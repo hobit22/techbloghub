@@ -62,3 +62,6 @@ target/
 # Docker
 .dockerignore
 docker-compose.override.yml
+
+# Claude Code
+.claude/
