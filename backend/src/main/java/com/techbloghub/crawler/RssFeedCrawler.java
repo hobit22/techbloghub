@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.io.StringReader;
+import java.io.ByteArrayInputStream;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -45,7 +45,7 @@ public class RssFeedCrawler {
                 return new ArrayList<>();
             }
             
-            SyndFeed feed = input.build(new XmlReader(new StringReader(feedContent)));
+            SyndFeed feed = input.build(new XmlReader(new ByteArrayInputStream(feedContent.getBytes())));
             List<Post> posts = new ArrayList<>();
             
             for (SyndEntry entry : feed.getEntries()) {
