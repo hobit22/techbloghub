@@ -30,7 +30,7 @@ public class Post {
     @Column(columnDefinition = "TEXT")
     private String content;
     
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 1023)
     private String originalUrl;
     
     @Column
