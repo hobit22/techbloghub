@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  elasticsearch:
+    image: elasticsearch:8.11.0
+    container_name: techblog-elasticsearch-dev
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks:
+      - techblog-network
+
+  kibana:
+    image: kibana:8.11.0
+    container_name: techblog-kibana-dev
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    networks:
+      - techblog-network
+
+  postgres:
+    image: postgres:15
+    container_name: techblog-postgres-dev
+    environment:
+      POSTGRES_DB: techbloghub
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - techblog-network
+
+volumes:
+  elasticsearch-data:
+  postgres-data:
+
+networks:
+  techblog-network:
+    driver: bridge

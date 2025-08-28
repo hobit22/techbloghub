@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  elasticsearch:
+    image: elasticsearch:8.11.0
+    container_name: techblog-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks:
+      - techblog-network
+
+  kibana:
+    image: kibana:8.11.0
+    container_name: techblog-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    networks:
+      - techblog-network
+
+  postgres:
+    image: postgres:15
+    container_name: techblog-postgres
+    environment:
+      POSTGRES_DB: techbloghub
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - techblog-network
+
+  backend:
+    build: ./backend
+    container_name: techblog-backend
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - DATABASE_URL=jdbc:postgresql://postgres:5432/techbloghub
+      - ELASTICSEARCH_HOST=http://elasticsearch:9200
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - elasticsearch
+    networks:
+      - techblog-network
+
+  frontend:
+    build: ./frontend
+    container_name: techblog-frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - techblog-network
+
+volumes:
+  elasticsearch-data:
+  postgres-data:
+
+networks:
+  techblog-network:
+    driver: bridge
