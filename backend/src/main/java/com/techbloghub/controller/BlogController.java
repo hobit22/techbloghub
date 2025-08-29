@@ -104,4 +104,19 @@ public class BlogController {
             return ResponseEntity.badRequest().body("Error starting crawl: " + e.getMessage());
         }
     }
+
+    @PostMapping("/reindex")
+    @Operation(summary = "ElasticSearch 재인덱싱", description = "모든 포스트를 ElasticSearch에 재인덱싱합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "재인덱싱 성공"),
+            @ApiResponse(responseCode = "400", description = "재인덱싱 실패")
+    })
+    public ResponseEntity<String> reindexAllPosts() {
+        try {
+            crawlerService.reindexAllPosts();
+            return ResponseEntity.ok("Reindexing completed successfully");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error during reindexing: " + e.getMessage());
+        }
+    }
 }
