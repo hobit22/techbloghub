@@ -1,13 +1,7 @@
 package com.techbloghub.repository;
 
-import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.techbloghub.entity.Post;
-import com.techbloghub.entity.QPost;
-import com.techbloghub.entity.QPostTags;
-import com.techbloghub.entity.QPostCategory;
-import com.techbloghub.entity.QTags;
-import com.techbloghub.entity.QCategory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -17,17 +11,17 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static com.techbloghub.entity.QCategory.category;
+import static com.techbloghub.entity.QPost.post;
+import static com.techbloghub.entity.QPostCategory.postCategory;
+import static com.techbloghub.entity.QPostTags.postTags;
+import static com.techbloghub.entity.QTags.tags;
+
 @Repository
 @RequiredArgsConstructor
 public class PostRepositoryImpl implements PostRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
-    
-    private static final QPost post = QPost.post;
-    private static final QPostTags postTags = QPostTags.postTags;
-    private static final QPostCategory postCategory = QPostCategory.postCategory;
-    private static final QTags tags = QTags.tags;
-    private static final QCategory category = QCategory.category;
 
     @Override
     public Page<Post> findAllOrderByPublishedAtDesc(Pageable pageable) {
