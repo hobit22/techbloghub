@@ -1,60 +1,101 @@
 package com.techbloghub.service;
 
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.techbloghub.dto.SearchRequest;
-import com.techbloghub.entity.PostDocument;
-import com.techbloghub.repository.PostDocumentRepository;
+import com.techbloghub.entity.Post;
+import com.techbloghub.entity.QPost;
+import com.techbloghub.entity.QPostTags;
+import com.techbloghub.entity.QPostCategory;
+import com.techbloghub.entity.QTags;
+import com.techbloghub.entity.QCategory;
+import com.techbloghub.entity.QBlog;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class SearchService {
 
-    private final PostDocumentRepository postDocumentRepository;
+    private final JPAQueryFactory queryFactory;
+    
+    private static final QPost post = QPost.post;
+    private static final QPostTags postTags = QPostTags.postTags;
+    private static final QPostCategory postCategory = QPostCategory.postCategory;
+    private static final QTags tags = QTags.tags;
+    private static final QCategory category = QCategory.category;
+    private static final QBlog blog = QBlog.blog;
 
-    public Page<PostDocument> search(SearchRequest request) {
+    public Page<Post> search(SearchRequest request) {
         try {
             Pageable pageable = createPageable(request);
+            BooleanBuilder builder = new BooleanBuilder();
 
-            // 간단한 검색 구현 - 복잡한 ElasticSearch 쿼리 대신 Repository 메서드 사용
+            // 키워드 검색 (제목 또는 내용에 포함)
             if (request.getQuery() != null && !request.getQuery().trim().isEmpty()) {
-                return postDocumentRepository.findByTitleContainingOrContentContaining(
-                        request.getQuery(), request.getQuery(), pageable);
+                String keyword = request.getQuery().trim();
+                builder.and(post.title.containsIgnoreCase(keyword)
+                        .or(post.content.containsIgnoreCase(keyword)));
             }
 
-            // 필터가 있는 경우
-            if (hasFilters(request)) {
-                if (request.getCompanies() != null && !request.getCompanies().isEmpty()) {
-                    // 첫 번째 회사로 검색 (단순화)
-                    return postDocumentRepository.findByCompany(request.getCompanies().get(0), pageable);
-                }
-                if (request.getTags() != null && !request.getTags().isEmpty()) {
-                    return postDocumentRepository.findByTagsContaining(request.getTags().get(0), pageable);
-                }
-                if (request.getCategories() != null && !request.getCategories().isEmpty()) {
-                    return postDocumentRepository.findByCategoriesContaining(request.getCategories().get(0), pageable);
-                }
+            // 회사 필터
+            if (request.getCompanies() != null && !request.getCompanies().isEmpty()) {
+                builder.and(blog.company.in(request.getCompanies()));
             }
 
-            // 기본 전체 검색
-            return postDocumentRepository.findAll(pageable);
+            // 태그 필터
+            if (request.getTags() != null && !request.getTags().isEmpty()) {
+                builder.and(tags.name.in(request.getTags()));
+            }
+
+            // 카테고리 필터
+            if (request.getCategories() != null && !request.getCategories().isEmpty()) {
+                builder.and(category.name.in(request.getCategories()));
+            }
+
+            // 메인 쿼리
+            List<Post> content = queryFactory
+                    .selectFrom(post)
+                    .distinct()
+                    .leftJoin(post.blog, blog).fetchJoin()
+                    .leftJoin(post.postTags, postTags)
+                    .leftJoin(postTags.tags, tags)
+                    .leftJoin(post.postCategories, postCategory)
+                    .leftJoin(postCategory.category, category)
+                    .where(builder)
+                    .orderBy("desc".equalsIgnoreCase(request.getSortDirection()) ? 
+                            post.publishedAt.desc() : post.publishedAt.asc())
+                    .offset(pageable.getOffset())
+                    .limit(pageable.getPageSize())
+                    .fetch();
+
+            // 카운트 쿼리
+            Long total = queryFactory
+                    .select(post.countDistinct())
+                    .from(post)
+                    .leftJoin(post.blog, blog)
+                    .leftJoin(post.postTags, postTags)
+                    .leftJoin(postTags.tags, tags)
+                    .leftJoin(post.postCategories, postCategory)
+                    .leftJoin(postCategory.category, category)
+                    .where(builder)
+                    .fetchOne();
+
+            return new PageImpl<>(content, pageable, total != null ? total : 0);
 
         } catch (Exception e) {
             log.error("Error performing search: {}", e.getMessage());
             return Page.empty();
         }
-    }
-
-    private boolean hasFilters(SearchRequest request) {
-        return (request.getCompanies() != null && !request.getCompanies().isEmpty()) ||
-                (request.getTags() != null && !request.getTags().isEmpty()) ||
-                (request.getCategories() != null && !request.getCategories().isEmpty());
     }
 
     private Pageable createPageable(SearchRequest request) {
