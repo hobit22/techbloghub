@@ -29,7 +29,7 @@ INSERT INTO blogs (name, company, rss_url, site_url, description, status, create
 ('네이버 D2', '네이버', 'https://d2.naver.com/d2.atom', 'https://d2.naver.com', '네이버 개발자들의 기술 경험과 노하우 공유', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('카카오 Tech', '카카오', 'https://tech.kakao.com/feed/', 'https://tech.kakao.com', '카카오의 기술 블로그', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('우아한기술블로그', '우아한형제들', 'https://techblog.woowahan.com/feed/', 'https://techblog.woowahan.com', '우아한형제들 기술블로그', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('LINE Engineering', '라인', 'https://engineering.linecorp.com/ko/rss/', 'https://engineering.linecorp.com/ko/', 'LINE의 기술과 문화', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('LY Corporation Tech Blog', '라인', 'https://techblog.lycorp.co.jp/ko/feed/index.xml', 'https://techblog.lycorp.co.jp/ko', 'LINE의 기술과 문화', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('NHN Cloud Meetup', 'NHN', 'https://meetup.nhncloud.com/rss', 'https://meetup.nhncloud.com', 'NHN의 기술 경험과 노하우', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('토스 Tech', '토스', 'https://toss.tech/rss.xml', 'https://toss.tech', '토스의 개발 문화와 기술', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('당근 Tech Blog', '당근마켓', 'https://medium.com/feed/daangn', 'https://medium.com/daangn', '당근마켓의 개발 이야기', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
