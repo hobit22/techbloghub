@@ -9,10 +9,10 @@ import org.springframework.data.elasticsearch.repository.config.EnableElasticsea
 @Configuration
 @EnableElasticsearchRepositories(basePackages = "com.techbloghub.repository")
 public class ElasticsearchConfig extends ElasticsearchConfiguration {
-    
+
     @Value("${spring.elasticsearch.uris:http://localhost:9200}")
     private String elasticsearchHost;
-    
+
     @Override
     public ClientConfiguration clientConfiguration() {
         return ClientConfiguration.builder()
