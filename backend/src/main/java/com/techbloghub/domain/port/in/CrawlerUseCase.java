@@ -16,11 +16,8 @@ public interface CrawlerUseCase {
     
     /**
      * 특정 블로그를 크롤링
+     * @param blogId 크롤링할 블로그 ID
+     * @return 저장된 새로운 포스트 수
      */
-    void crawlSpecificBlog(Long blogId);
-    
-    /**
-     * 크롤링이 필요한 블로그 목록 조회
-     */
-    List<Blog> getBlogsNeedingCrawl();
+    int crawlSpecificBlog(Long blogId);
 }

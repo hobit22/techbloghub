@@ -48,6 +48,13 @@ logging:
   level:
     com.techbloghub: DEBUG
 
+# 크롤링 스케줄러 설정
+crawler:
+  schedule:
+    enabled: true
+    hourly-cron: "0 0 * * * *"  # 매시간 0분에 실행
+    daily-cron: "0 0 6 * * *"   # 매일 오전 6시에 실행
+
 management:
   endpoints:
     web:

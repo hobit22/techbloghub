@@ -12,7 +12,7 @@ INSERT INTO categories (name, description, color, created_at, updated_at) VALUES
 ('Architecture', '아키텍처 및 설계', '#5F27CD', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- 초기 태그 데이터
-INSERT INTO tags (name, description, created_at, updated_at) VALUES
+INSERT INTO tag (name, description, created_at, updated_at) VALUES
 ('Java', 'Java 프로그래밍', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('Spring', 'Spring Framework', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('JavaScript', 'JavaScript', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
@@ -25,7 +25,7 @@ INSERT INTO tags (name, description, created_at, updated_at) VALUES
 ('데이터', '데이터 관련', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- 초기 블로그 데이터 (국내 IT 대기업)
-INSERT INTO blogs (name, company, rss_url, site_url, description, status, created_at, updated_at) VALUES
+INSERT INTO blog (name, company, rss_url, site_url, description, status, created_at, updated_at) VALUES
 ('네이버 D2', '네이버', 'https://d2.naver.com/d2.atom', 'https://d2.naver.com', '네이버 개발자들의 기술 경험과 노하우 공유', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('카카오 Tech', '카카오', 'https://tech.kakao.com/feed/', 'https://tech.kakao.com', '카카오의 기술 블로그', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('우아한기술블로그', '우아한형제들', 'https://techblog.woowahan.com/feed/', 'https://techblog.woowahan.com', '우아한형제들 기술블로그', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),

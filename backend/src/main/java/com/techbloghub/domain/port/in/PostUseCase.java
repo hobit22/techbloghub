@@ -40,4 +40,9 @@ public interface PostUseCase {
      * 포스트 중복 여부 확인
      */
     boolean existsByOriginalUrl(String originalUrl);
+    
+    /**
+     * 포스트 저장 (태그/카테고리 자동 추출 포함)
+     */
+    Post savePostWithTagsAndCategories(Post post);
 }

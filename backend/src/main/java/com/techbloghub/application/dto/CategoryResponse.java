@@ -1,0 +1,43 @@
+package com.techbloghub.application.dto;
+
+import com.techbloghub.persistance.entity.CategoryEntity;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
+import lombok.Data;
+
+import java.time.LocalDateTime;
+
+@Data
+@Builder
+@Schema(description = "카테고리 응답 정보")
+public class CategoryResponse {
+
+    @Schema(description = "카테고리 ID", example = "1")
+    private Long id;
+
+    @Schema(description = "카테고리 이름", example = "Backend")
+    private String name;
+
+    @Schema(description = "카테고리 설명", example = "백엔드 개발")
+    private String description;
+
+    @Schema(description = "카테고리 색상", example = "#4ECDC4")
+    private String color;
+
+    @Schema(description = "생성일시", example = "2024-01-15T10:30:00")
+    private LocalDateTime createdAt;
+
+    @Schema(description = "수정일시", example = "2024-01-15T10:30:00")
+    private LocalDateTime updatedAt;
+
+    public static CategoryResponse from(CategoryEntity categoryEntity) {
+        return CategoryResponse.builder()
+                .id(categoryEntity.getId())
+                .name(categoryEntity.getName())
+                .description(categoryEntity.getDescription())
+                .color(categoryEntity.getColor())
+                .createdAt(categoryEntity.getCreatedAt())
+                .updatedAt(categoryEntity.getUpdatedAt())
+                .build();
+    }
+}

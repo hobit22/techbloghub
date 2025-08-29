@@ -21,24 +21,4 @@ public interface BlogUseCase {
      * 활성화된 블로그 목록 조회
      */
     List<Blog> getActiveBlogs();
-    
-    /**
-     * 블로그 ID로 단건 조회
-     */
-    Optional<Blog> getBlogById(Long id);
-    
-    /**
-     * 회사별 블로그 목록 조회
-     */
-    List<Blog> getBlogsByCompany(String company);
-    
-    /**
-     * 블로그 저장/수정
-     */
-    Blog saveBlog(Blog blog);
-    
-    /**
-     * 블로그 상태 변경
-     */
-    Blog updateBlogStatus(Long blogId, String status);
 }
