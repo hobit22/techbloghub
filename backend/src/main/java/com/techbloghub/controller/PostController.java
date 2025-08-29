@@ -3,7 +3,6 @@ package com.techbloghub.controller;
 import com.techbloghub.dto.PostResponse;
 import com.techbloghub.dto.SearchRequest;
 import com.techbloghub.entity.Post;
-import com.techbloghub.entity.PostDocument;
 import com.techbloghub.repository.PostRepository;
 import com.techbloghub.service.SearchService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -98,13 +97,8 @@ public class PostController {
     public ResponseEntity<Page<PostResponse>> searchPosts(
             @Parameter(description = "검색 조건", required = true)
             @RequestBody SearchRequest searchRequest) {
-        Page<PostDocument> searchResults = searchService.search(searchRequest);
-
-        Page<PostResponse> response = searchResults.map(doc -> {
-            Post post = postRepository.findById(doc.getPostId())
-                    .orElse(null);
-            return post != null ? PostResponse.from(post) : null;
-        }).map(postResponse -> postResponse);
+        Page<Post> searchResults = searchService.search(searchRequest);
+        Page<PostResponse> response = searchResults.map(PostResponse::from);
 
         return ResponseEntity.ok(response);
     }

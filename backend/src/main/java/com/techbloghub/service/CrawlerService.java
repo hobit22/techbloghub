@@ -21,7 +21,6 @@ public class CrawlerService {
     private final RssFeedCrawler rssFeedCrawler;
     private final BlogRepository blogRepository;
     private final PostRepository postRepository;
-    private final PostDocumentRepository postDocumentRepository;
     private final PostTagsRepository postTagsRepository;
     private final PostCategoryRepository postCategoryRepository;
     private final TagsService tagsService;
@@ -77,9 +76,6 @@ public class CrawlerService {
                         postCategoryRepository.save(postCategory);
                     }
 
-                    PostDocument postDocument = PostDocument.fromPost(savedPost);
-                    postDocumentRepository.save(postDocument);
-
                     savedCount++;
                 } catch (Exception e) {
                     log.error("Error saving post {}: {}", post.getTitle(), e.getMessage());
@@ -101,23 +97,4 @@ public class CrawlerService {
         crawlBlogFeed(blog);
     }
 
-    @Transactional
-    public void reindexAllPosts() {
-        log.info("Starting reindexing of all posts to Elasticsearch");
-
-        postDocumentRepository.deleteAll();
-
-        List<Post> allPosts = postRepository.findAll();
-
-        for (Post post : allPosts) {
-            try {
-                PostDocument postDocument = PostDocument.fromPost(post);
-                postDocumentRepository.save(postDocument);
-            } catch (Exception e) {
-                log.error("Error reindexing post {}: {}", post.getId(), e.getMessage());
-            }
-        }
-
-        log.info("Completed reindexing {} posts", allPosts.size());
-    }
 }

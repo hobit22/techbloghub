@@ -29,8 +29,6 @@ spring:
       enabled: true
       path: /h2-console
   
-  elasticsearch:
-    uris: http://localhost:9200
   
   security:
     user:
@@ -49,7 +47,6 @@ server:
 logging:
   level:
     com.techbloghub: DEBUG
-    org.springframework.data.elasticsearch: DEBUG
 
 management:
   endpoints:
@@ -77,8 +74,6 @@ spring:
       ddl-auto: update
     database-platform: org.hibernate.dialect.PostgreSQLDialect
   
-  elasticsearch:
-    uris: ${ELASTICSEARCH_HOST:http://localhost:9200}
 
 ---
 spring:
@@ -97,8 +92,6 @@ spring:
       ddl-auto: validate
     show-sql: false
   
-  elasticsearch:
-    uris: ${ELASTICSEARCH_HOST}
 
 logging:
   level:
