@@ -1,5 +1,6 @@
 package com.techbloghub.application.dto;
 
+import com.techbloghub.domain.model.Category;
 import com.techbloghub.persistance.entity.CategoryEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -30,14 +31,14 @@ public class CategoryResponse {
     @Schema(description = "수정일시", example = "2024-01-15T10:30:00")
     private LocalDateTime updatedAt;
 
-    public static CategoryResponse from(CategoryEntity categoryEntity) {
+    public static CategoryResponse from(Category category) {
         return CategoryResponse.builder()
-                .id(categoryEntity.getId())
-                .name(categoryEntity.getName())
-                .description(categoryEntity.getDescription())
-                .color(categoryEntity.getColor())
-                .createdAt(categoryEntity.getCreatedAt())
-                .updatedAt(categoryEntity.getUpdatedAt())
+                .id(category.getId())
+                .name(category.getName())
+                .description(category.getDescription())
+                .color(category.getColor())
+                .createdAt(category.getCreatedAt())
+                .updatedAt(category.getUpdatedAt())
                 .build();
     }
 }

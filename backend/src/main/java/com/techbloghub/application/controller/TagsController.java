@@ -29,21 +29,11 @@ public class TagsController {
     @ApiResponse(responseCode = "200", description = "태그 목록 조회 성공")
     public ResponseEntity<List<TagsResponse>> getAllTags() {
         List<com.techbloghub.domain.model.Tag> tags = tagUseCase.getAllTags();
-        
-        List<TagsResponse> responses = tags.stream()
-                .map(this::toTagsResponse)
-                .collect(Collectors.toList());
-        
-        return ResponseEntity.ok(responses);
-    }
 
-    private TagsResponse toTagsResponse(com.techbloghub.domain.model.Tag tag) {
-        return TagsResponse.builder()
-                .id(tag.getId())
-                .name(tag.getName())
-                .description(tag.getDescription())
-                .createdAt(tag.getCreatedAt())
-                .updatedAt(tag.getUpdatedAt())
-                .build();
+        List<TagsResponse> responses = tags.stream()
+                .map(TagsResponse::from)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(responses);
     }
 }

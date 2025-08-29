@@ -37,7 +37,7 @@ public class BlogController {
         Page<Blog> blogs = blogUseCase.getAllBlogs(pageable);
         
         List<BlogResponse> responses = blogs.getContent().stream()
-                .map(this::toBlogResponse)
+                .map(BlogResponse::from)
                 .collect(Collectors.toList());
         
         return ResponseEntity.ok(responses);
@@ -50,7 +50,7 @@ public class BlogController {
         List<Blog> blogs = blogUseCase.getActiveBlogs();
         
         List<BlogResponse> responses = blogs.stream()
-                .map(this::toBlogResponse)
+                .map(BlogResponse::from)
                 .collect(Collectors.toList());
         
         return ResponseEntity.ok(responses);
@@ -72,20 +72,5 @@ public class BlogController {
     @Operation(summary = "회사별 블로그 조회", description = "특정 회사의 블로그 목록을 조회합니다.")
     public ResponseEntity<List<BlogResponse>> getBlogsByCompany(@PathVariable String company) {
         return ResponseEntity.ok(List.of());
-    }
-
-    private BlogResponse toBlogResponse(Blog blog) {
-        return BlogResponse.builder()
-                .id(blog.getId())
-                .name(blog.getName())
-                .company(blog.getCompany())
-                .rssUrl(blog.getRssUrl())
-                .siteUrl(blog.getSiteUrl())
-                .description(blog.getDescription())
-                .status(blog.getStatus().name())
-                .lastCrawledAt(blog.getLastCrawledAt())
-                .createdAt(blog.getCreatedAt())
-                .updatedAt(blog.getUpdatedAt())
-                .build();
     }
 }

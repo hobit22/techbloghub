@@ -1,6 +1,6 @@
 package com.techbloghub.application.dto;
 
-import com.techbloghub.persistance.entity.TagEntity;
+import com.techbloghub.domain.model.Tag;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;
@@ -27,13 +27,13 @@ public class TagsResponse {
     @Schema(description = "수정일시", example = "2024-01-15T10:30:00")
     private LocalDateTime updatedAt;
 
-    public static TagsResponse from(TagEntity tagEntity) {
+    public static TagsResponse from(Tag tag) {
         return TagsResponse.builder()
-                .id(tagEntity.getId())
-                .name(tagEntity.getName())
-                .description(tagEntity.getDescription())
-                .createdAt(tagEntity.getCreatedAt())
-                .updatedAt(tagEntity.getUpdatedAt())
+                .id(tag.getId())
+                .name(tag.getName())
+                .description(tag.getDescription())
+                .createdAt(tag.getCreatedAt())
+                .updatedAt(tag.getUpdatedAt())
                 .build();
     }
 }

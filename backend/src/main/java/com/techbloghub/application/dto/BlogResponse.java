@@ -1,6 +1,6 @@
 package com.techbloghub.application.dto;
 
-import com.techbloghub.persistance.entity.BlogEntity;
+import com.techbloghub.domain.model.Blog;
 import lombok.Builder;
 import lombok.Data;
 
@@ -22,25 +22,19 @@ public class BlogResponse {
     private LocalDateTime lastCrawledAt;
     private Long postCount;
 
-    public static BlogResponse from(BlogEntity blogEntity) {
-        return BlogResponse.builder()
-                .id(blogEntity.getId())
-                .name(blogEntity.getName())
-                .company(blogEntity.getCompany())
-                .rssUrl(blogEntity.getRssUrl())
-                .siteUrl(blogEntity.getSiteUrl())
-                .description(blogEntity.getDescription())
-                .logoUrl(blogEntity.getLogoUrl())
-                .status(blogEntity.getStatus().name())
-                .createdAt(blogEntity.getCreatedAt())
-                .updatedAt(blogEntity.getUpdatedAt())
-                .lastCrawledAt(blogEntity.getLastCrawledAt())
-                .build();
-    }
 
-    public static BlogResponse from(BlogEntity blogEntity, Long postCount) {
-        BlogResponse response = from(blogEntity);
-        response.setPostCount(postCount);
-        return response;
+    public static BlogResponse from(Blog blog) {
+        return BlogResponse.builder()
+                .id(blog.getId())
+                .name(blog.getName())
+                .company(blog.getCompany())
+                .rssUrl(blog.getRssUrl())
+                .siteUrl(blog.getSiteUrl())
+                .description(blog.getDescription())
+                .status(blog.getStatus().name())
+                .lastCrawledAt(blog.getLastCrawledAt())
+                .createdAt(blog.getCreatedAt())
+                .updatedAt(blog.getUpdatedAt())
+                .build();
     }
 }

@@ -32,20 +32,10 @@ public class CategoryController {
         List<Category> categories = categoryUseCase.getAllCategories();
         
         List<CategoryResponse> responses = categories.stream()
-                .map(this::toCategoryResponse)
+                .map(CategoryResponse::from)
                 .collect(Collectors.toList());
         
         return ResponseEntity.ok(responses);
     }
 
-    private CategoryResponse toCategoryResponse(Category category) {
-        return CategoryResponse.builder()
-                .id(category.getId())
-                .name(category.getName())
-                .description(category.getDescription())
-                .color(category.getColor())
-                .createdAt(category.getCreatedAt())
-                .updatedAt(category.getUpdatedAt())
-                .build();
-    }
 }
