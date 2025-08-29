@@ -21,7 +21,7 @@ public class BlogResponse {
     private LocalDateTime updatedAt;
     private LocalDateTime lastCrawledAt;
     private Long postCount;
-    
+
     public static BlogResponse from(Blog blog) {
         return BlogResponse.builder()
                 .id(blog.getId())
@@ -37,7 +37,7 @@ public class BlogResponse {
                 .lastCrawledAt(blog.getLastCrawledAt())
                 .build();
     }
-    
+
     public static BlogResponse from(Blog blog, Long postCount) {
         BlogResponse response = from(blog);
         response.setPostCount(postCount);
