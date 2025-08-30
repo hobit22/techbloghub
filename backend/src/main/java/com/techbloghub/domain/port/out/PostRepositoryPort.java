@@ -14,11 +14,6 @@ import java.util.Optional;
 public interface PostRepositoryPort {
     
     /**
-     * 포스트 저장
-     */
-    Post save(Post post);
-    
-    /**
      * 포스트 ID로 조회
      */
     Optional<Post> findById(Long id);

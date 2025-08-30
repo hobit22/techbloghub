@@ -22,13 +22,6 @@ public class PostAdapter implements PostRepositoryPort {
     private final PostRepository postRepository;
 
     @Override
-    public Post save(Post post) {
-        PostEntity entity = toEntity(post);
-        PostEntity savedEntity = postRepository.save(entity);
-        return toDomain(savedEntity);
-    }
-
-    @Override
     public Optional<Post> findById(Long id) {
         return postRepository.findById(id).map(this::toDomain);
     }
