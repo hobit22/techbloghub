@@ -1,0 +1,32 @@
+from sqlalchemy import Column, Integer, String, DateTime, Enum as SQLEnum, Text
+from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
+from enum import Enum
+from ..core.database import Base
+
+
+class BlogStatus(str, Enum):
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE" 
+    SUSPENDED = "SUSPENDED"
+
+
+class BlogEntity(Base):
+    __tablename__ = "blog"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False, unique=True, index=True)
+    company = Column(String, nullable=False)
+    rss_url = Column(String, nullable=False, unique=True)
+    site_url = Column(String, nullable=False)
+    description = Column(Text)
+    logo_url = Column(String)
+    status = Column(SQLEnum(BlogStatus), default=BlogStatus.ACTIVE)
+    last_crawled_at = Column(DateTime)
+    
+    # Timestamps
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    posts = relationship("PostEntity", back_populates="blog", cascade="all, delete-orphan")
