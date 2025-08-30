@@ -7,4 +7,7 @@ INSERT INTO blog (name, company, rss_url, site_url, description, status, created
 ('NHN Cloud Meetup', 'NHN', 'https://meetup.nhncloud.com/rss', 'https://meetup.nhncloud.com', 'NHN의 기술 경험과 노하우', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('토스 Tech', '토스', 'https://toss.tech/rss.xml', 'https://toss.tech', '토스의 개발 문화와 기술', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('당근 Tech Blog', '당근마켓', 'https://medium.com/feed/daangn', 'https://medium.com/daangn', '당근마켓의 개발 이야기', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('컬리 기술 블로그', '마켓컬리', 'https://helloworld.kurly.com/feed.xml', 'https://helloworld.kurly.com', '컬리의 기술적 도전과 성장', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+('SOCAR Tech Blog', '쏘카', 'https://tech.socarcorp.kr/feed.xml', 'https://tech.socarcorp.kr/', '당근마켓의 개발 이야기', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('컬리 기술 블로그', '마켓컬리', 'https://helloworld.kurly.com/feed.xml', 'https://helloworld.kurly.com', '쏘카 기술 블로그', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('카카모빌리티 디벨로퍼스', '카카오모빌리티', 'https://developers.kakaomobility.com/techblogs.xml', 'https://developers.kakaomobility.com/techblogs', '카카오모빌리티 디벨로퍼스 기술블로그', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('카카오페이 기술 블로그', '카카오페이', 'https://tech.kakaopay.com/rss', 'https://tech.kakaopay.com', '기술과 경험을 함께 공유합니다', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);

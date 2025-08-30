@@ -30,9 +30,5 @@ public interface CategoryRepositoryPort {
      * 모든 카테고리 조회
      */
     List<Category> findAll();
-    
-    /**
-     * 텍스트에서 카테고리를 추출하고 생성
-     */
-    Set<Category> extractAndCreateCategories(String text);
+
 }

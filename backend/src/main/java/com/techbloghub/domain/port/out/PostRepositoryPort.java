@@ -54,12 +54,6 @@ public interface PostRepositoryPort {
     Page<Post> searchWithFilters(String keyword, List<String> companies, 
                                 List<String> tags, List<String> categories, 
                                 Pageable pageable);
-    
-    /**
-     * URL 중복 확인
-     */
-    boolean existsByOriginalUrl(String originalUrl);
-    
     /**
      * 블로그별 포스트 수 조회
      */

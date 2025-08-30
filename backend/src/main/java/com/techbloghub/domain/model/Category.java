@@ -36,4 +36,6 @@ public class Category {
         return color != null && 
                color.matches("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$");
     }
+
+
 }

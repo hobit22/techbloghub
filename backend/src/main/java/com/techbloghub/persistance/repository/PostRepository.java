@@ -11,11 +11,7 @@ import java.util.Optional;
 @Repository
 public interface PostRepository extends JpaRepository<PostEntity, Long>, PostRepositoryCustom {
 
-    Optional<PostEntity> findByOriginalUrl(String originalUrl);
-
     Page<PostEntity> findByBlogIdOrderByPublishedAtDesc(Long blogId, Pageable pageable);
-
-    boolean existsByOriginalUrl(String originalUrl);
 
     long countByBlogId(Long blogId);
 }
