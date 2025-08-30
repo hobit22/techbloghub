@@ -35,11 +35,11 @@ public class BlogController {
             @RequestParam(defaultValue = "20") int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Blog> blogs = blogUseCase.getAllBlogs(pageable);
-        
+
         List<BlogResponse> responses = blogs.getContent().stream()
                 .map(BlogResponse::from)
                 .collect(Collectors.toList());
-        
+
         return ResponseEntity.ok(responses);
     }
 
@@ -48,11 +48,11 @@ public class BlogController {
     @ApiResponse(responseCode = "200", description = "활성 블로그 목록 조회 성공")
     public ResponseEntity<List<BlogResponse>> getActiveBlogs() {
         List<Blog> blogs = blogUseCase.getActiveBlogs();
-        
+
         List<BlogResponse> responses = blogs.stream()
                 .map(BlogResponse::from)
                 .collect(Collectors.toList());
-        
+
         return ResponseEntity.ok(responses);
     }
 

@@ -89,9 +89,9 @@ public class PostController {
             @RequestParam(defaultValue = "10") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<Post> posts = postUseCase.getRecentPosts(pageable);
 
-        Page<PostResponse> responses = posts.map(PostResponse::from);
+        Page<PostResponse> responses = postUseCase.getRecentPosts(pageable)
+                .map(PostResponse::from);
 
         return ResponseEntity.ok(responses);
     }
