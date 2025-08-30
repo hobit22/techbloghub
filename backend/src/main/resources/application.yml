@@ -4,16 +4,19 @@ spring:
   
   profiles:
     active: local
-  
+
+
   datasource:
-    url: jdbc:h2:mem:testdb
-    driver-class-name: org.h2.Driver
-    username: sa
+    url: jdbc:postgresql://localhost:5432/techbloghub
+    driver-class-name: org.postgresql.Driver
+    username: admin
     password: password
-  
   jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: create-drop
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
