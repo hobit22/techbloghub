@@ -1,0 +1,54 @@
+package com.techbloghub.persistance.entity;
+
+import com.techbloghub.domain.model.BlogStatus;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Entity
+@Table(name = "blog")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@EqualsAndHashCode(callSuper = false)
+public class BlogEntity extends BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, unique = true)
+    private String name;
+
+    @Column(nullable = false)
+    private String company;
+
+    @Column(nullable = false, unique = true)
+    private String rssUrl;
+
+    @Column(nullable = false)
+    private String siteUrl;
+
+    @Column
+    private String description;
+
+    @Column
+    private String logoUrl;
+
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private BlogStatus status = BlogStatus.ACTIVE;
+
+    @Column(name = "last_crawled_at")
+    private LocalDateTime lastCrawledAt;
+
+    @OneToMany(mappedBy = "blog", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PostEntity> postEntities;
+}
