@@ -9,10 +9,31 @@ import FilterResetButton from '@/components/FilterResetButton';
 import { useInfinitePosts } from '@/hooks/useInfinitePosts';
 import { useBlogs, useAvailableFilters } from '@/hooks/useFilters';
 import { useUrlState } from '@/hooks/useUrlState';
-import { SearchRequest } from '@/types';
+import { SearchRequest, Post, Blog, PageResponse } from '@/types';
 import { X } from 'lucide-react';
 
-export default function ClientHomePage() {
+interface ClientHomePageProps {
+  // 서버에서 받은 초기 데이터
+  initialData: PageResponse<Post>;
+  initialBlogs: Blog[];
+  initialCategories: string[];
+  initialTags: string[];
+  initialHasFilters: boolean;
+  searchSummary: {
+    keyword?: string;
+    totalResults: number;
+    appliedFiltersCount: number;
+  };
+}
+
+export default function ClientHomePage({
+  initialData,
+  initialBlogs,
+  initialCategories,
+  initialTags,
+  initialHasFilters,
+  searchSummary,
+}: ClientHomePageProps) {
   const {
     state: urlState,
     setKeyword,
@@ -27,8 +48,9 @@ export default function ClientHomePage() {
   const [selectedTags, setSelectedTags] = useState<string[]>(urlState.tags || []);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(urlState.categories || []);
 
-  const { data: blogs = [], isLoading: blogsLoading } = useBlogs();
-  const { tags, categories } = useAvailableFilters();
+  // 서버에서 받은 초기 데이터를 우선 사용하고, 필요시 클라이언트에서 추가 fetch
+  const { data: blogs = initialBlogs } = useBlogs(initialBlogs);
+  const { tags = initialTags, categories = initialCategories } = useAvailableFilters(initialTags, initialCategories);
 
   const searchRequest: SearchRequest = {
     keyword: searchQuery || undefined,
@@ -41,16 +63,18 @@ export default function ClientHomePage() {
 
   const hasFilters = Boolean(searchQuery || selectedBlogs.length > 0 || selectedTags.length > 0 || selectedCategories.length > 0);
 
+  // 초기 로드인지 확인 (URL에 필터가 없고 상태도 비어있음)
+  const isInitialLoad = !hasFilters && !initialHasFilters;
+
   const {
     data: infiniteData,
     isLoading: postsLoading,
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
-  } = useInfinitePosts(searchRequest, 20);
+  } = useInfinitePosts(searchRequest, 20, initialData, isInitialLoad);
 
-  const allPosts = infiniteData?.pages.flatMap(page => page.content) || [];
-  const totalElements = infiniteData?.pages[0]?.totalElements || 0;
+  const allPosts = infiniteData?.pages.flatMap(page => page.content) || initialData.content;
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -89,28 +113,8 @@ export default function ClientHomePage() {
     setCategories(categories);
   };
 
-  if (blogsLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50">
-        <Header onSearch={handleSearch} />
-        <main className="max-w-7xl mx-auto p-4 lg:p-6">
-          <div className="space-y-4">
-            {Array.from({ length: 8 }).map((_, index) => (
-              <div key={index} className="bg-white rounded-lg border border-slate-200 p-4 animate-pulse">
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-slate-200 rounded-lg"></div>
-                  <div className="flex-1 space-y-2">
-                    <div className="h-5 bg-slate-200 rounded-md w-3/4"></div>
-                    <div className="h-4 bg-slate-200 rounded-md w-1/2"></div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </main>
-      </div>
-    );
-  }
+  // 서버 데이터가 있으므로 초기 로딩 상태 제거
+  // blogsLoading은 클라이언트 사이드 추가 데이터 로딩에만 사용
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -134,19 +138,29 @@ export default function ClientHomePage() {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="space-y-1">
               <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 tracking-tight">
-                {hasFilters ? '검색 결과' : '최신 기술 블로그 포스트'}
+                {searchSummary.keyword ? (
+                  <>&quot;{searchSummary.keyword}&quot; 검색 결과</>
+                ) : hasFilters ? (
+                  '필터링된 포스트'
+                ) : (
+                  '최신 기술 블로그 포스트'
+                )}
               </h1>
               <p className="text-slate-600">
-                {totalElements > 0 ? (
+                {searchSummary.totalResults > 0 ? (
                   <>
-                    총 <span className="font-semibold text-slate-700">{totalElements.toLocaleString()}</span>개의 포스트
-                    {hasFilters && (
+                    총 <span className="font-semibold text-slate-700">{searchSummary.totalResults.toLocaleString()}</span>개의 포스트
+                    {searchSummary.appliedFiltersCount > 0 && (
                       <span className="ml-2 text-sm bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
-                        필터링됨
+                        {searchSummary.appliedFiltersCount}개 필터 적용
                       </span>
                     )}
                   </>
-                ) : '포스트를 불러오는 중...'}
+                ) : searchSummary.keyword ? (
+                  `&quot;${searchSummary.keyword}&quot;에 대한 검색 결과가 없습니다`
+                ) : (
+                  '포스트를 불러오는 중...'
+                )}
               </p>
             </div>
             <div className="flex items-center space-x-3">

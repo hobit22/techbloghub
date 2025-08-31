@@ -62,7 +62,7 @@ export default function Header({ onSearch }: HeaderProps) {
                   placeholder="기술 포스트, 회사, 키워드 검색..."
                   className="w-full pl-12 pr-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl 
                            focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 focus:bg-white
-                           transition-all duration-200 text-sm placeholder-slate-400
+                           transition-all duration-200 text-sm placeholder-slate-400 text-slate-900
                            hover:bg-slate-50"
                 />
               </div>
@@ -106,7 +106,7 @@ export default function Header({ onSearch }: HeaderProps) {
                   placeholder="기술 포스트, 회사, 키워드 검색..."
                   className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl 
                            focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 focus:bg-white
-                           transition-all duration-200 text-sm placeholder-slate-400"
+                           transition-all duration-200 text-sm placeholder-slate-400 text-slate-900"
                 />
               </div>
             </form>
