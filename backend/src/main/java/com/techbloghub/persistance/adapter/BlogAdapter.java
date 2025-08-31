@@ -22,26 +22,26 @@ public class BlogAdapter implements BlogRepositoryPort {
 
     @Override
     public Blog save(Blog blog) {
-        BlogEntity entity = toEntity(blog);
+        BlogEntity entity = BlogEntity.from(blog);
         BlogEntity savedEntity = blogRepository.save(entity);
-        return toDomain(savedEntity);
+        return savedEntity.toDomain();
     }
 
     @Override
     public Optional<Blog> findById(Long id) {
-        return blogRepository.findById(id).map(this::toDomain);
+        return blogRepository.findById(id).map(BlogEntity::toDomain);
     }
 
     @Override
     public Page<Blog> findAll(Pageable pageable) {
-        return blogRepository.findAll(pageable).map(this::toDomain);
+        return blogRepository.findAll(pageable).map(BlogEntity::toDomain);
     }
 
     @Override
     public List<Blog> findActiveBlogs() {
         return blogRepository.findActiveBlogs()
                 .stream()
-                .map(this::toDomain)
+                .map(BlogEntity::toDomain)
                 .collect(Collectors.toList());
     }
 
@@ -49,7 +49,7 @@ public class BlogAdapter implements BlogRepositoryPort {
     public List<Blog> findByCompany(String company) {
         return blogRepository.findByCompanyContainingIgnoreCase(company)
                 .stream()
-                .map(this::toDomain)
+                .map(BlogEntity::toDomain)
                 .collect(Collectors.toList());
     }
 
@@ -58,37 +58,10 @@ public class BlogAdapter implements BlogRepositoryPort {
         LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
         return blogRepository.findByStatus(BlogStatus.ACTIVE)
                 .stream()
-                .filter(entity -> entity.getLastCrawledAt() == null || 
-                               entity.getLastCrawledAt().isBefore(oneHourAgo))
-                .map(this::toDomain)
+                .filter(entity -> entity.getLastCrawledAt() == null ||
+                        entity.getLastCrawledAt().isBefore(oneHourAgo))
+                .map(BlogEntity::toDomain)
                 .collect(Collectors.toList());
     }
 
-    private Blog toDomain(BlogEntity entity) {
-        return Blog.builder()
-                .id(entity.getId())
-                .name(entity.getName())
-                .company(entity.getCompany())
-                .rssUrl(entity.getRssUrl())
-                .siteUrl(entity.getSiteUrl())
-                .description(entity.getDescription())
-                .status(entity.getStatus())
-                .lastCrawledAt(entity.getLastCrawledAt())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
-                .build();
-    }
-
-    private BlogEntity toEntity(Blog domain) {
-        return BlogEntity.builder()
-                .id(domain.getId())
-                .name(domain.getName())
-                .company(domain.getCompany())
-                .rssUrl(domain.getRssUrl())
-                .siteUrl(domain.getSiteUrl())
-                .description(domain.getDescription())
-                .status(domain.getStatus())
-                .lastCrawledAt(domain.getLastCrawledAt())
-                .build();
-    }
 }

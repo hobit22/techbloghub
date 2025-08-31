@@ -1,20 +1,19 @@
 package com.techbloghub.persistance.entity;
 
+import com.techbloghub.domain.model.Post;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.Set;
 
 @Entity
 @Table(name = "posts", indexes = {
         @Index(name = "idx_post_published_at", columnList = "publishedAt")
 })
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Getter
+@Builder(access = AccessLevel.PRIVATE)
 public class PostEntity extends BaseEntity {
 
     @Id
@@ -40,9 +39,17 @@ public class PostEntity extends BaseEntity {
     @JoinColumn(name = "blog_id", nullable = false)
     private BlogEntity blog;
 
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<PostTagEntity> postTags;
-
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<PostCategoryEntity> postCategories;
+    public Post toDomain() {
+        return Post.builder()
+                .id(id)
+                .title(title)
+                .content(content)
+                .originalUrl(originalUrl)
+                .author(author)
+                .publishedAt(publishedAt)
+                .createdAt(this.getCreatedAt())
+                .updatedAt(this.getUpdatedAt())
+                .blog(this.blog.toDomain())
+                .build();
+    }
 }

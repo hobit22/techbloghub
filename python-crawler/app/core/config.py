@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     crawler_timeout: int = 30
     crawler_max_posts_per_feed: int = 50
     
+    # ElasticSearch settings
+    elasticsearch_host: str = "localhost"
+    elasticsearch_port: int = 9200
+    elasticsearch_index_name: str = "techbloghub_posts"
+    
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

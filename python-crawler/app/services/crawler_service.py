@@ -5,6 +5,7 @@ from loguru import logger
 from ..models import BlogEntity, PostEntity, BlogStatus
 from ..services.rss_crawler import RSSCrawler
 from ..services.tag_classifier import tag_classifier
+from ..services.elasticsearch_indexer import elasticsearch_indexer
 
 
 class CrawlerService:
@@ -14,6 +15,7 @@ class CrawlerService:
         self.db = db
         self.rss_crawler = RSSCrawler()
         self.enable_tagging = True  # 태깅 활성화 여부
+        self.enable_indexing = True  # ElasticSearch 인덱싱 활성화 여부
     
     async def crawl_all_active_blogs(self) -> dict:
         """모든 활성화된 블로그를 크롤링"""
@@ -107,8 +109,13 @@ class CrawlerService:
                         saved_count += 1
                         
                         # 태깅 수행
+                        namespace_tags = {}
                         if self.enable_tagging:
-                            await self._tag_post(post)
+                            namespace_tags = await self._tag_post(post)
+                        
+                        # ElasticSearch 인덱싱
+                        if self.enable_indexing:
+                            await self._index_post(post, namespace_tags)
                             
                     else:
                         logger.debug(f"Post already exists, skipping: {post.original_url}")
@@ -160,7 +167,7 @@ class CrawlerService:
             logger.error("Error getting crawling status", exc_info=e)
             raise
     
-    async def _tag_post(self, post: PostEntity) -> None:
+    async def _tag_post(self, post: PostEntity) -> dict:
         """포스트에 대해 태깅 수행"""
         try:
             logger.debug(f"Tagging post: {post.id} - {post.title[:50]}...")
@@ -171,43 +178,57 @@ class CrawlerService:
             
             if not title.strip() and not content.strip():
                 logger.debug(f"Post {post.id} has no content to tag")
-                return
+                return {}
             
             # 태그 추출
             namespace_tags = tag_classifier.extract_tags_from_text(content, title)
             
             if not namespace_tags:
                 logger.debug(f"No tags extracted for post {post.id}")
-                return
+                return {}
             
-            # 현재는 로그만 출력 (추후 PostTag 테이블 구현시 저장)
+            # 태그 정보 로깅
             total_tags = sum(len(tags) for tags in namespace_tags.values())
             logger.debug(f"Extracted {total_tags} tags for post {post.id}: {namespace_tags}")
             
-            # TODO: 향후 PostTag 테이블에 태그 저장 로직 추가
-            # for namespace, tag_results in namespace_tags.items():
-            #     for tag_result in tag_results:
-            #         post_tag = PostTagEntity(
-            #             post_id=post.id,
-            #             namespace=namespace,
-            #             tag=tag_result.tag,
-            #             confidence=tag_result.confidence
-            #         )
-            #         self.db.add(post_tag)
-            # self.db.commit()
+            return namespace_tags
             
         except Exception as e:
             logger.error(f"Failed to tag post {post.id}: {e}")
             # 태깅 실패해도 크롤링은 계속 진행
+            return {}
+    
+    async def _index_post(self, post: PostEntity, namespace_tags: dict = None) -> None:
+        """포스트를 ElasticSearch에 인덱싱"""
+        try:
+            logger.debug(f"Indexing post: {post.id} - {post.title[:50]}...")
+            
+            success = elasticsearch_indexer.index_post(post, namespace_tags or {})
+            
+            if success:
+                logger.debug(f"Post {post.id} indexed successfully")
+            else:
+                logger.warning(f"Failed to index post {post.id}")
+                
+        except Exception as e:
+            logger.error(f"Failed to index post {post.id}: {e}")
+            # 인덱싱 실패해도 크롤링은 계속 진행
     
     def set_tagging_enabled(self, enabled: bool) -> None:
         """태깅 활성화/비활성화 설정"""
         self.enable_tagging = enabled
         logger.info(f"Tagging {'enabled' if enabled else 'disabled'}")
     
+    def set_indexing_enabled(self, enabled: bool) -> None:
+        """ElasticSearch 인덱싱 활성화/비활성화 설정"""
+        self.enable_indexing = enabled
+        logger.info(f"ElasticSearch indexing {'enabled' if enabled else 'disabled'}")
+    
     def get_tagging_status(self) -> dict:
         """태깅 상태 정보 반환"""
         return {
             "tagging_enabled": self.enable_tagging,
+            "indexing_enabled": self.enable_indexing,
             "tag_classifier_available": True,
+            "elasticsearch_available": elasticsearch_indexer.es_client is not None
         }
