@@ -22,8 +22,8 @@ export interface Post {
   publishedAt: string;
   createdAt: string;
   blog: BlogInfo;
-  tags: string[];
-  categories: string[];
+  tags?: string[] | null;
+  categories?: string[] | null;
 }
 
 export interface BlogInfo {
@@ -52,14 +52,14 @@ export interface Category {
 }
 
 export interface SearchRequest {
-  query?: string;
-  companies?: string[];
+  keyword?: string;
   tags?: string[];
   categories?: string[];
+  blogIds?: number[];
+  publishedAfter?: string;
+  publishedBefore?: string;
   sortBy?: string;
   sortDirection?: string;
-  page?: number;
-  size?: number;
 }
 
 export interface PageResponse<T> {
