@@ -4,9 +4,7 @@ import com.techbloghub.application.dto.BlogResponse;
 import com.techbloghub.domain.model.Blog;
 import com.techbloghub.domain.port.in.BlogUseCase;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,7 +20,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/blogs")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
-@Tag(name = "blogs", description = "기술블로그 관리 API")
+@Tag(name = "Blog", description = "기술블로그 관리 API")
 public class BlogController {
 
     private final BlogUseCase blogUseCase;
@@ -54,23 +52,5 @@ public class BlogController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(responses);
-    }
-
-    @GetMapping("/{id}")
-    @Operation(summary = "블로그 상세 조회", description = "특정 블로그의 상세 정보를 조회합니다.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "블로그 조회 성공"),
-            @ApiResponse(responseCode = "404", description = "블로그를 찾을 수 없음")
-    })
-    public ResponseEntity<BlogResponse> getBlog(
-            @Parameter(description = "블로그 ID", required = true, example = "1")
-            @PathVariable Long id) {
-        return ResponseEntity.notFound().build();
-    }
-
-    @GetMapping("/company/{company}")
-    @Operation(summary = "회사별 블로그 조회", description = "특정 회사의 블로그 목록을 조회합니다.")
-    public ResponseEntity<List<BlogResponse>> getBlogsByCompany(@PathVariable String company) {
-        return ResponseEntity.ok(List.of());
     }
 }

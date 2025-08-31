@@ -1,18 +1,13 @@
 package com.techbloghub.application.dto;
 
 import com.techbloghub.domain.model.Blog;
-import com.techbloghub.domain.model.Category;
 import com.techbloghub.domain.model.Post;
-import com.techbloghub.domain.model.Tag;
-import com.techbloghub.persistance.entity.PostEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Data
 @Builder
@@ -78,12 +73,6 @@ public class PostResponse {
                 .publishedAt(post.getPublishedAt())
                 .createdAt(post.getCreatedAt())
                 .blog(post.getBlog() != null ? BlogInfo.from(post.getBlog()) : null)
-                .tags(post.getTags() != null ?
-                        post.getTags().stream().map(Tag::getName).collect(Collectors.toSet()) :
-                        Set.of())
-                .categories(post.getCategories() != null ?
-                        post.getCategories().stream().map(Category::getName).collect(Collectors.toSet()) :
-                        Set.of())
                 .build();
     }
 }

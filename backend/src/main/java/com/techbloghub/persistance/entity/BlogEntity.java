@@ -10,11 +10,10 @@ import java.util.List;
 
 @Entity
 @Table(name = "blog")
-@Data
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
+@Getter
 @Builder(access = AccessLevel.PRIVATE)
-@EqualsAndHashCode(callSuper = false)
 public class BlogEntity extends BaseEntity {
 
     @Id
@@ -64,14 +63,14 @@ public class BlogEntity extends BaseEntity {
 
     public Blog toDomain() {
         return Blog.builder()
-                .id(this.getId())
-                .name(this.getName())
-                .company(this.getCompany())
-                .rssUrl(this.getRssUrl())
-                .siteUrl(this.getSiteUrl())
-                .description(this.getDescription())
-                .status(this.getStatus())
-                .lastCrawledAt(this.getLastCrawledAt())
+                .id(id)
+                .name(name)
+                .company(company)
+                .rssUrl(rssUrl)
+                .siteUrl(siteUrl)
+                .description(description)
+                .status(status)
+                .lastCrawledAt(lastCrawledAt)
                 .createdAt(this.getCreatedAt())
                 .updatedAt(this.getUpdatedAt())
                 .build();

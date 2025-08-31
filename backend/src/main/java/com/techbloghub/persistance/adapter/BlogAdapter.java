@@ -58,8 +58,8 @@ public class BlogAdapter implements BlogRepositoryPort {
         LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
         return blogRepository.findByStatus(BlogStatus.ACTIVE)
                 .stream()
-                .filter(entity -> entity.getLastCrawledAt() == null || 
-                               entity.getLastCrawledAt().isBefore(oneHourAgo))
+                .filter(entity -> entity.getLastCrawledAt() == null ||
+                        entity.getLastCrawledAt().isBefore(oneHourAgo))
                 .map(BlogEntity::toDomain)
                 .collect(Collectors.toList());
     }
