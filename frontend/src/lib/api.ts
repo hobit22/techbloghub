@@ -1,66 +1,64 @@
-import axios from 'axios';
-import { Blog, Post, Tag, Category, SearchRequest, PageResponse } from '@/types';
+import axios from "axios";
+import { Blog, Post, SearchRequest, PageResponse } from "@/types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
+// 배열 파라미터를 쉼표로 구분된 문자열로 변환하는 함수
+function convertArrayParams(params: any): any {
+  const converted: any = {};
+
+  Object.keys(params).forEach((key) => {
+    const value = params[key];
+
+    if (Array.isArray(value) && value.length > 0) {
+      // 배열을 쉼표로 구분된 문자열로 변환
+      converted[key] = value.join(",");
+    } else if (value !== undefined && value !== null) {
+      converted[key] = value;
+    }
+  });
+
+  return converted;
+}
+
 export const blogApi = {
-  getAll: (): Promise<Blog[]> => 
-    api.get('/api/blogs').then(res => res.data),
-  
-  getById: (id: number): Promise<Blog> => 
-    api.get(`/api/blogs/${id}`).then(res => res.data),
-  
-  getByCompany: (company: string): Promise<Blog[]> => 
-    api.get(`/api/blogs/company/${company}`).then(res => res.data),
-  
-  crawl: (id: number): Promise<string> => 
-    api.post(`/api/blogs/${id}/crawl`).then(res => res.data),
-  
-  crawlAll: (): Promise<string> => 
-    api.post('/api/blogs/crawl-all').then(res => res.data),
+  getAll: (
+    params: {
+      page?: number;
+      size?: number;
+    } = {}
+  ): Promise<Blog[]> =>
+    api.get("/api/blogs", { params }).then((res) => res.data),
+
+  getActive: (): Promise<Blog[]> =>
+    api.get("/api/blogs/active").then((res) => res.data),
 };
 
-export const postApi = {
-  getAll: (params: {
-    page?: number;
-    size?: number;
-    sortBy?: string;
-    sortDirection?: string;
-  } = {}): Promise<PageResponse<Post>> => 
-    api.get('/api/posts', { params }).then(res => res.data),
-  
-  getById: (id: number): Promise<Post> => 
-    api.get(`/api/posts/${id}`).then(res => res.data),
-  
-  getByBlog: (blogId: number, params: {
-    page?: number;
-    size?: number;
-  } = {}): Promise<PageResponse<Post>> => 
-    api.get(`/api/posts/blog/${blogId}`, { params }).then(res => res.data),
-  
-  search: (searchRequest: SearchRequest): Promise<PageResponse<Post>> => 
-    api.post('/api/posts/search', searchRequest).then(res => res.data),
-  
-  getRecent: (params: {
-    page?: number;
-    size?: number;
-  } = {}): Promise<PageResponse<Post>> => 
-    api.get('/api/posts/recent', { params }).then(res => res.data),
-};
+export const searchApi = {
+  searchPosts: (
+    searchRequest: SearchRequest,
+    params: {
+      page?: number;
+      size?: number;
+    } = {}
+  ): Promise<PageResponse<Post>> => {
+    const queryParams = {
+      ...searchRequest,
+      ...params,
+    };
 
-export const tagApi = {
-  getAll: (): Promise<Tag[]> => 
-    api.get('/api/tags').then(res => res.data),
-};
+    // 배열 파라미터를 변환
+    const convertedParams = convertArrayParams(queryParams);
 
-export const categoryApi = {
-  getAll: (): Promise<Category[]> => 
-    api.get('/api/categories').then(res => res.data),
+    return api
+      .get("/api/search/posts", { params: convertedParams })
+      .then((res) => res.data);
+  },
 };

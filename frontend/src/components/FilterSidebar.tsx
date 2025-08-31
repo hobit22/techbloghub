@@ -1,17 +1,17 @@
 'use client';
 
-import { Blog, Tag, Category } from '@/types';
+import { Blog } from '@/types';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
 interface FilterSidebarProps {
   blogs: Blog[];
-  tags: Tag[];
-  categories: Category[];
-  selectedCompanies: string[];
+  tags: string[];
+  categories: string[];
+  selectedBlogs: number[];
   selectedTags: string[];
   selectedCategories: string[];
-  onCompanyChange: (companies: string[]) => void;
+  onBlogChange: (blogIds: number[]) => void;
   onTagChange: (tags: string[]) => void;
   onCategoryChange: (categories: string[]) => void;
 }
@@ -20,15 +20,15 @@ export default function FilterSidebar({
   blogs,
   tags,
   categories,
-  selectedCompanies,
+  selectedBlogs,
   selectedTags,
   selectedCategories,
-  onCompanyChange,
+  onBlogChange,
   onTagChange,
   onCategoryChange,
 }: FilterSidebarProps) {
   const [expandedSections, setExpandedSections] = useState({
-    companies: true,
+    blogs: true,
     categories: true,
     tags: false,
   });
@@ -40,11 +40,11 @@ export default function FilterSidebar({
     }));
   };
 
-  const handleCompanyToggle = (company: string) => {
-    if (selectedCompanies.includes(company)) {
-      onCompanyChange(selectedCompanies.filter(c => c !== company));
+  const handleBlogToggle = (blogId: number) => {
+    if (selectedBlogs.includes(blogId)) {
+      onBlogChange(selectedBlogs.filter(id => id !== blogId));
     } else {
-      onCompanyChange([...selectedCompanies, company]);
+      onBlogChange([...selectedBlogs, blogId]);
     }
   };
 
@@ -64,8 +64,7 @@ export default function FilterSidebar({
     }
   };
 
-  const companies = Array.from(new Set(blogs.map(blog => blog.company))).sort();
-  const topTags = tags.slice(0, 20);
+  const topTags = tags?.slice(0, 20) || [];
 
   return (
     <div className="w-64 bg-white shadow-sm border-r h-screen overflow-y-auto">
@@ -75,27 +74,27 @@ export default function FilterSidebar({
         <div className="space-y-6">
           <div>
             <button
-              onClick={() => toggleSection('companies')}
+              onClick={() => toggleSection('blogs')}
               className="flex items-center justify-between w-full text-sm font-medium text-gray-700 mb-3"
             >
-              <span>회사</span>
-              {expandedSections.companies ? (
+              <span>블로그</span>
+              {expandedSections.blogs ? (
                 <ChevronDown className="h-4 w-4" />
               ) : (
                 <ChevronRight className="h-4 w-4" />
               )}
             </button>
-            {expandedSections.companies && (
+            {expandedSections.blogs && (
               <div className="space-y-2">
-                {companies.map((company) => (
-                  <label key={company} className="flex items-center">
+                {blogs.map((blog) => (
+                  <label key={blog.id} className="flex items-center">
                     <input
                       type="checkbox"
-                      checked={selectedCompanies.includes(company)}
-                      onChange={() => handleCompanyToggle(company)}
+                      checked={selectedBlogs.includes(blog.id)}
+                      onChange={() => handleBlogToggle(blog.id)}
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="ml-2 text-sm text-gray-600">{company}</span>
+                    <span className="ml-2 text-sm text-gray-600">{blog.name}</span>
                   </label>
                 ))}
               </div>
@@ -117,14 +116,14 @@ export default function FilterSidebar({
             {expandedSections.categories && (
               <div className="space-y-2">
                 {categories.map((category) => (
-                  <label key={category.id} className="flex items-center">
+                  <label key={category} className="flex items-center">
                     <input
                       type="checkbox"
-                      checked={selectedCategories.includes(category.name)}
-                      onChange={() => handleCategoryToggle(category.name)}
+                      checked={selectedCategories.includes(category)}
+                      onChange={() => handleCategoryToggle(category)}
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="ml-2 text-sm text-gray-600">{category.name}</span>
+                    <span className="ml-2 text-sm text-gray-600">{category}</span>
                   </label>
                 ))}
               </div>
@@ -146,14 +145,14 @@ export default function FilterSidebar({
             {expandedSections.tags && (
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {topTags.map((tag) => (
-                  <label key={tag.id} className="flex items-center">
+                  <label key={tag} className="flex items-center">
                     <input
                       type="checkbox"
-                      checked={selectedTags.includes(tag.name)}
-                      onChange={() => handleTagToggle(tag.name)}
+                      checked={selectedTags.includes(tag)}
+                      onChange={() => handleTagToggle(tag)}
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="ml-2 text-sm text-gray-600">#{tag.name}</span>
+                    <span className="ml-2 text-sm text-gray-600">#{tag}</span>
                   </label>
                 ))}
               </div>

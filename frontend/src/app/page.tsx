@@ -5,57 +5,91 @@ import Header from '@/components/Header';
 import PostCard from '@/components/PostCard';
 import FilterSidebar from '@/components/FilterSidebar';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { usePosts, useSearchPosts } from '@/hooks/usePosts';
-import { useBlogs, useTags, useCategories } from '@/hooks/useFilters';
+import InfiniteScroll from '@/components/InfiniteScroll';
+import FilterResetButton from '@/components/FilterResetButton';
+import { useInfinitePosts } from '@/hooks/useInfinitePosts';
+import { useBlogs, useAvailableFilters } from '@/hooks/useFilters';
+import { useUrlState } from '@/hooks/useUrlState';
 import { SearchRequest } from '@/types';
 
 export default function Home() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCompanies, setSelectedCompanies] = useState<string[]>([]);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [page, setPage] = useState(0);
-  const [isSearching, setIsSearching] = useState(false);
+  const {
+    state: urlState,
+    setKeyword,
+    setBlogIds,
+    setTags,
+    setCategories,
+    reset,
+  } = useUrlState();
+
+  const [searchQuery, setSearchQuery] = useState(urlState.keyword || '');
+  const [selectedBlogs, setSelectedBlogs] = useState<number[]>(urlState.blogIds || []);
+  const [selectedTags, setSelectedTags] = useState<string[]>(urlState.tags || []);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(urlState.categories || []);
 
   const { data: blogs = [], isLoading: blogsLoading } = useBlogs();
-  const { data: tags = [], isLoading: tagsLoading } = useTags();
-  const { data: categories = [], isLoading: categoriesLoading } = useCategories();
+  const { tags, categories } = useAvailableFilters();
 
   const searchRequest: SearchRequest = {
-    query: searchQuery || undefined,
-    companies: selectedCompanies.length > 0 ? selectedCompanies : undefined,
+    keyword: searchQuery || undefined,
+    blogIds: selectedBlogs.length > 0 ? selectedBlogs : undefined,
     tags: selectedTags.length > 0 ? selectedTags : undefined,
     categories: selectedCategories.length > 0 ? selectedCategories : undefined,
-    page,
-    size: 20,
     sortBy: 'publishedAt',
     sortDirection: 'desc',
   };
 
-  const hasFilters = searchQuery || selectedCompanies.length > 0 || selectedTags.length > 0 || selectedCategories.length > 0;
+  const hasFilters = searchQuery || selectedBlogs.length > 0 || selectedTags.length > 0 || selectedCategories.length > 0;
 
-  const { data: postsData, isLoading: postsLoading } = usePosts({ page, size: 20 });
-  const { data: searchData, isLoading: searchLoading } = useSearchPosts(searchRequest, hasFilters);
+  const {
+    data: infiniteData,
+    isLoading: postsLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfinitePosts(searchRequest, 20);
 
-  const currentData = hasFilters ? searchData : postsData;
-  const isLoading = hasFilters ? searchLoading : postsLoading;
+  const allPosts = infiniteData?.pages.flatMap(page => page.content) || [];
+  const totalElements = infiniteData?.pages[0]?.totalElements || 0;
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    setPage(0);
+    setKeyword(query);
   };
 
-  const handleLoadMore = () => {
-    if (currentData && !currentData.last) {
-      setPage(prev => prev + 1);
-    }
+  const handleReset = () => {
+    setSearchQuery('');
+    setSelectedBlogs([]);
+    setSelectedTags([]);
+    setSelectedCategories([]);
+    reset();
   };
 
+  // URL 상태와 로컬 상태 동기화
   useEffect(() => {
-    setPage(0);
-  }, [selectedCompanies, selectedTags, selectedCategories]);
+    setSearchQuery(urlState.keyword || '');
+    setSelectedBlogs(urlState.blogIds || []);
+    setSelectedTags(urlState.tags || []);
+    setSelectedCategories(urlState.categories || []);
+  }, [urlState]);
 
-  if (blogsLoading || tagsLoading || categoriesLoading) {
+  // 필터 변경 시 URL 업데이트
+  const handleBlogChange = (blogIds: number[]) => {
+    setSelectedBlogs(blogIds);
+    setBlogIds(blogIds);
+  };
+
+  const handleTagChange = (tags: string[]) => {
+    setSelectedTags(tags);
+    setTags(tags);
+  };
+
+  const handleCategoryChange = (categories: string[]) => {
+    setSelectedCategories(categories);
+    setCategories(categories);
+  };
+
+  if (blogsLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header onSearch={handleSearch} />
@@ -73,46 +107,42 @@ export default function Home() {
           blogs={blogs}
           tags={tags}
           categories={categories}
-          selectedCompanies={selectedCompanies}
+          selectedBlogs={selectedBlogs}
           selectedTags={selectedTags}
           selectedCategories={selectedCategories}
-          onCompanyChange={setSelectedCompanies}
-          onTagChange={setSelectedTags}
-          onCategoryChange={setSelectedCategories}
+          onBlogChange={handleBlogChange}
+          onTagChange={handleTagChange}
+          onCategoryChange={handleCategoryChange}
         />
 
         <main className="flex-1 p-6">
           <div className="max-w-6xl mx-auto">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">
-                {hasFilters ? '검색 결과' : '최신 기술 블로그 포스트'}
-              </h2>
-              <p className="text-gray-600 mt-1">
-                {currentData ? `총 ${currentData.totalElements}개의 포스트` : '포스트를 불러오는 중...'}
-              </p>
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {hasFilters ? '검색 결과' : '최신 기술 블로그 포스트'}
+                </h2>
+                <p className="text-gray-600 mt-1">
+                  {totalElements > 0 ? `총 ${totalElements}개의 포스트` : '포스트를 불러오는 중...'}
+                </p>
+              </div>
+              <FilterResetButton onReset={handleReset} hasFilters={hasFilters} />
             </div>
 
-            {isLoading ? (
+            {postsLoading && allPosts.length === 0 ? (
               <LoadingSpinner />
-            ) : currentData?.content && currentData.content.length > 0 ? (
-              <>
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {currentData.content.map((post) => (
+            ) : allPosts.length > 0 ? (
+              <InfiniteScroll
+                onLoadMore={fetchNextPage}
+                hasNextPage={hasNextPage as boolean}
+                isFetchingNextPage={isFetchingNextPage as boolean}
+              >
+                <div className="space-y-4">
+                  {allPosts.map((post) => (
                     <PostCard key={post.id} post={post} />
                   ))}
                 </div>
-
-                {!currentData.last && (
-                  <div className="mt-8 text-center">
-                    <button
-                      onClick={handleLoadMore}
-                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      더 보기
-                    </button>
-                  </div>
-                )}
-              </>
+              </InfiniteScroll>
             ) : (
               <div className="text-center py-12">
                 <p className="text-gray-500">검색 결과가 없습니다.</p>

@@ -68,3 +68,8 @@ docker-compose.override.yml
 
 # querydsl
 /generated
+
+# Gradle
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
