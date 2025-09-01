@@ -15,6 +15,8 @@ class BlogType(str, Enum):
     WORDPRESS = "WORDPRESS"
     NAVER_D2 = "NAVER_D2" 
     NHN_CLOUD = "NHN_CLOUD"
+    LYCORP = "LYCORP"
+    MEDIUM = "MEDIUM"
 
 
 class BlogEntity(Base):
@@ -28,7 +30,7 @@ class BlogEntity(Base):
     description = Column(Text)
     logo_url = Column(String)
     status = Column(SQLEnum(BlogStatus), default=BlogStatus.ACTIVE)
-    blog_type = Column(SQLEnum(BlogType), default=BlogType.RSS)
+    blog_type = Column(SQLEnum(BlogType), default=None)
     last_crawled_at = Column(DateTime)
     
     # Timestamps
