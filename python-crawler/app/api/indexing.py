@@ -9,8 +9,8 @@ from loguru import logger
 
 from ..core.database import get_db
 from ..models import PostEntity
-from ..services.elasticsearch_indexer import elasticsearch_indexer
-from ..services.tag_classifier import tag_classifier
+from ..services.indexing import elasticsearch_indexer
+from ..services.processing import tag_classifier
 
 router = APIRouter(prefix="/indexing", tags=["indexing"])
 

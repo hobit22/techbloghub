@@ -2,10 +2,10 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 from loguru import logger
 
-from ..models import BlogEntity, PostEntity, BlogStatus
-from ..services.rss_crawler import RSSCrawler
-from ..services.tag_classifier import tag_classifier
-from ..services.elasticsearch_indexer import elasticsearch_indexer
+from ...models import BlogEntity, PostEntity, BlogStatus
+from .rss_crawler import RSSCrawler
+from ..processing.tag_classifier import tag_classifier
+from ..indexing.elasticsearch_indexer import elasticsearch_indexer
 
 
 class CrawlerService:

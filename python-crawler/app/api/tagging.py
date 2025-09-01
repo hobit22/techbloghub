@@ -10,10 +10,10 @@ from loguru import logger
 
 from ..core.database import get_db
 from ..models import PostEntity
-from ..services.tag_classifier import tag_classifier, TagResult
-from ..services.keyword_extractor import keyword_extractor
-from ..services.text_processor import text_processor
-from ..services.tech_dictionary import tech_dictionary
+from ..services.processing import tag_classifier, TagResult
+from ..services.processing import keyword_extractor
+from ..services.processing import text_processor
+from ..services.processing import tech_dictionary
 
 router = APIRouter(prefix="/tagging", tags=["tagging"])
 

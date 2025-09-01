@@ -4,7 +4,7 @@ from typing import Optional
 
 class Settings(BaseSettings):
     # Database
-    database_url: str = "postgresql://user:password@localhost:5432/techbloghub"
+    database_url: str = "postgresql://admin:password@localhost:5432/techbloghub"
     
     # API
     api_title: str = "TechBlogHub RSS Crawler"

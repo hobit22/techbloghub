@@ -9,8 +9,8 @@ from datetime import datetime
 from typing import Dict, List, Optional
 from loguru import logger
 
-from ..core.config import settings
-from ..models import PostEntity
+from ...core.config import settings
+from ...models import PostEntity
 
 
 class ElasticSearchIndexer:
