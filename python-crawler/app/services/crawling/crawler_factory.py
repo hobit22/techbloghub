@@ -4,6 +4,7 @@ from .naver_d2_crawler import NaverD2Crawler
 from .nhn_cloud_crawler import NHNCloudCrawler
 from .lycorp_crawler import LYCorpCrawler
 from .medium_crawler import MediumCrawler
+from .kakao_crawler import KakaoCrawler
 
 
 class CrawlerFactory:
@@ -15,6 +16,7 @@ class CrawlerFactory:
         BlogType.NHN_CLOUD: NHNCloudCrawler,
         BlogType.LYCORP: LYCorpCrawler,
         BlogType.MEDIUM: MediumCrawler,
+        BlogType.KAKAO: KakaoCrawler,
     }
 
     @staticmethod
@@ -57,5 +59,10 @@ class CrawlerFactory:
                 "type": BlogType.MEDIUM.value,
                 "description": "Medium GraphQL API를 지원하는 블로그",
                 "examples": ["medium.com/musinsa-tech", "기타 Medium 기반 기술블로그"]
+            },
+            {
+                "type": BlogType.KAKAO.value,
+                "description": "카카오 기술블로그 API를 지원하는 블로그",
+                "examples": ["tech.kakao.com"]
             }
         ]

@@ -17,6 +17,7 @@ class BlogType(str, Enum):
     NHN_CLOUD = "NHN_CLOUD"
     LYCORP = "LYCORP"
     MEDIUM = "MEDIUM"
+    KAKAO = "KAKAO"
 
 
 class BlogEntity(Base):
