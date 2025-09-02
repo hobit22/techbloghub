@@ -18,6 +18,7 @@ class BlogType(str, Enum):
     LYCORP = "LYCORP"
     MEDIUM = "MEDIUM"
     KAKAO = "KAKAO"
+    TOSS = "TOSS"
 
 
 class BlogEntity(Base):

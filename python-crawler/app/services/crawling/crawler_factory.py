@@ -5,6 +5,7 @@ from .nhn_cloud_crawler import NHNCloudCrawler
 from .lycorp_crawler import LYCorpCrawler
 from .medium_crawler import MediumCrawler
 from .kakao_crawler import KakaoCrawler
+from .toss_crawler import TossCrawler
 
 
 class CrawlerFactory:
@@ -17,6 +18,7 @@ class CrawlerFactory:
         BlogType.LYCORP: LYCorpCrawler,
         BlogType.MEDIUM: MediumCrawler,
         BlogType.KAKAO: KakaoCrawler,
+        BlogType.TOSS: TossCrawler,
     }
 
     @staticmethod
@@ -64,5 +66,10 @@ class CrawlerFactory:
                 "type": BlogType.KAKAO.value,
                 "description": "카카오 기술블로그 API를 지원하는 블로그",
                 "examples": ["tech.kakao.com"]
+            },
+            {
+                "type": BlogType.TOSS.value,
+                "description": "토스 기술블로그 API를 지원하는 블로그",
+                "examples": ["toss.tech"]
             }
         ]
