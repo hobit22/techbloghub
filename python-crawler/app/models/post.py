@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Index
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Index, Boolean, Float
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from ..core.database import Base
@@ -14,12 +14,13 @@ class PostEntity(Base):
     author = Column(String)
     published_at = Column(DateTime)
     
+    
     # Foreign keys
     blog_id = Column(Integer, ForeignKey("blog.id"), nullable=False)
     
     # Timestamps  
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    created_at = Column(DateTime(timezone=True), default=func.now(), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
     
     # Relationships
     blog = relationship("BlogEntity", back_populates="posts")

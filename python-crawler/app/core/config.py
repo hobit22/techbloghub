@@ -1,10 +1,9 @@
 from pydantic_settings import BaseSettings
-from typing import Optional
 
 
 class Settings(BaseSettings):
     # Database
-    database_url: str = "postgresql://user:password@localhost:5432/techbloghub"
+    database_url: str = "postgresql://admin:password@localhost:5432/techbloghub"
     
     # API
     api_title: str = "TechBlogHub RSS Crawler"
@@ -19,10 +18,6 @@ class Settings(BaseSettings):
     crawler_timeout: int = 30
     crawler_max_posts_per_feed: int = 50
     
-    # ElasticSearch settings
-    elasticsearch_host: str = "localhost"
-    elasticsearch_port: int = 9200
-    elasticsearch_index_name: str = "techbloghub_posts"
     
     class Config:
         env_file = ".env"

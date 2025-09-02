@@ -5,8 +5,8 @@ from typing import List, Optional, Dict, Any
 from loguru import logger
 from dateutil import parser as date_parser
 
-from ..models import BlogEntity, PostEntity
-from ..core.config import settings
+from ...models import BlogEntity, PostEntity
+from ...core.config import settings
 
 
 class RSSCrawler:

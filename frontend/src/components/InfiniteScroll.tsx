@@ -16,7 +16,7 @@ export default function InfiniteScroll({
   isFetchingNextPage,
   children,
 }: InfiniteScrollProps) {
-  const observerRef = useRef<IntersectionObserver>();
+  const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const handleObserver = useCallback(

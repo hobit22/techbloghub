@@ -1,11 +1,8 @@
-from typing import List, Optional
 from sqlalchemy.orm import Session
 from loguru import logger
 
 from ..models import BlogEntity, PostEntity, BlogStatus
-from ..services.rss_crawler import RSSCrawler
-from ..services.tag_classifier import tag_classifier
-from ..services.elasticsearch_indexer import elasticsearch_indexer
+from .crawling.rss_crawler import RSSCrawler
 
 
 class CrawlerService:
@@ -181,7 +178,7 @@ class CrawlerService:
                 return {}
             
             # 태그 추출
-            namespace_tags = tag_classifier.extract_tags_from_text(content, title)
+            namespace_tags = {}
             
             if not namespace_tags:
                 logger.debug(f"No tags extracted for post {post.id}")

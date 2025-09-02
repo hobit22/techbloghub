@@ -1,156 +1,109 @@
-'use client';
+import { Metadata } from 'next';
+import { Suspense } from 'react';
+import ClientHomePage from '@/components/ClientHomePage';
+import { fetchServerSideData } from '@/lib/server-api';
+import { SkeletonGrid } from '@/components/SkeletonCard';
 
-import { useState, useEffect } from 'react';
-import Header from '@/components/Header';
-import PostCard from '@/components/PostCard';
-import FilterSidebar from '@/components/FilterSidebar';
-import LoadingSpinner from '@/components/LoadingSpinner';
-import InfiniteScroll from '@/components/InfiniteScroll';
-import FilterResetButton from '@/components/FilterResetButton';
-import { useInfinitePosts } from '@/hooks/useInfinitePosts';
-import { useBlogs, useAvailableFilters } from '@/hooks/useFilters';
-import { useUrlState } from '@/hooks/useUrlState';
-import { SearchRequest } from '@/types';
+// 동적 메타데이터 생성
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}): Promise<Metadata> {
+  const keyword = searchParams.keyword as string;
+  const blogIds = searchParams.blogIds as string;
+  const tags = searchParams.tags as string;
+  const categories = searchParams.categories as string;
 
-export default function Home() {
-  const {
-    state: urlState,
-    setKeyword,
-    setBlogIds,
-    setTags,
-    setCategories,
-    reset,
-  } = useUrlState();
+  // 필터 조합에 따른 타이틀과 설명 생성
+  let title = '기술 블로그 모음';
+  let description = '국내 주요 IT 기업의 최신 기술 블로그 포스트를 한 곳에서 확인하세요.';
 
-  const [searchQuery, setSearchQuery] = useState(urlState.keyword || '');
-  const [selectedBlogs, setSelectedBlogs] = useState<number[]>(urlState.blogIds || []);
-  const [selectedTags, setSelectedTags] = useState<string[]>(urlState.tags || []);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(urlState.categories || []);
-
-  const { data: blogs = [], isLoading: blogsLoading } = useBlogs();
-  const { tags, categories } = useAvailableFilters();
-
-  const searchRequest: SearchRequest = {
-    keyword: searchQuery || undefined,
-    blogIds: selectedBlogs.length > 0 ? selectedBlogs : undefined,
-    tags: selectedTags.length > 0 ? selectedTags : undefined,
-    categories: selectedCategories.length > 0 ? selectedCategories : undefined,
-    sortBy: 'publishedAt',
-    sortDirection: 'desc',
-  };
-
-  const hasFilters = searchQuery || selectedBlogs.length > 0 || selectedTags.length > 0 || selectedCategories.length > 0;
-
-  const {
-    data: infiniteData,
-    isLoading: postsLoading,
-    isFetchingNextPage,
-    hasNextPage,
-    fetchNextPage,
-  } = useInfinitePosts(searchRequest, 20);
-
-  const allPosts = infiniteData?.pages.flatMap(page => page.content) || [];
-  const totalElements = infiniteData?.pages[0]?.totalElements || 0;
-
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    setKeyword(query);
-  };
-
-  const handleReset = () => {
-    setSearchQuery('');
-    setSelectedBlogs([]);
-    setSelectedTags([]);
-    setSelectedCategories([]);
-    reset();
-  };
-
-  // URL 상태와 로컬 상태 동기화
-  useEffect(() => {
-    setSearchQuery(urlState.keyword || '');
-    setSelectedBlogs(urlState.blogIds || []);
-    setSelectedTags(urlState.tags || []);
-    setSelectedCategories(urlState.categories || []);
-  }, [urlState]);
-
-  // 필터 변경 시 URL 업데이트
-  const handleBlogChange = (blogIds: number[]) => {
-    setSelectedBlogs(blogIds);
-    setBlogIds(blogIds);
-  };
-
-  const handleTagChange = (tags: string[]) => {
-    setSelectedTags(tags);
-    setTags(tags);
-  };
-
-  const handleCategoryChange = (categories: string[]) => {
-    setSelectedCategories(categories);
-    setCategories(categories);
-  };
-
-  if (blogsLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header onSearch={handleSearch} />
-        <LoadingSpinner />
-      </div>
-    );
+  if (keyword) {
+    title = `"${keyword}" 검색 결과 - TechBlogHub`;
+    description = `"${keyword}" 관련 기술 블로그 포스트를 모아보세요. 국내 IT 대기업의 개발 인사이트와 기술 트렌드를 확인하세요.`;
+  } else if (tags) {
+    const tagList = tags.split(',').slice(0, 3).join(', ');
+    title = `${tagList} 태그 포스트 - TechBlogHub`;
+    description = `${tagList} 태그가 포함된 기술 블로그 포스트들을 모아보세요.`;
+  } else if (categories) {
+    const categoryList = categories.split(',').slice(0, 2).join(', ');
+    title = `${categoryList} 카테고리 포스트 - TechBlogHub`;
+    description = `${categoryList} 분야의 기술 블로그 포스트들을 모아보세요.`;
   }
 
+  return {
+    title: {
+      default: title,
+      template: '%s | TechBlogHub',
+    },
+    description,
+    keywords: [
+      '기술블로그',
+      '개발블로그',
+      '개발자',
+      keyword,
+      ...(tags ? tags.split(',') : []),
+      ...(categories ? categories.split(',') : []),
+    ].filter(Boolean),
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      images: [
+        {
+          url: '/og-image.png',
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/og-image.png'],
+    },
+  };
+}
+
+interface HomePageProps {
+  searchParams: { [key: string]: string | string[] | undefined };
+}
+
+// 메인 Server Component
+export default async function HomePage({ searchParams }: HomePageProps) {
+  // URL 파라미터를 string으로 변환
+  const normalizedSearchParams = {
+    keyword: searchParams.keyword as string,
+    blogIds: searchParams.blogIds as string,
+    tags: searchParams.tags as string,
+    categories: searchParams.categories as string,
+    page: searchParams.page as string,
+  };
+
+  // 서버에서 초기 데이터 페칭
+  const serverData = await fetchServerSideData(normalizedSearchParams);
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header onSearch={handleSearch} />
-      
-      <div className="flex">
-        <FilterSidebar
-          blogs={blogs}
-          tags={tags}
-          categories={categories}
-          selectedBlogs={selectedBlogs}
-          selectedTags={selectedTags}
-          selectedCategories={selectedCategories}
-          onBlogChange={handleBlogChange}
-          onTagChange={handleTagChange}
-          onCategoryChange={handleCategoryChange}
-        />
-
-        <main className="flex-1 p-6">
-          <div className="max-w-6xl mx-auto">
-            <div className="mb-6 flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {hasFilters ? '검색 결과' : '최신 기술 블로그 포스트'}
-                </h2>
-                <p className="text-gray-600 mt-1">
-                  {totalElements > 0 ? `총 ${totalElements}개의 포스트` : '포스트를 불러오는 중...'}
-                </p>
-              </div>
-              <FilterResetButton onReset={handleReset} hasFilters={hasFilters} />
-            </div>
-
-            {postsLoading && allPosts.length === 0 ? (
-              <LoadingSpinner />
-            ) : allPosts.length > 0 ? (
-              <InfiniteScroll
-                onLoadMore={fetchNextPage}
-                hasNextPage={hasNextPage as boolean}
-                isFetchingNextPage={isFetchingNextPage as boolean}
-              >
-                <div className="space-y-4">
-                  {allPosts.map((post) => (
-                    <PostCard key={post.id} post={post} />
-                  ))}
-                </div>
-              </InfiniteScroll>
-            ) : (
-              <div className="text-center py-12">
-                <p className="text-gray-500">검색 결과가 없습니다.</p>
-              </div>
-            )}
+    <Suspense 
+      fallback={
+        <div className="min-h-screen bg-slate-50">
+          <div className="max-w-7xl mx-auto p-4 lg:p-6">
+            <SkeletonGrid count={12} />
           </div>
-        </main>
-      </div>
-    </div>
+        </div>
+      }
+    >
+      <ClientHomePage 
+        initialData={serverData.initialPosts}
+        initialBlogs={serverData.blogs}
+        initialCategories={serverData.categories}
+        initialTags={serverData.tags}
+        initialHasFilters={serverData.hasFilters}
+        searchSummary={serverData.searchSummary}
+      />
+    </Suspense>
   );
 }

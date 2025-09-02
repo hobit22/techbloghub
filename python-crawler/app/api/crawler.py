@@ -4,7 +4,7 @@ from typing import Dict, Any
 from loguru import logger
 
 from ..core.database import get_db
-from ..services.crawler_service import CrawlerService
+from ..services import CrawlerService
 
 router = APIRouter(prefix="/crawler", tags=["crawler"])
 

@@ -11,6 +11,16 @@ class BlogStatus(str, Enum):
     SUSPENDED = "SUSPENDED"
 
 
+class BlogType(str, Enum):
+    WORDPRESS = "WORDPRESS"
+    NAVER_D2 = "NAVER_D2" 
+    NHN_CLOUD = "NHN_CLOUD"
+    LYCORP = "LYCORP"
+    MEDIUM = "MEDIUM"
+    KAKAO = "KAKAO"
+    TOSS = "TOSS"
+
+
 class BlogEntity(Base):
     __tablename__ = "blog"
     
@@ -22,11 +32,12 @@ class BlogEntity(Base):
     description = Column(Text)
     logo_url = Column(String)
     status = Column(SQLEnum(BlogStatus), default=BlogStatus.ACTIVE)
+    blog_type = Column(SQLEnum(BlogType), default=None)
     last_crawled_at = Column(DateTime)
     
     # Timestamps
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    created_at = Column(DateTime(timezone=True), default=func.now(), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
     
     # Relationships
     posts = relationship("PostEntity", back_populates="blog", cascade="all, delete-orphan")
