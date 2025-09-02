@@ -1,4 +1,3 @@
-from typing import Optional
 from ...models.blog import BlogEntity, BlogType
 from .wordpress_crawler import WordPressCrawler
 from .naver_d2_crawler import NaverD2Crawler

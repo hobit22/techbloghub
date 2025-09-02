@@ -5,7 +5,6 @@ from typing import List, Optional, Dict, Any
 from loguru import logger
 from dateutil import parser as date_parser
 import re
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
 from ...models import BlogEntity, PostEntity

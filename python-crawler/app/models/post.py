@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Index
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Index, Boolean, Float
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from ..core.database import Base
@@ -13,6 +13,7 @@ class PostEntity(Base):
     original_url = Column(String(1023), nullable=False, unique=True)
     author = Column(String)
     published_at = Column(DateTime)
+    
     
     # Foreign keys
     blog_id = Column(Integer, ForeignKey("blog.id"), nullable=False)

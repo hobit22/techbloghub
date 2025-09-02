@@ -9,7 +9,6 @@ from .nhn_cloud_crawler import NHNCloudCrawler
 from .lycorp_crawler import LYCorpCrawler
 from .medium_crawler import MediumCrawler
 from .crawler_factory import CrawlerFactory
-from .crawler_service import CrawlerService
 
 __all__ = [
     "RSSCrawler",
@@ -18,6 +17,5 @@ __all__ = [
     "NHNCloudCrawler",
     "LYCorpCrawler",
     "MediumCrawler",
-    "CrawlerFactory",
-    "CrawlerService"
+    "CrawlerFactory"
 ]

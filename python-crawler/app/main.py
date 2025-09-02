@@ -6,7 +6,7 @@ from loguru import logger
 from .core.config import settings
 from .core.database import engine
 from .models import Base
-from .api import crawler, tagging, indexing, backfill
+from .api import crawler, backfill
 
 # Configure logging
 logger.remove()
@@ -37,8 +37,6 @@ app.add_middleware(
 
 # Include routers
 app.include_router(crawler.router, prefix="/api")
-app.include_router(tagging.router, prefix="/api")
-app.include_router(indexing.router, prefix="/api")
 app.include_router(backfill.router, prefix="/api")
 
 # Create database tables

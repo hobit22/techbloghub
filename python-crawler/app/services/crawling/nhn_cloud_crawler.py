@@ -3,8 +3,6 @@ import asyncio
 from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
 from loguru import logger
-import re
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from dateutil import parser as date_parser
 
