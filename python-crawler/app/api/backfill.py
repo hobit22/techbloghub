@@ -94,11 +94,3 @@ def perform_backfill(blog_id: int):
         loop.close()
 
 
-@router.get("/status")
-def get_backfill_status() -> Dict[str, Any]:
-    """백필링 상태 확인 (추후 구현)"""
-    return {
-        "message": "Backfill status endpoint - TODO: implement actual status tracking",
-        "active_tasks": 0,  # 실제로는 Redis나 메모리에서 활성 작업 수를 추적
-        "completed_tasks": 0
-    }
