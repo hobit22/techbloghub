@@ -1,7 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import sys
+import os
 from loguru import logger
+from dotenv import load_dotenv
+
+# Load environment variables first
+load_dotenv()
 
 from .core.config import settings
 from .core.database import engine
@@ -42,6 +47,10 @@ app.include_router(backfill.router, prefix="/api")
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
+# Log environment variable status on startup
+logger.info(f"OpenAI API Key loaded: {'Yes' if settings.openai_api_key else 'No'}")
+logger.info(f"Database URL: {settings.database_url}")
+
 
 @app.get("/")
 async def root():
@@ -49,7 +58,8 @@ async def root():
     return {
         "service": settings.api_title,
         "version": settings.api_version,
-        "status": "running"
+        "status": "running",
+        "openai_configured": bool(settings.openai_api_key)
     }
 
 
