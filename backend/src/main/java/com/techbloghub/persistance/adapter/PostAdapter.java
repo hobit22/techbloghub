@@ -26,7 +26,7 @@ public class PostAdapter implements PostRepositoryPort {
 
     @Override
     public Optional<Post> findById(Long id) {
-        return postRepository.findById(id)
+        return postRepository.findByIdWithBlog(id)
                 .map(PostEntity::toDomain);
     }
 
@@ -42,4 +42,15 @@ public class PostAdapter implements PostRepositoryPort {
         postRepository.deleteById(id);
     }
 
+    @Override
+    public Page<Post> findAllByOrderByPublishedAtDesc(Pageable pageable) {
+        return postRepository.findAllByOrderByPublishedAtDesc(pageable)
+                .map(PostEntity::toDomain);
+    }
+
+    @Override
+    public Page<Post> findAllByOrderByCreatedAtDesc(Pageable pageable) {
+        return postRepository.findAllByOrderByCreatedAtDesc(pageable)
+                .map(PostEntity::toDomain);
+    }
 }
