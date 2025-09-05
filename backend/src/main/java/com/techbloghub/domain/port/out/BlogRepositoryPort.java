@@ -28,6 +28,11 @@ public interface BlogRepositoryPort {
     Page<Blog> findAll(Pageable pageable);
     
     /**
+     * 모든 블로그 목록 조회
+     */
+    List<Blog> findAll();
+    
+    /**
      * 활성화된 블로그 목록 조회
      */
     List<Blog> findActiveBlogs();

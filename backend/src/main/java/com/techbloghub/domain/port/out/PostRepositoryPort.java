@@ -30,4 +30,14 @@ public interface PostRepositoryPort {
      * 포스트 삭제
      */
     void deleteById(Long id);
+    
+    /**
+     * 최신 포스트 조회 (발행일 기준 내림차순)
+     */
+    Page<Post> findAllByOrderByPublishedAtDesc(Pageable pageable);
+    
+    /**
+     * 생성일 기준 내림차순으로 포스트 조회
+     */
+    Page<Post> findAllByOrderByCreatedAtDesc(Pageable pageable);
 }
