@@ -1,9 +1,10 @@
 package com.techbloghub.admin.controller;
 
+import com.techbloghub.admin.dto.AdminBatchDeleteRequest;
 import com.techbloghub.admin.dto.AdminPostResponse;
 import com.techbloghub.admin.dto.AdminPostUpdateRequest;
+import com.techbloghub.domain.port.in.AdminPostUseCase;
 import com.techbloghub.domain.port.in.SearchUseCase;
-import com.techbloghub.domain.port.out.PostRepositoryPort;
 import com.techbloghub.domain.model.Post;
 import com.techbloghub.domain.model.SearchCondition;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,7 +33,7 @@ import java.util.Optional;
 public class AdminPostController {
 
     private final SearchUseCase searchUseCase;
-    private final PostRepositoryPort postRepositoryPort;
+    private final AdminPostUseCase adminPostUseCase;
 
     @GetMapping
     @Operation(summary = "어드민 포스트 목록 조회", description = "관리자용 포스트 목록을 조회합니다.")
@@ -90,7 +91,7 @@ public class AdminPostController {
             @Parameter(description = "포스트 ID", example = "1")
             @PathVariable Long id) {
         
-        Optional<Post> postOptional = postRepositoryPort.findById(id);
+        Optional<Post> postOptional = adminPostUseCase.getPostForAdmin(id);
         
         if (postOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -111,17 +112,14 @@ public class AdminPostController {
             @PathVariable Long id,
             @RequestBody AdminPostUpdateRequest request) {
         
-        Optional<Post> postOptional = postRepositoryPort.findById(id);
-        
-        if (postOptional.isEmpty()) {
+        try {
+            Post updatedPost = adminPostUseCase.updatePost(id, request);
+            AdminPostResponse response = AdminPostResponse.from(updatedPost);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            log.warn("포스트 업데이트 실패: {}", e.getMessage());
             return ResponseEntity.notFound().build();
         }
-        
-        // TODO: 실제 업데이트 로직 구현 (PostService 필요)
-        log.info("포스트 업데이트 요청: ID={}, 요청={}", id, request);
-        
-        AdminPostResponse response = AdminPostResponse.from(postOptional.get());
-        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
@@ -134,14 +132,28 @@ public class AdminPostController {
             @Parameter(description = "포스트 ID", example = "1")
             @PathVariable Long id) {
         
-        Optional<Post> postOptional = postRepositoryPort.findById(id);
-        
-        if (postOptional.isEmpty()) {
+        try {
+            adminPostUseCase.deletePost(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            log.warn("포스트 삭제 실패: {}", e.getMessage());
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @PostMapping("/batch/delete")
+    @Operation(summary = "어드민 포스트 일괄 삭제", description = "여러 포스트를 일괄 삭제합니다.")
+    @ApiResponse(responseCode = "204", description = "일괄 삭제 성공")
+    public ResponseEntity<Void> deletePostsBatch(
+            @RequestBody AdminBatchDeleteRequest request) {
         
-        // TODO: 실제 삭제 로직 구현 (PostService 필요)
-        log.info("포스트 삭제 요청: ID={}", id);
+        if (request.getIds() == null || request.getIds().isEmpty()) {
+            log.warn("일괄 삭제 요청에 ID가 없음");
+            return ResponseEntity.badRequest().build();
+        }
+
+        log.info("포스트 일괄 삭제 요청: IDs={}, 사유={}", request.getIds(), request.getReason());
+        adminPostUseCase.deletePostsBatch(request.getIds());
         
         return ResponseEntity.noContent().build();
     }
