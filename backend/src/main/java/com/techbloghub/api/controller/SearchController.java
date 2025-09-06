@@ -1,7 +1,7 @@
-package com.techbloghub.application.controller;
+package com.techbloghub.api.controller;
 
-import com.techbloghub.application.dto.PostResponse;
-import com.techbloghub.application.dto.SearchRequest;
+import com.techbloghub.api.dto.PostResponse;
+import com.techbloghub.api.dto.SearchRequest;
 import com.techbloghub.domain.port.in.SearchUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

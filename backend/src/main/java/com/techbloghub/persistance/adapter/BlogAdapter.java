@@ -38,6 +38,14 @@ public class BlogAdapter implements BlogRepositoryPort {
     }
 
     @Override
+    public List<Blog> findAll() {
+        return blogRepository.findAll()
+                .stream()
+                .map(BlogEntity::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<Blog> findActiveBlogs() {
         return blogRepository.findActiveBlogs()
                 .stream()

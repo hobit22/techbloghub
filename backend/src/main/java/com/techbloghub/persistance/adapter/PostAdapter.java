@@ -10,6 +10,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @RequiredArgsConstructor
 @Repository
 public class PostAdapter implements PostRepositoryPort {
@@ -22,4 +24,33 @@ public class PostAdapter implements PostRepositoryPort {
                 .map(PostEntity::toDomain);
     }
 
+    @Override
+    public Optional<Post> findById(Long id) {
+        return postRepository.findByIdWithBlog(id)
+                .map(PostEntity::toDomain);
+    }
+
+    @Override
+    public Post save(Post post) {
+        PostEntity entity = PostEntity.fromDomain(post);
+        PostEntity savedEntity = postRepository.save(entity);
+        return savedEntity.toDomain();
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        postRepository.deleteById(id);
+    }
+
+    @Override
+    public Page<Post> findAllByOrderByPublishedAtDesc(Pageable pageable) {
+        return postRepository.findAllByOrderByPublishedAtDesc(pageable)
+                .map(PostEntity::toDomain);
+    }
+
+    @Override
+    public Page<Post> findAllByOrderByCreatedAtDesc(Pageable pageable) {
+        return postRepository.findAllByOrderByCreatedAtDesc(pageable)
+                .map(PostEntity::toDomain);
+    }
 }

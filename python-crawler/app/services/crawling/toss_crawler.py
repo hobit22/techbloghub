@@ -130,10 +130,10 @@ class TossCrawler(AsyncHTTPCrawler):
             
             # 콘텐츠 처리
             content = (
-                post_data.get("shortDescription")
-                or post_data.get("seoConfig", {}).get("description")
-                or post_data.get("openGraph", {}).get("description")
-                or ""
+                (post_data.get("shortDescription") or "").strip()
+                or (post_data.get("seoConfig", {}).get("description") or "").strip()  
+                or (post_data.get("openGraph", {}).get("description") or "").strip()
+                or post_data.get("subtitle") or ""
             )
         
             # URL 생성 (slug 우선, 없으면 ID)

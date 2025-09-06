@@ -11,10 +11,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
- * 블로그 관리 관련 비즈니스 로직을 처리하는 애플리케이션 서비스
- * BlogUseCase 인터페이스를 구현하여 블로그 도메인 로직을 수행
+ * 블로그 서비스
+ * BlogUseCase를 구현하여 일반 사용자를 위한 블로그 관리 기능을 제공
  */
 @Service
 @RequiredArgsConstructor
@@ -23,16 +25,27 @@ import java.util.List;
 public class BlogService implements BlogUseCase {
 
     private final BlogRepositoryPort blogRepositoryPort;
+    private final BlogDomainService blogDomainService;
 
     @Override
     public Page<Blog> getAllBlogs(Pageable pageable) {
-        log.debug("Fetching all blogs with pageable: {}", pageable);
+        log.debug("블로그 목록 조회");
         return blogRepositoryPort.findAll(pageable);
     }
 
     @Override
     public List<Blog> getActiveBlogs() {
-        log.debug("Fetching active blogs");
-        return blogRepositoryPort.findActiveBlogs();
+        log.debug("활성 블로그 목록 조회");
+        List<Blog> allBlogs = blogRepositoryPort.findAll();
+        
+        return allBlogs.stream()
+                .filter(blogDomainService::isActiveBlog)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Optional<Blog> getBlogById(Long id) {
+        log.debug("블로그 조회: ID={}", id);
+        return blogRepositoryPort.findById(id);
     }
 }

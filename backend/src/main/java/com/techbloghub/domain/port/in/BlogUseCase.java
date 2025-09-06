@@ -21,4 +21,9 @@ public interface BlogUseCase {
      * 활성화된 블로그 목록 조회
      */
     List<Blog> getActiveBlogs();
+    
+    /**
+     * ID로 블로그 조회
+     */
+    Optional<Blog> getBlogById(Long id);
 }

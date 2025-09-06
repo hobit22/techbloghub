@@ -1,6 +1,6 @@
-package com.techbloghub.application.controller;
+package com.techbloghub.api.controller;
 
-import com.techbloghub.application.dto.BlogResponse;
+import com.techbloghub.api.dto.BlogResponse;
 import com.techbloghub.domain.model.Blog;
 import com.techbloghub.domain.port.in.BlogUseCase;
 import io.swagger.v3.oas.annotations.Operation;

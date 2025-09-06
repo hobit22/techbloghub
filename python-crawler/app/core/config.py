@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     crawler_timeout: int = 30
     crawler_max_posts_per_feed: int = 50
     
+    # OpenAI settings
+    openai_api_key: str = ""
     
     class Config:
         env_file = ".env"
@@ -25,3 +27,8 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+
+def get_settings() -> Settings:
+    """Get application settings."""
+    return settings

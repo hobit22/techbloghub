@@ -17,6 +17,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import static org.springframework.util.StringUtils.hasText;
 
@@ -91,4 +92,50 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         return new OrderSpecifier(order, pathBuilder.get(sortBy));
     }
 
+    @Override
+    public Optional<PostEntity> findByIdWithBlog(Long id) {
+        PostEntity result = queryFactory
+                .selectFrom(post)
+                .leftJoin(post.blog).fetchJoin()
+                .where(post.id.eq(id))
+                .fetchOne();
+        
+        return Optional.ofNullable(result);
+    }
+
+    @Override
+    public Page<PostEntity> findAllByOrderByPublishedAtDesc(Pageable pageable) {
+        List<PostEntity> content = queryFactory
+                .selectFrom(post)
+                .leftJoin(post.blog).fetchJoin()
+                .orderBy(post.publishedAt.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        Long total = queryFactory
+                .select(post.count())
+                .from(post)
+                .fetchOne();
+
+        return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    @Override
+    public Page<PostEntity> findAllByOrderByCreatedAtDesc(Pageable pageable) {
+        List<PostEntity> content = queryFactory
+                .selectFrom(post)
+                .leftJoin(post.blog).fetchJoin()
+                .orderBy(post.createdAt.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        Long total = queryFactory
+                .select(post.count())
+                .from(post)
+                .fetchOne();
+
+        return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
 }

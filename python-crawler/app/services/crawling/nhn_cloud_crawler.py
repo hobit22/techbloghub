@@ -141,9 +141,7 @@ class NHNCloudCrawler:
                 logger.warning(f"Skipping NHN Cloud post with empty title (ID: {nhn_post.get('postId', 'unknown')})")
                 return None
             
-            # 콘텐츠 - description 사용 (실제 내용은 별도 API 호출 필요할 수 있음)
-            description = post_per_lang.get('description', '').strip()
-            content = description if description else title  # 최소한 제목이라도
+            content = nhn_post.get('contentPreview', title)
             
             # URL 생성 - postId를 기준으로 생성 (실제 URL 패턴 확인 필요)
             post_id = nhn_post.get('postId')

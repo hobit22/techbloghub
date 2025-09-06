@@ -52,4 +52,16 @@ public class PostEntity extends BaseEntity {
                 .blog(this.blog.toDomain())
                 .build();
     }
+    
+    public static PostEntity fromDomain(Post post) {
+        return PostEntity.builder()
+                .id(post.getId())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .originalUrl(post.getOriginalUrl())
+                .author(post.getAuthor())
+                .publishedAt(post.getPublishedAt())
+                // blog은 별도로 설정해야 함 (BlogEntity 필요)
+                .build();
+    }
 }

@@ -38,6 +38,11 @@ spring:
       name: admin
       password: admin123
 
+app:
+  admin:
+    username: admin
+    password: admin123
+
 springdoc:
   api-docs:
     path: /v3/api-docs

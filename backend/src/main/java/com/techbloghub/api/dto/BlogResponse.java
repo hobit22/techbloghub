@@ -1,4 +1,4 @@
-package com.techbloghub.application.dto;
+package com.techbloghub.api.dto;
 
 import com.techbloghub.domain.model.Blog;
 import lombok.Builder;
