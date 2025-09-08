@@ -73,6 +73,8 @@ public class PostResponse {
                 .publishedAt(post.getPublishedAt())
                 .createdAt(post.getCreatedAt())
                 .blog(post.getBlog() != null ? BlogInfo.from(post.getBlog()) : null)
+                .tags(post.getTagNames())
+                .categories(post.getCategoryNames())
                 .build();
     }
 }
