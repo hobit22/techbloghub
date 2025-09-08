@@ -8,12 +8,13 @@ import { SkeletonGrid } from '@/components/SkeletonCard';
 export async function generateMetadata({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }): Promise<Metadata> {
-  const keyword = searchParams.keyword as string;
-  const blogIds = searchParams.blogIds as string;
-  const tags = searchParams.tags as string;
-  const categories = searchParams.categories as string;
+  const params = await searchParams;
+  const keyword = params.keyword as string;
+  const blogIds = params.blogIds as string;
+  const tags = params.tags as string;
+  const categories = params.categories as string;
 
   // 필터 조합에 따른 타이틀과 설명 생성
   let title = '기술 블로그 모음';
@@ -69,18 +70,19 @@ export async function generateMetadata({
 }
 
 interface HomePageProps {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 // 메인 Server Component
 export default async function HomePage({ searchParams }: HomePageProps) {
+  const params = await searchParams;
   // URL 파라미터를 string으로 변환
   const normalizedSearchParams = {
-    keyword: searchParams.keyword as string,
-    blogIds: searchParams.blogIds as string,
-    tags: searchParams.tags as string,
-    categories: searchParams.categories as string,
-    page: searchParams.page as string,
+    keyword: params.keyword as string,
+    blogIds: params.blogIds as string,
+    tags: params.tags as string,
+    categories: params.categories as string,
+    page: params.page as string,
   };
 
   // 서버에서 초기 데이터 페칭

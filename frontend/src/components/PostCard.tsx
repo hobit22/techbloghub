@@ -4,14 +4,35 @@ import { Post } from '@/types';
 import { ExternalLink, User, Building2, Clock, ArrowUpRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { useUrlState } from '@/hooks/useUrlState';
+import { useState } from 'react';
+import Image from 'next/image';
 
 interface PostCardProps {
   post: Post;
 }
 
 export default function PostCard({ post }: PostCardProps) {
+  const { setTags, setCategories, setBlogIds } = useUrlState();
+  const [logoError, setLogoError] = useState(false);
+  
   const handleClick = () => {
     window.open(post.originalUrl, '_blank');
+  };
+
+  const handleTagClick = (e: React.MouseEvent, tag: string) => {
+    e.stopPropagation(); // 이벤트 전파 방지
+    setTags([tag]); // 해당 태그로 검색
+  };
+
+  const handleCategoryClick = (e: React.MouseEvent, category: string) => {
+    e.stopPropagation(); // 이벤트 전파 방지
+    setCategories([category]); // 해당 카테고리로 검색
+  };
+
+  const handleCompanyClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // 이벤트 전파 방지
+    setBlogIds([post.blog.id]); // 해당 회사의 블로그로 필터링
   };
 
   const publishedDate = new Date(post.publishedAt);
@@ -26,17 +47,37 @@ export default function PostCard({ post }: PostCardProps) {
     >
       <div className="flex items-start space-x-4">
         {/* Left side - Company Logo and Info */}
-        <div className="flex-shrink-0">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg 
-                        flex items-center justify-center mb-2">
-            <Building2 className="h-6 w-6 text-white" />
+        <div className="flex-shrink-0 flex flex-col items-center">
+          <div 
+            onClick={handleCompanyClick}
+            className="w-6 h-6 
+                      flex items-center justify-center mb-2 cursor-pointer 
+                      overflow-hidden"
+          >
+            {post.blog.logoUrl && !logoError ? (
+              <Image 
+                src={post.blog.logoUrl}
+                alt={`${post.blog.company} logo`}
+                width={24}
+                height={24}
+                className="w-full h-full object-contain"
+                onError={() => setLogoError(true)}
+              />
+            ) : (
+              <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg 
+                      flex items-center justify-center cursor-pointer hover:from-blue-600 hover:to-blue-700 
+                      transition-all duration-200 overflow-hidden">
+              <Building2 className="h-4 w-4 text-white" />
+              </div>
+            )}
           </div>
           <div className="text-center">
-            <div className="text-xs font-medium text-slate-700 truncate w-16">
+            <div 
+              onClick={handleCompanyClick}
+              className="text-xs font-medium text-slate-700 truncate w-16 cursor-pointer hover:text-blue-600 
+                        transition-colors duration-200"
+            >
               {post.blog.company}
-            </div>
-            <div className="text-xs text-slate-500 truncate w-16">
-              {post.blog.name}
             </div>
           </div>
         </div>
@@ -75,8 +116,9 @@ export default function PostCard({ post }: PostCardProps) {
             {post.categories && post.categories.length > 0 && post.categories.slice(0, 2).map((category) => (
               <span
                 key={category}
+                onClick={(e) => handleCategoryClick(e, category)}
                 className="inline-flex items-center px-2 py-1 text-xs font-medium text-emerald-700 
-                         bg-emerald-50 border border-emerald-200 rounded-md"
+                         bg-emerald-50 border border-emerald-200 rounded-md cursor-pointer hover:bg-emerald-100 transition-colors"
               >
                 {category}
               </span>
@@ -84,8 +126,9 @@ export default function PostCard({ post }: PostCardProps) {
             {post.tags && post.tags.length > 0 && post.tags.slice(0, 4).map((tag) => (
               <span
                 key={tag}
+                onClick={(e) => handleTagClick(e, tag)}
                 className="inline-flex items-center px-2 py-1 text-xs font-medium text-slate-600 
-                         bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
+                         bg-slate-100 hover:bg-slate-200 rounded-md transition-colors cursor-pointer"
               >
                 #{tag}
               </span>

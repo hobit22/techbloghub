@@ -1,14 +1,19 @@
 'use client';
 
-import { Search, Menu, X, Zap } from 'lucide-react';
+import { Menu, X, Zap } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import UnifiedSearchInput from './UnifiedSearchInput';
 
 interface HeaderProps {
   onSearch: (query: string) => void;
+  onSearchSubmit: (query: string) => void;
+  onTagsChange: (tags: string[]) => void;
+  onReset: () => void;
+  searchValue: string;
+  selectedTags: string[];
 }
 
-export default function Header({ onSearch }: HeaderProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+export default function Header({ onSearch, onSearchSubmit, onTagsChange, onReset, searchValue, selectedTags }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -20,10 +25,6 @@ export default function Header({ onSearch }: HeaderProps) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSearch(searchQuery);
-  };
 
   return (
     <header className={`sticky top-0 z-50 transition-all duration-300 ${
@@ -51,22 +52,16 @@ export default function Header({ onSearch }: HeaderProps) {
           </div>
 
           {/* Desktop Search */}
-          <div className="hidden md:flex flex-1 max-w-2xl mx-8">
-            <form onSubmit={handleSubmit} className="w-full">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="기술 포스트, 회사, 키워드 검색..."
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl 
-                           focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 focus:bg-white
-                           transition-all duration-200 text-sm placeholder-slate-400 text-slate-900
-                           hover:bg-slate-50"
-                />
-              </div>
-            </form>
+          <div className="hidden md:flex flex-1 max-w-xl mx-6">
+            <UnifiedSearchInput
+              value={searchValue}
+              onValueChange={onSearch}
+              selectedTags={selectedTags}
+              onTagsChange={onTagsChange}
+              onSearch={onSearchSubmit}
+              onClear={onReset}
+              placeholder="기술 포스트, 회사, 키워드 검색 또는 #으로 태그 검색..."
+            />
           </div>
 
           {/* Desktop Navigation */}
@@ -96,20 +91,17 @@ export default function Header({ onSearch }: HeaderProps) {
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-slate-200 bg-white">
-            <form onSubmit={handleSubmit} className="mb-4">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="기술 포스트, 회사, 키워드 검색..."
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl 
-                           focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 focus:bg-white
-                           transition-all duration-200 text-sm placeholder-slate-400 text-slate-900"
-                />
-              </div>
-            </form>
+            <div className="mb-4">
+              <UnifiedSearchInput
+                value={searchValue}
+                onValueChange={onSearch}
+                selectedTags={selectedTags}
+                onTagsChange={onTagsChange}
+                onSearch={onSearchSubmit}
+                onClear={onReset}
+                placeholder="기술 포스트, 회사, 키워드 검색 또는 #으로 태그 검색..."
+              />
+            </div>
             <div className="space-y-3">
               <div className="text-sm text-slate-600 font-medium px-2">
                 국내 IT 대기업 기술 블로그

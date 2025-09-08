@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Blog, Post, SearchRequest, PageResponse } from "@/types";
+import { Blog, Post, SearchRequest, PageResponse, TagResponse, CategoryResponse } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
@@ -39,6 +39,19 @@ export const blogApi = {
 
   getActive: (): Promise<Blog[]> =>
     api.get("/api/blogs/active").then((res) => res.data),
+};
+
+export const tagApi = {
+  getAll: (): Promise<TagResponse[]> =>
+    api.get("/api/tags").then((res) => res.data),
+    
+  search: (query?: string): Promise<TagResponse[]> =>
+    api.get("/api/tags/search", { params: { q: query } }).then((res) => res.data),
+};
+
+export const categoryApi = {
+  getAll: (): Promise<CategoryResponse[]> =>
+    api.get("/api/categories").then((res) => res.data),
 };
 
 export const searchApi = {

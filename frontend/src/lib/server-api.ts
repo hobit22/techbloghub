@@ -1,4 +1,4 @@
-import { Blog, Post, PageResponse } from "@/types";
+import { Blog, Post, PageResponse, TagResponse, CategoryResponse } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
@@ -109,15 +109,41 @@ export const serverApi = {
     }
   },
 
+  // 태그 목록 가져오기
+  async getTags(): Promise<TagResponse[]> {
+    try {
+      return await serverFetch<TagResponse[]>("/api/tags");
+    } catch (error) {
+      console.error("Failed to fetch tags:", error);
+      return [];
+    }
+  },
+
+  // 카테고리 목록 가져오기
+  async getCategories(): Promise<CategoryResponse[]> {
+    try {
+      return await serverFetch<CategoryResponse[]>("/api/categories");
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
+      return [];
+    }
+  },
+
   // 사용 가능한 필터 데이터 가져오기 (카테고리, 태그)
   async getAvailableFilters(): Promise<{
     categories: string[];
     tags: string[];
   }> {
     try {
-      // 실제 API 엔드포인트가 있다면 사용, 없다면 포스트에서 추출
-      // 우선 임시로 빈 배열 반환
-      return { categories: [], tags: [] };
+      const [tags, categories] = await Promise.all([
+        this.getTags(),
+        this.getCategories(),
+      ]);
+      
+      return {
+        categories: categories.map(cat => cat.name).sort(),
+        tags: tags.map(tag => tag.name).sort(),
+      };
     } catch (error) {
       console.error("Failed to fetch filters:", error);
       return { categories: [], tags: [] };

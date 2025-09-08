@@ -1,0 +1,101 @@
+spring:
+  application:
+    name: techbloghub-backend
+  
+  profiles:
+    active: local
+
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/techbloghub
+    driver-class-name: org.postgresql.Driver
+    username: admin
+    password: password
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    defer-datasource-initialization: true
+  
+  sql:
+    init:
+      mode: NEVER
+  
+  security:
+    user:
+      name: admin
+      password: admin123
+
+app:
+  admin:
+    username: admin
+    password: admin123
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.techbloghub: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/techbloghub}
+    username: ${DATABASE_USERNAME:admin}
+    password: ${DATABASE_PASSWORD:password}
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+
+logging:
+  level:
+    root: INFO
+    com.techbloghub: INFO

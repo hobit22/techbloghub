@@ -36,13 +36,14 @@ export default function ClientHomePage({
 }: ClientHomePageProps) {
   const {
     state: urlState,
-    setKeyword,
     setBlogIds,
     setTags,
     setCategories,
+    updateMultiple,
     reset,
   } = useUrlState();
 
+  // 모든 필터 상태를 URL 상태와 동기화
   const [searchQuery, setSearchQuery] = useState(urlState.keyword || '');
   const [selectedBlogs, setSelectedBlogs] = useState<number[]>(urlState.blogIds || []);
   const [selectedTags, setSelectedTags] = useState<string[]>(urlState.tags || []);
@@ -53,15 +54,15 @@ export default function ClientHomePage({
   const { tags = initialTags, categories = initialCategories } = useAvailableFilters(initialTags, initialCategories);
 
   const searchRequest: SearchRequest = {
-    keyword: searchQuery || undefined,
-    blogIds: selectedBlogs.length > 0 ? selectedBlogs : undefined,
-    tags: selectedTags.length > 0 ? selectedTags : undefined,
-    categories: selectedCategories.length > 0 ? selectedCategories : undefined,
+    keyword: urlState.keyword || undefined,
+    blogIds: urlState.blogIds || undefined,
+    tags: urlState.tags || undefined,
+    categories: urlState.categories || undefined,
     sortBy: 'publishedAt',
     sortDirection: 'desc',
   };
 
-  const hasFilters = Boolean(searchQuery || selectedBlogs.length > 0 || selectedTags.length > 0 || selectedCategories.length > 0);
+  const hasFilters = Boolean(urlState.keyword || urlState.blogIds?.length || urlState.tags?.length || urlState.categories?.length);
 
   // 초기 로드인지 확인 (URL에 필터가 없고 상태도 비어있음)
   const isInitialLoad = !hasFilters && !initialHasFilters;
@@ -78,7 +79,17 @@ export default function ClientHomePage({
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    setKeyword(query);
+    // 키워드 입력 시에는 URL 업데이트하지 않음 (엔터/검색 버튼에서만)
+  };
+
+  const handleSearchSubmit = (query: string) => {
+    // 검색 버튼 클릭/엔터 시에만 URL 업데이트
+    // 전달받은 검색어와 현재 태그 상태를 한 번에 URL에 반영
+    updateMultiple({
+      keyword: query,
+      tags: selectedTags,
+      page: 0
+    });
   };
 
   const handleReset = () => {
@@ -86,6 +97,7 @@ export default function ClientHomePage({
     setSelectedBlogs([]);
     setSelectedTags([]);
     setSelectedCategories([]);
+    
     reset();
   };
 
@@ -105,6 +117,7 @@ export default function ClientHomePage({
 
   const handleTagChange = (tags: string[]) => {
     setSelectedTags(tags);
+    // 태그 칩 선택 시 즉시 URL 업데이트
     setTags(tags);
   };
 
@@ -118,7 +131,14 @@ export default function ClientHomePage({
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Header onSearch={handleSearch} />
+      <Header 
+        onSearch={handleSearch}
+        onSearchSubmit={handleSearchSubmit}
+        onTagsChange={handleTagChange}
+        onReset={handleReset}
+        searchValue={searchQuery}
+        selectedTags={selectedTags}
+      />
       
       <FilterTopBar
         blogs={blogs}
@@ -138,8 +158,8 @@ export default function ClientHomePage({
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="space-y-1">
               <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 tracking-tight">
-                {searchSummary.keyword ? (
-                  <>&quot;{searchSummary.keyword}&quot; 검색 결과</>
+                {urlState.keyword ? (
+                  <>&quot;{urlState.keyword}&quot; 검색 결과</>
                 ) : hasFilters ? (
                   '필터링된 포스트'
                 ) : (
@@ -150,14 +170,14 @@ export default function ClientHomePage({
                 {searchSummary.totalResults > 0 ? (
                   <>
                     총 <span className="font-semibold text-slate-700">{searchSummary.totalResults.toLocaleString()}</span>개의 포스트
-                    {searchSummary.appliedFiltersCount > 0 && (
+                    {(urlState.tags?.length || urlState.blogIds?.length || urlState.categories?.length || urlState.keyword) && (
                       <span className="ml-2 text-sm bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
-                        {searchSummary.appliedFiltersCount}개 필터 적용
+                        필터 적용
                       </span>
                     )}
                   </>
-                ) : searchSummary.keyword ? (
-                  `&quot;${searchSummary.keyword}&quot;에 대한 검색 결과가 없습니다`
+                ) : urlState.keyword ? (
+                  `&quot;${urlState.keyword}&quot;에 대한 검색 결과가 없습니다`
                 ) : (
                   '포스트를 불러오는 중...'
                 )}
