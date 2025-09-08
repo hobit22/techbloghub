@@ -5,6 +5,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "posts", indexes = {
@@ -39,6 +42,14 @@ public class PostEntity extends BaseEntity {
     @JoinColumn(name = "blog_id", nullable = false)
     private BlogEntity blog;
 
+    @OneToMany(mappedBy = "post", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private Set<PostTagEntity> postTags = new HashSet<>();
+
+    @OneToMany(mappedBy = "post", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private Set<PostCategoryEntity> postCategories = new HashSet<>();
+
     public Post toDomain() {
         return Post.builder()
                 .id(id)
@@ -50,6 +61,16 @@ public class PostEntity extends BaseEntity {
                 .createdAt(this.getCreatedAt())
                 .updatedAt(this.getUpdatedAt())
                 .blog(this.blog.toDomain())
+                .tags(postTags != null ? 
+                    postTags.stream()
+                        .filter(pt -> pt.getTag() != null)
+                        .map(pt -> pt.getTag().toDomain())
+                        .collect(Collectors.toSet()) : Set.of())
+                .categories(postCategories != null ? 
+                    postCategories.stream()
+                        .filter(pc -> pc.getCategory() != null)
+                        .map(pc -> pc.getCategory().toDomain())
+                        .collect(Collectors.toSet()) : Set.of())
                 .build();
     }
     
@@ -61,7 +82,35 @@ public class PostEntity extends BaseEntity {
                 .originalUrl(post.getOriginalUrl())
                 .author(post.getAuthor())
                 .publishedAt(post.getPublishedAt())
-                // blog은 별도로 설정해야 함 (BlogEntity 필요)
+                // blog, tags, categories는 별도로 설정해야 함 (Entity 변환 필요)
                 .build();
+    }
+    
+    public static PostEntity fromDomainWithRelations(Post post, BlogEntity blogEntity, 
+                                                   Set<TagEntity> tagEntities, 
+                                                   Set<CategoryEntity> categoryEntities) {
+        PostEntity postEntity = PostEntity.builder()
+                .id(post.getId())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .originalUrl(post.getOriginalUrl())
+                .author(post.getAuthor())
+                .publishedAt(post.getPublishedAt())
+                .blog(blogEntity)
+                .build();
+
+        // PostTag 관계 생성
+        Set<PostTagEntity> postTags = tagEntities.stream()
+                .map(tagEntity -> PostTagEntity.create(postEntity, tagEntity))
+                .collect(Collectors.toSet());
+        postEntity.postTags = postTags;
+
+        // PostCategory 관계 생성
+        Set<PostCategoryEntity> postCategories = categoryEntities.stream()
+                .map(categoryEntity -> PostCategoryEntity.create(postEntity, categoryEntity))
+                .collect(Collectors.toSet());
+        postEntity.postCategories = postCategories;
+
+        return postEntity;
     }
 }

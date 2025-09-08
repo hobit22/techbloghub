@@ -17,6 +17,11 @@ public interface PostRepositoryCustom {
     Optional<PostEntity> findByIdWithBlog(Long id);
     
     /**
+     * ID로 포스트 조회 (Blog, Tags, Categories 정보 포함, 지연로딩 방지)
+     */
+    Optional<PostEntity> findByIdWithAllRelations(Long id);
+    
+    /**
      * 발행일 기준 내림차순으로 포스트 조회
      */
     Page<PostEntity> findAllByOrderByPublishedAtDesc(Pageable pageable);

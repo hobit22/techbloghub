@@ -4,10 +4,10 @@ import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.PathBuilder;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.techbloghub.domain.model.SearchCondition;
-import com.techbloghub.persistance.entity.PostEntity;
-import com.techbloghub.persistance.entity.QPostEntity;
+import com.techbloghub.persistance.entity.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -28,6 +28,10 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     private static final QPostEntity post = QPostEntity.postEntity;
+    private static final QPostCategoryEntity postCategory = QPostCategoryEntity.postCategoryEntity;
+    private static final QPostTagEntity postTag = QPostTagEntity.postTagEntity;
+    private static final QCategoryEntity category = QCategoryEntity.categoryEntity;
+    private static final QTagEntity tag = QTagEntity.tagEntity;
 
     @Override
     public Page<PostEntity> searchPosts(SearchCondition searchCondition, Pageable pageable) {
@@ -39,6 +43,8 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .where(
                         keywordCondition(searchCondition.getKeyword()),
                         blogIdCondition(searchCondition.getBlogIds()),
+                        categoriesContainsAll(searchCondition.getCategories()),
+                        tagsContainsAll(searchCondition.getTags()),
                         dateAfterCondition(searchCondition.getPublishedAfter()),
                         dateBeforeCondition(searchCondition.getPublishedBefore())
                 )
@@ -53,6 +59,8 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .where(
                         keywordCondition(searchCondition.getKeyword()),
                         blogIdCondition(searchCondition.getBlogIds()),
+                        categoriesContainsAll(searchCondition.getCategories()),
+                        tagsContainsAll(searchCondition.getTags()),
                         dateAfterCondition(searchCondition.getPublishedAfter()),
                         dateBeforeCondition(searchCondition.getPublishedBefore())
                 )
@@ -71,6 +79,34 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     private BooleanExpression blogIdCondition(List<Long> blogIds) {
         return (blogIds != null && !blogIds.isEmpty()) ?
                 post.blog.id.in(blogIds) : null;
+    }
+
+    private BooleanExpression categoriesContainsAll(List<String> categories) {
+        if (categories == null || categories.isEmpty()) {
+            return null;
+        }
+
+        return JPAExpressions
+                .select(postCategory.countDistinct())
+                .from(postCategory)
+                .join(postCategory.category, category)
+                .where(postCategory.post.eq(post),
+                        category.name.in(categories))
+                .eq((long) categories.size());
+    }
+
+    private BooleanExpression tagsContainsAll(List<String> tags) {
+        if (tags == null || tags.isEmpty()) {
+            return null;
+        }
+
+        return JPAExpressions
+                .select(postTag.countDistinct())
+                .from(postTag)
+                .join(postTag.tag, tag)
+                .where(postTag.post.eq(post),
+                        tag.name.in(tags))
+                .eq((long) tags.size());
     }
 
     private BooleanExpression dateAfterCondition(LocalDate publishedAfter) {
@@ -97,6 +133,21 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         PostEntity result = queryFactory
                 .selectFrom(post)
                 .leftJoin(post.blog).fetchJoin()
+                .where(post.id.eq(id))
+                .fetchOne();
+        
+        return Optional.ofNullable(result);
+    }
+
+    @Override
+    public Optional<PostEntity> findByIdWithAllRelations(Long id) {
+        PostEntity result = queryFactory
+                .selectFrom(post)
+                .leftJoin(post.blog).fetchJoin()
+                .leftJoin(post.postTags).fetchJoin()
+                .leftJoin(post.postTags.any().tag).fetchJoin()
+                .leftJoin(post.postCategories).fetchJoin()
+                .leftJoin(post.postCategories.any().category).fetchJoin()
                 .where(post.id.eq(id))
                 .fetchOne();
         
