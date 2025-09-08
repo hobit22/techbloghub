@@ -68,6 +68,7 @@ public class BlogEntity extends BaseEntity {
                 .company(company)
                 .rssUrl(rssUrl)
                 .siteUrl(siteUrl)
+                .logoUrl(logoUrl)
                 .description(description)
                 .status(status)
                 .lastCrawledAt(lastCrawledAt)

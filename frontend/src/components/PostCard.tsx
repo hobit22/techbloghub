@@ -5,6 +5,8 @@ import { ExternalLink, User, Building2, Clock, ArrowUpRight } from 'lucide-react
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useUrlState } from '@/hooks/useUrlState';
+import { useState } from 'react';
+import Image from 'next/image';
 
 interface PostCardProps {
   post: Post;
@@ -12,6 +14,7 @@ interface PostCardProps {
 
 export default function PostCard({ post }: PostCardProps) {
   const { setTags, setCategories, setBlogIds } = useUrlState();
+  const [logoError, setLogoError] = useState(false);
   
   const handleClick = () => {
     window.open(post.originalUrl, '_blank');
@@ -44,14 +47,29 @@ export default function PostCard({ post }: PostCardProps) {
     >
       <div className="flex items-start space-x-4">
         {/* Left side - Company Logo and Info */}
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 flex flex-col items-center">
           <div 
             onClick={handleCompanyClick}
-            className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg 
-                      flex items-center justify-center mb-2 cursor-pointer hover:from-blue-600 hover:to-blue-700 
-                      transition-all duration-200"
+            className="w-6 h-6 
+                      flex items-center justify-center mb-2 cursor-pointer 
+                      overflow-hidden"
           >
-            <Building2 className="h-6 w-6 text-white" />
+            {post.blog.logoUrl && !logoError ? (
+              <Image 
+                src={post.blog.logoUrl}
+                alt={`${post.blog.company} logo`}
+                width={24}
+                height={24}
+                className="w-full h-full object-contain"
+                onError={() => setLogoError(true)}
+              />
+            ) : (
+              <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg 
+                      flex items-center justify-center cursor-pointer hover:from-blue-600 hover:to-blue-700 
+                      transition-all duration-200 overflow-hidden">
+              <Building2 className="h-4 w-4 text-white" />
+              </div>
+            )}
           </div>
           <div className="text-center">
             <div 
@@ -60,9 +78,6 @@ export default function PostCard({ post }: PostCardProps) {
                         transition-colors duration-200"
             >
               {post.blog.company}
-            </div>
-            <div className="text-xs text-slate-500 truncate w-16">
-              {post.blog.name}
             </div>
           </div>
         </div>

@@ -30,6 +30,7 @@ public class BlogResponse {
                 .company(blog.getCompany())
                 .rssUrl(blog.getRssUrl())
                 .siteUrl(blog.getSiteUrl())
+                .logoUrl(blog.getLogoUrl())
                 .description(blog.getDescription())
                 .status(blog.getStatus().name())
                 .lastCrawledAt(blog.getLastCrawledAt())

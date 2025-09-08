@@ -21,6 +21,7 @@ public class Blog {
     private final String company;
     private final String rssUrl;
     private final String siteUrl;
+    private final String logoUrl;
     private final String description;
     private final BlogStatus status;
     private final LocalDateTime lastCrawledAt;

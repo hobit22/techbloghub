@@ -59,6 +59,7 @@ public class PostResponse {
                     .name(blog.getName())
                     .company(blog.getCompany())
                     .siteUrl(blog.getSiteUrl())
+                    .logoUrl(blog.getLogoUrl())
                     .build();
         }
     }
