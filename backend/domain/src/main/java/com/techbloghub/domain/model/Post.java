@@ -3,6 +3,7 @@ package com.techbloghub.domain.model;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 /**
  * 포스트 도메인 모델
@@ -25,6 +26,8 @@ public class Post {
     
     // 연관된 도메인 객체
     private final Blog blog;
+    private final Set<Tag> tags;
+    private final Set<Category> categories;
     
     /**
      * 포스트가 유효한지 검증하는 도메인 규칙
@@ -41,6 +44,44 @@ public class Post {
     public boolean isRecent() {
         if (publishedAt == null) return false;
         return publishedAt.isAfter(LocalDateTime.now().minusDays(7));
+    }
+    
+    /**
+     * 포스트가 특정 태그를 가지고 있는지 확인
+     */
+    public boolean hasTag(String tagName) {
+        if (tags == null || tagName == null) return false;
+        return tags.stream()
+                .anyMatch(tag -> tag.getNormalizedName().equals(tagName.trim().toLowerCase()));
+    }
+    
+    /**
+     * 포스트가 특정 카테고리를 가지고 있는지 확인
+     */
+    public boolean hasCategory(String categoryName) {
+        if (categories == null || categoryName == null) return false;
+        return categories.stream()
+                .anyMatch(category -> category.getNormalizedName().equalsIgnoreCase(categoryName.trim()));
+    }
+    
+    /**
+     * 태그 이름 목록 반환
+     */
+    public Set<String> getTagNames() {
+        if (tags == null) return Set.of();
+        return tags.stream()
+                .map(Tag::getName)
+                .collect(java.util.stream.Collectors.toSet());
+    }
+    
+    /**
+     * 카테고리 이름 목록 반환
+     */
+    public Set<String> getCategoryNames() {
+        if (categories == null) return Set.of();
+        return categories.stream()
+                .map(Category::getName)
+                .collect(java.util.stream.Collectors.toSet());
     }
     
 }
