@@ -71,3 +71,20 @@ export interface PageResponse<T> {
   first: boolean;
   last: boolean;
 }
+
+export interface TagResponse {
+  id: number;
+  name: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CategoryResponse {
+  id: number;
+  name: string;
+  description?: string;
+  color?: string;
+  createdAt: string;
+  updatedAt: string;
+}

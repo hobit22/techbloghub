@@ -71,16 +71,25 @@ export function useUrlState() {
   );
 
   // 초기 상태
-  const [state, setState] = useState<UrlState>(getStateFromUrl);
+  const [state, setState] = useState<UrlState>(() => getStateFromUrl());
 
   // URL 변경 감지
   useEffect(() => {
     setState(getStateFromUrl());
   }, [getStateFromUrl]);
 
+  // 여러 상태를 한 번에 업데이트하는 함수
+  const updateMultiple = useCallback(
+    (updates: Partial<UrlState>) => {
+      updateUrl(updates);
+    },
+    [updateUrl]
+  );
+
   return {
     state,
     updateUrl,
+    updateMultiple,
     setKeyword: (keyword: string) => updateUrl({ keyword, page: 0 }),
     setBlogIds: (blogIds: number[]) => updateUrl({ blogIds, page: 0 }),
     setTags: (tags: string[]) => updateUrl({ tags, page: 0 }),

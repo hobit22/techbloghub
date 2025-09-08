@@ -2,7 +2,7 @@
 
 import { Blog } from '@/types';
 import { ChevronDown, Filter, Building2, Tag, Bookmark, Check, Search } from 'lucide-react';
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, memo } from 'react';
 
 interface FilterTopBarProps {
   blogs: Blog[];
@@ -15,6 +15,91 @@ interface FilterTopBarProps {
   onTagChange: (tags: string[]) => void;
   onCategoryChange: (categories: string[]) => void;
 }
+
+interface FilterDropdownProps {
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  count: number;
+  dropdownKey: string;
+  children: React.ReactNode;
+  hasSearch?: boolean;
+  openDropdown: string | null;
+  searchTerms: Record<string, string>;
+  dropdownRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
+  toggleDropdown: (dropdown: string) => void;
+  setSearchTerms: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  handleScrollEvent: (e: React.WheelEvent) => void;
+}
+
+const FilterDropdown = memo<FilterDropdownProps>(({ 
+  title, 
+  icon: Icon, 
+  count, 
+  dropdownKey,
+  children,
+  hasSearch = false,
+  openDropdown,
+  searchTerms,
+  dropdownRefs,
+  toggleDropdown,
+  setSearchTerms,
+  handleScrollEvent
+}) => (
+  <div className="relative">
+    <button
+      data-dropdown={dropdownKey}
+      onClick={() => toggleDropdown(dropdownKey)}
+      className={`flex items-center space-x-2 px-4 py-2.5 border rounded-xl
+                 text-sm font-medium transition-all duration-200 ${
+        count > 0 
+          ? 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100' 
+          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
+      }`}
+    >
+      <Icon className={`h-4 w-4 ${count > 0 ? 'text-blue-600' : 'text-slate-500'}`} />
+      <span>{title}</span>
+      {count > 0 && (
+        <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full font-medium min-w-[1.5rem] text-center">
+          {count}
+        </span>
+      )}
+      <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${
+        openDropdown === dropdownKey ? 'rotate-180' : ''
+      }`} />
+    </button>
+    
+    {openDropdown === dropdownKey && (
+      <div 
+        ref={(el) => { dropdownRefs.current[dropdownKey] = el; }}
+        onWheel={handleScrollEvent}
+        className="absolute top-full left-0 mt-2 w-96 bg-white border border-slate-200 
+                 rounded-xl shadow-xl z-50 animate-in fade-in slide-in-from-top-2 duration-200"
+      >
+        {hasSearch && (
+          <div className="p-3 border-b border-slate-100">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder={`${title} 검색...`}
+                value={searchTerms[dropdownKey] || ''}
+                onChange={(e) => setSearchTerms(prev => ({ ...prev, [dropdownKey]: e.target.value }))}
+                className="w-full pl-10 pr-4 py-2 text-sm text-slate-800 placeholder:text-slate-500 border border-slate-200 rounded-lg
+                         focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          </div>
+        )}
+        <div className="p-2 max-h-72 overflow-y-auto">
+          {children}
+        </div>
+      </div>
+    )}
+  </div>
+));
+
+FilterDropdown.displayName = 'FilterDropdown';
 
 export default function FilterTopBar({
   blogs,
@@ -39,6 +124,8 @@ export default function FilterTopBar({
     } else {
       onBlogChange([...selectedBlogs, blogId]);
     }
+    // 필터 선택 후 검색창 초기화
+    setSearchTerms(prev => ({ ...prev, blogs: '' }));
   }, [selectedBlogs, onBlogChange]);
 
   const handleTagToggle = useCallback((tag: string, event?: React.MouseEvent) => {
@@ -48,6 +135,8 @@ export default function FilterTopBar({
     } else {
       onTagChange([...selectedTags, tag]);
     }
+    // 필터 선택 후 검색창 초기화
+    setSearchTerms(prev => ({ ...prev, tags: '' }));
   }, [selectedTags, onTagChange]);
 
   const handleCategoryToggle = useCallback((category: string, event?: React.MouseEvent) => {
@@ -57,6 +146,8 @@ export default function FilterTopBar({
     } else {
       onCategoryChange([...selectedCategories, category]);
     }
+    // 필터 선택 후 검색창 초기화
+    setSearchTerms(prev => ({ ...prev, categories: '' }));
   }, [selectedCategories, onCategoryChange]);
 
   const toggleDropdown = useCallback((dropdown: string) => {
@@ -107,7 +198,7 @@ export default function FilterTopBar({
   const activeFiltersCount = selectedBlogs.length + selectedTags.length + selectedCategories.length;
 
   // 검색 필터링
-  const getFilteredBlogs = (blogs: Blog[]) => {
+  const getFilteredBlogs = useCallback((blogs: Blog[]) => {
     const searchTerm = searchTerms['blogs']?.toLowerCase() || '';
     if (!searchTerm) return blogs;
     
@@ -115,94 +206,26 @@ export default function FilterTopBar({
       blog.name.toLowerCase().includes(searchTerm) || 
       blog.company.toLowerCase().includes(searchTerm)
     );
-  };
+  }, [searchTerms]);
 
-  const getFilteredCategories = (categories: string[]) => {
+  const getFilteredCategories = useCallback((categories: string[]) => {
     const searchTerm = searchTerms['categories']?.toLowerCase() || '';
     if (!searchTerm) return categories;
     
     return categories.filter(category => 
       category.toLowerCase().includes(searchTerm)
     );
-  };
+  }, [searchTerms]);
 
-  const getFilteredTags = (tags: string[]) => {
+  const getFilteredTags = useCallback((tags: string[]) => {
     const searchTerm = searchTerms['tags']?.toLowerCase() || '';
     if (!searchTerm) return tags;
     
     return tags.filter(tag => 
       tag.toLowerCase().includes(searchTerm)
     );
-  };
+  }, [searchTerms]);
 
-  const FilterDropdown = ({ 
-    title, 
-    icon: Icon, 
-    count, 
-    dropdownKey,
-    children,
-    hasSearch = false
-  }: { 
-    title: string; 
-    icon: React.ComponentType<{ className?: string }>; 
-    count: number;
-    dropdownKey: string;
-    children: React.ReactNode;
-    hasSearch?: boolean;
-  }) => (
-    <div className="relative">
-      <button
-        data-dropdown={dropdownKey}
-        onClick={() => toggleDropdown(dropdownKey)}
-        className={`flex items-center space-x-2 px-4 py-2.5 border rounded-xl
-                   text-sm font-medium transition-all duration-200 ${
-          count > 0 
-            ? 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100' 
-            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
-        }`}
-      >
-        <Icon className={`h-4 w-4 ${count > 0 ? 'text-blue-600' : 'text-slate-500'}`} />
-        <span>{title}</span>
-        {count > 0 && (
-          <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full font-medium min-w-[1.5rem] text-center">
-            {count}
-          </span>
-        )}
-        <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${
-          openDropdown === dropdownKey ? 'rotate-180' : ''
-        }`} />
-      </button>
-      
-      {openDropdown === dropdownKey && (
-        <div 
-          ref={(el) => { dropdownRefs.current[dropdownKey] = el; }}
-          onWheel={handleScrollEvent}
-          className="absolute top-full left-0 mt-2 w-96 bg-white border border-slate-200 
-                   rounded-xl shadow-xl z-50 animate-in fade-in slide-in-from-top-2 duration-200"
-        >
-          {hasSearch && (
-            <div className="p-3 border-b border-slate-100">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder={`${title} 검색...`}
-                  value={searchTerms[dropdownKey] || ''}
-                  onChange={(e) => setSearchTerms(prev => ({ ...prev, [dropdownKey]: e.target.value }))}
-                  className="w-full pl-10 pr-4 py-2 text-sm border border-slate-200 rounded-lg
-                           focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </div>
-            </div>
-          )}
-          <div className="p-2 max-h-72 overflow-y-auto">
-            {children}
-          </div>
-        </div>
-      )}
-    </div>
-  );
 
   const CustomCheckbox = ({ 
     checked, 
@@ -268,7 +291,7 @@ export default function FilterTopBar({
 
   const filteredBlogs = getFilteredBlogs(blogs);
   const filteredCategories = getFilteredCategories(categories);
-  const filteredTags = getFilteredTags(topTags);
+  const filteredTags = getFilteredTags(tags);
 
   return (
     <div className="bg-white/95 backdrop-blur-sm border-b border-slate-200 sticky top-16 lg:top-18 z-30">
@@ -281,7 +304,7 @@ export default function FilterTopBar({
               </div>
               <span className="text-sm font-semibold text-slate-800">필터</span>
             </div>
-            {activeFiltersCount > 0 && (
+            {/* {activeFiltersCount > 0 && (
               <div className="flex items-center space-x-2">
                 <span className="bg-blue-600 text-white text-xs px-2.5 py-1 rounded-full font-medium">
                   {activeFiltersCount}개 선택
@@ -297,7 +320,7 @@ export default function FilterTopBar({
                   전체 해제
                 </button>
               </div>
-            )}
+            )} */}
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -306,8 +329,13 @@ export default function FilterTopBar({
               icon={Building2}
               count={selectedBlogs.length}
               dropdownKey="blogs"
-              hasSearch={blogs.length > 10
-              }
+              hasSearch={true}
+              openDropdown={openDropdown}
+              searchTerms={searchTerms}
+              dropdownRefs={dropdownRefs}
+              toggleDropdown={toggleDropdown}
+              setSearchTerms={setSearchTerms}
+              handleScrollEvent={handleScrollEvent}
             >
               <div className="space-y-1">
                 {filteredBlogs.length === 0 ? (
@@ -339,6 +367,12 @@ export default function FilterTopBar({
               count={selectedCategories.length}
               dropdownKey="categories"
               hasSearch={categories.length > 10}
+              openDropdown={openDropdown}
+              searchTerms={searchTerms}
+              dropdownRefs={dropdownRefs}
+              toggleDropdown={toggleDropdown}
+              setSearchTerms={setSearchTerms}
+              handleScrollEvent={handleScrollEvent}
             >
               <div className="space-y-1">
                 {filteredCategories.length === 0 ? (
@@ -360,32 +394,6 @@ export default function FilterTopBar({
               </div>
             </FilterDropdown>
 
-            <FilterDropdown
-              title="태그"
-              icon={Tag}
-              count={selectedTags.length}
-              dropdownKey="tags"
-              hasSearch={topTags.length > 10}
-            >
-              <div className="space-y-1">
-                {filteredTags.length === 0 ? (
-                  <div className="text-center py-8 text-slate-500 text-sm">
-                    <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    검색 결과가 없습니다
-                  </div>
-                ) : (
-                  filteredTags.map((tag: string) => (
-                    <CheckboxItem
-                      key={tag}
-                      checked={selectedTags.includes(tag)}
-                      onChange={(e) => handleTagToggle(tag, e)}
-                    >
-                      <span className="font-mono text-sm">#{tag}</span>
-                    </CheckboxItem>
-                  ))
-                )}
-              </div>
-            </FilterDropdown>
           </div>
         </div>
       </div>
