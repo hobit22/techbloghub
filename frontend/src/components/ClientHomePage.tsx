@@ -135,6 +135,7 @@ export default function ClientHomePage({
         onSearch={handleSearch}
         onSearchSubmit={handleSearchSubmit}
         onTagsChange={handleTagChange}
+        onReset={handleReset}
         searchValue={searchQuery}
         selectedTags={selectedTags}
       />

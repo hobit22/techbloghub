@@ -11,6 +11,7 @@ interface UnifiedSearchInputProps {
   selectedTags: string[];
   onTagsChange: (tags: string[]) => void;
   onSearch?: (query: string) => void;
+  onClear?: () => void;
   placeholder?: string;
 }
 
@@ -20,6 +21,7 @@ export default function UnifiedSearchInput({
   selectedTags,
   onTagsChange,
   onSearch,
+  onClear,
   placeholder = "검색어 입력 또는 #으로 태그 검색..."
 }: UnifiedSearchInputProps) {
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
@@ -227,8 +229,12 @@ export default function UnifiedSearchInput({
 
   // 전체 초기화
   const handleClear = () => {
-    onValueChange('');
-    onTagsChange([]);
+    // 먼저 완전한 초기화를 실행
+    if (onClear) {
+      onClear();
+    }
+    
+    // UI 상태 정리
     setShowTagSuggestions(false);
     setIsTagMode(false);
     inputRef.current?.focus();

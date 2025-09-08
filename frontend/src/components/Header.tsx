@@ -8,11 +8,12 @@ interface HeaderProps {
   onSearch: (query: string) => void;
   onSearchSubmit: (query: string) => void;
   onTagsChange: (tags: string[]) => void;
+  onReset: () => void;
   searchValue: string;
   selectedTags: string[];
 }
 
-export default function Header({ onSearch, onSearchSubmit, onTagsChange, searchValue, selectedTags }: HeaderProps) {
+export default function Header({ onSearch, onSearchSubmit, onTagsChange, onReset, searchValue, selectedTags }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -58,6 +59,7 @@ export default function Header({ onSearch, onSearchSubmit, onTagsChange, searchV
               selectedTags={selectedTags}
               onTagsChange={onTagsChange}
               onSearch={onSearchSubmit}
+              onClear={onReset}
               placeholder="기술 포스트, 회사, 키워드 검색 또는 #으로 태그 검색..."
             />
           </div>
@@ -96,6 +98,7 @@ export default function Header({ onSearch, onSearchSubmit, onTagsChange, searchV
                 selectedTags={selectedTags}
                 onTagsChange={onTagsChange}
                 onSearch={onSearchSubmit}
+                onClear={onReset}
                 placeholder="기술 포스트, 회사, 키워드 검색 또는 #으로 태그 검색..."
               />
             </div>
