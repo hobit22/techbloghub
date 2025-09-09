@@ -1,33 +1,6 @@
-version: '3.8'
+version: "3.8"
 
 services:
-  elasticsearch:
-    image: elasticsearch:8.11.0
-    container_name: techblog-elasticsearch
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ports:
-      - "9200:9200"
-      - "9300:9300"
-    volumes:
-      - elasticsearch-data:/usr/share/elasticsearch/data
-    networks:
-      - techblog-network
-
-  kibana:
-    image: kibana:8.11.0
-    container_name: techblog-kibana
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-    ports:
-      - "5601:5601"
-    depends_on:
-      - elasticsearch
-    networks:
-      - techblog-network
-
   postgres:
     image: postgres:15
     container_name: techblog-postgres
