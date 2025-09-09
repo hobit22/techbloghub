@@ -1,6 +1,18 @@
-import { Blog, Post, PageResponse, TagResponse, CategoryResponse } from "@/types";
+import {
+  Blog,
+  Post,
+  PageResponse,
+  TagResponse,
+  CategoryResponse,
+} from "@/types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+// API Base URL 설정: 프로덕션에서는 ECS 환경변수, 개발에서는 localhost
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+// 환경 확인을 위한 로그 (개발환경에서만)
+if (process.env.NODE_ENV === "development") {
+  console.log("Server API_BASE_URL:", API_BASE_URL);
+}
 
 // 서버에서 사용할 fetch 헬퍼 함수
 async function serverFetch<T>(url: string, options?: RequestInit): Promise<T> {
@@ -139,10 +151,10 @@ export const serverApi = {
         this.getTags(),
         this.getCategories(),
       ]);
-      
+
       return {
-        categories: categories.map(cat => cat.name).sort(),
-        tags: tags.map(tag => tag.name).sort(),
+        categories: categories.map((cat) => cat.name).sort(),
+        tags: tags.map((tag) => tag.name).sort(),
       };
     } catch (error) {
       console.error("Failed to fetch filters:", error);

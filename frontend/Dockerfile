@@ -2,11 +2,21 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+# Next.js 빌드를 위한 환경 변수
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_OPTIONS="--max-old-space-size=2048"
+
 COPY package*.json ./
 
-RUN npm ci --only=production
+# 개발 의존성도 설치 (빌드에 필요)
+RUN npm ci
 
 COPY . .
+
+# 빌드 시 ARG로 API URL을 받아서 환경변수로 설정
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
 RUN npm run build
 
