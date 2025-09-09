@@ -1,0 +1,14 @@
+# Terraform Variables Example
+# Copy this file to terraform.tfvars and fill in your values
+# terraform.tfvars is automatically ignored by git for security
+
+# AWS Configuration
+aws_region = "ap-northeast-2"
+
+# Database Configuration
+db_name     = "techbloghub"
+db_username = "your_secure_admin_username"  # 예: techblog_admin_2024
+db_password = "your_secure_db_password_here"
+
+# Example:
+# db_password = "MySecureP@ssw0rd123!"

@@ -66,3 +66,19 @@ docker-compose.override.yml
 # Claude Code
 .claude/
 CLAUDE.md
+
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+.terraform/
+.terraform.lock.hcl
+terraform.tfplan
+terraform.tfplan.*
+
+# AWS
+*.pem
+*.key
+aws-credentials
+.aws/
