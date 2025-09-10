@@ -1,9 +1,9 @@
 # Route 53 도메인 설정
-# 가비아에서 구매한 techbloghub.kr 도메인을 AWS Route 53으로 관리
+# 가비아에서 구매한 teckbloghub.kr 도메인을 AWS Route 53으로 관리
 
 # Route 53 호스팅 영역 생성
 resource "aws_route53_zone" "techbloghub" {
-  name = "techbloghub.kr"
+  name = "teckbloghub.kr"
 
   tags = {
     Name = "TechBlogHub Domain Zone"
@@ -13,7 +13,7 @@ resource "aws_route53_zone" "techbloghub" {
 # 루트 도메인 A 레코드 (ALB 연결)
 resource "aws_route53_record" "root" {
   zone_id = aws_route53_zone.techbloghub.zone_id
-  name    = "techbloghub.kr"
+  name    = "teckbloghub.kr"
   type    = "A"
 
   alias {
@@ -26,7 +26,7 @@ resource "aws_route53_record" "root" {
 # www 서브도메인 A 레코드 (ALB 연결)
 resource "aws_route53_record" "www" {
   zone_id = aws_route53_zone.techbloghub.zone_id
-  name    = "www.techbloghub.kr"
+  name    = "www.teckbloghub.kr"
   type    = "A"
 
   alias {
@@ -39,7 +39,7 @@ resource "aws_route53_record" "www" {
 # API 서브도메인 A 레코드 (ALB 연결)
 resource "aws_route53_record" "api" {
   zone_id = aws_route53_zone.techbloghub.zone_id
-  name    = "api.techbloghub.kr"
+  name    = "api.teckbloghub.kr"
   type    = "A"
 
   alias {

@@ -1,10 +1,10 @@
 # AWS Certificate Manager (ACM) SSL 인증서 설정
-# techbloghub.kr 도메인용 무료 SSL 인증서
+# teckbloghub.kr 도메인용 무료 SSL 인증서
 
 # SSL 인증서 생성 (와일드카드 인증서)
 resource "aws_acm_certificate" "techbloghub" {
-  domain_name               = "techbloghub.kr"
-  subject_alternative_names = ["*.techbloghub.kr"]
+  domain_name               = "teckbloghub.kr"
+  subject_alternative_names = ["*.teckbloghub.kr"]
   validation_method         = "DNS"
 
   lifecycle {

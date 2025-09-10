@@ -95,6 +95,14 @@ resource "aws_security_group" "ecs_tasks" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # PostgreSQL 데이터베이스 연결 (직접 포트 오픈)
+  egress {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   tags = {
     Name = "TechBlogHub ECS Tasks Security Group"
   }
@@ -233,7 +241,7 @@ resource "aws_lb_listener_rule" "backend_api" {
   }
 }
 
-# 도메인별 라우팅 (api.techbloghub.kr -> Backend)
+# 도메인별 라우팅 (api.teckbloghub.kr -> Backend)
 resource "aws_lb_listener_rule" "api_subdomain" {
   listener_arn = aws_lb_listener.https.arn
   priority     = 50
@@ -245,7 +253,7 @@ resource "aws_lb_listener_rule" "api_subdomain" {
 
   condition {
     host_header {
-      values = ["api.techbloghub.kr"]
+      values = ["api.teckbloghub.kr"]
     }
   }
 }
