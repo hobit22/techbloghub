@@ -22,7 +22,9 @@ async function serverFetch<T>(url: string, options?: RequestInit): Promise<T> {
       ...options?.headers,
     },
     // 서버에서 캐싱 설정
-    next: { revalidate: 300 }, // 5분 캐싱
+    next: {
+      revalidate: 1800,
+    },
     ...options,
   });
 
@@ -181,12 +183,22 @@ export async function fetchServerSideData(
   searchParams: SearchParams
 ): Promise<ServerSideData> {
   try {
-    // 병렬로 데이터 페칭
-    const [initialPosts, blogs, filters] = await Promise.all([
-      serverApi.searchPosts(searchParams),
+    // 정적 데이터만 병렬로 페칭 (빠른 SSR)
+    const [blogs, filters] = await Promise.all([
       serverApi.getActiveBlogs(),
       serverApi.getAvailableFilters(),
     ]);
+
+    // 포스트 데이터는 빈 상태로 설정 (클라이언트에서 로드)
+    const initialPosts: PageResponse<Post> = {
+      content: [],
+      totalElements: 0,
+      totalPages: 0,
+      size: 20,
+      number: 0,
+      first: true,
+      last: true,
+    };
 
     const parsedParams = parseSearchParams(searchParams);
     const hasFilters = Boolean(

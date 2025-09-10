@@ -17,9 +17,9 @@ RUN npm ci
 
 COPY . .
 
-# 빌드 시 ARG로 API URL을 받아서 환경변수로 설정
-ARG NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+# 환경에 따른 .env 파일 복사
+ARG ENV=production
+COPY .env.${ENV} .env
 
 RUN npm run build
 

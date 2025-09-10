@@ -64,18 +64,16 @@ export default function ClientHomePage({
 
   const hasFilters = Boolean(urlState.keyword || urlState.blogIds?.length || urlState.tags?.length || urlState.categories?.length);
 
-  // 초기 로드인지 확인 (URL에 필터가 없고 상태도 비어있음)
-  const isInitialLoad = !hasFilters && !initialHasFilters;
-
+  // SSR에서는 정적 데이터만 로드했으므로 항상 클라이언트에서 포스트 로드
   const {
     data: infiniteData,
     isLoading: postsLoading,
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
-  } = useInfinitePosts(searchRequest, 20, initialData, isInitialLoad);
+  } = useInfinitePosts(searchRequest, 20, undefined, false);
 
-  const allPosts = infiniteData?.pages.flatMap(page => page.content) || initialData.content;
+  const allPosts = infiniteData?.pages.flatMap(page => page.content) || [];
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -167,15 +165,17 @@ export default function ClientHomePage({
                 )}
               </h1>
               <p className="text-slate-600">
-                {searchSummary.totalResults > 0 ? (
+                {!postsLoading && infiniteData && infiniteData.pages[0] ? (
                   <>
-                    총 <span className="font-semibold text-slate-700">{searchSummary.totalResults.toLocaleString()}</span>개의 포스트
+                    총 <span className="font-semibold text-slate-700">{infiniteData.pages[0].totalElements.toLocaleString()}</span>개의 포스트
                     {(urlState.tags?.length || urlState.blogIds?.length || urlState.categories?.length || urlState.keyword) && (
                       <span className="ml-2 text-sm bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
                         필터 적용
                       </span>
                     )}
                   </>
+                ) : postsLoading ? (
+                  '포스트를 불러오는 중...'
                 ) : urlState.keyword ? (
                   `&quot;${urlState.keyword}&quot;에 대한 검색 결과가 없습니다`
                 ) : (
