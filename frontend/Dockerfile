@@ -13,13 +13,13 @@ ENV NODE_OPTIONS="--max-old-space-size=2048"
 COPY package*.json ./
 
 # 개발 의존성도 설치 (빌드에 필요)
-RUN npm ci
+RUN npm ci --include=dev
 
-COPY . .
-
-# 환경에 따른 .env 파일 복사
+# 환경에 따른 .env 파일을 먼저 복사
 ARG ENV=production
 COPY .env.${ENV} .env
+
+COPY . .
 
 RUN npm run build
 

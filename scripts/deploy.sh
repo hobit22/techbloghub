@@ -109,12 +109,12 @@ build_and_push_backend() {
 build_and_push_frontend() {
     log "프론트엔드 빌드 시작..."
     
-    # ALB DNS 주소를 빌드 아규먼트로 전달
-    API_URL="http://$ALB_DNS"
-    log "프론트엔드 API URL: $API_URL"
+    # 환경 설정 (기본값: production)
+    FRONTEND_ENV=${FRONTEND_ENV:-"production"}
+    log "프론트엔드 환경: $FRONTEND_ENV"
     
     log "프론트엔드 Docker 이미지 빌드 중..."
-    docker build --platform linux/amd64 --build-arg NEXT_PUBLIC_API_URL="$API_URL" -t techbloghub-frontend ./frontend
+    docker build --platform linux/amd64 --build-arg ENV="$FRONTEND_ENV" -t techbloghub-frontend ./frontend
     
     # ECR에 태그 및 푸시
     FRONTEND_ECR_URI="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/techbloghub/frontend"
@@ -232,9 +232,9 @@ main() {
     local total_time=$((end_time - start_time))
     
     log "🎉 배포 완료! (총 소요시간: ${total_time}초)"
-    log "🌐 서비스 URL: http://$ALB_DNS"
-    log "📊 백엔드 API: http://$ALB_DNS/api"
-    log "📝 Swagger UI: http://$ALB_DNS/swagger-ui.html"
+    log "🌐 서비스 URL: https://teckbloghub.kr"
+    log "📊 백엔드 API: https://api.teckbloghub.kr"
+    log "📝 Swagger UI: https://api.teckbloghub.kr/swagger-ui.html"
 }
 
 # 스크립트 실행
