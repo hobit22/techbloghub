@@ -64,7 +64,7 @@ resource "aws_security_group" "ecs_tasks" {
     security_groups = [aws_security_group.alb.id]
   }
 
-  # HTTP/HTTPS 아웃바운드만 여기서 정의 (RDS는 별도 rule로)
+  # HTTP/HTTPS 및 DNS 아웃바운드 (RDS는 별도 rule로)
 
   egress {
     from_port   = 80
@@ -76,6 +76,29 @@ resource "aws_security_group" "ecs_tasks" {
   egress {
     from_port   = 443
     to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # DNS 해석을 위한 아웃바운드 (RDS 엔드포인트 도메인 해석용)
+  egress {
+    from_port   = 53
+    to_port     = 53
+    protocol    = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 53
+    to_port     = 53
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # PostgreSQL 데이터베이스 연결 (직접 포트 오픈)
+  egress {
+    from_port   = 5432
+    to_port     = 5432
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -133,7 +156,7 @@ resource "aws_lb_target_group" "frontend" {
     healthy_threshold   = 2
     interval            = 30
     matcher             = "200"
-    path                = "/"
+    path                = "/health"
     port                = "traffic-port"
     protocol            = "HTTP"
     timeout             = 5
@@ -170,11 +193,30 @@ resource "aws_lb_target_group" "backend" {
   }
 }
 
-# ALB Listener (HTTP)
-resource "aws_lb_listener" "frontend" {
+# ALB Listener (HTTP) - HTTP to HTTPS 리디렉션
+resource "aws_lb_listener" "http_redirect" {
   load_balancer_arn = aws_lb.techbloghub.arn
   port              = "80"
   protocol          = "HTTP"
+
+  default_action {
+    type = "redirect"
+
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+}
+
+# ALB Listener (HTTPS) - 메인 리스너
+resource "aws_lb_listener" "https" {
+  load_balancer_arn = aws_lb.techbloghub.arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS-1-2-2017-01"
+  certificate_arn   = aws_acm_certificate_validation.techbloghub.certificate_arn
 
   default_action {
     type             = "forward"
@@ -182,9 +224,9 @@ resource "aws_lb_listener" "frontend" {
   }
 }
 
-# Backend API용 Listener Rule
+# Backend API용 Listener Rule (HTTPS)
 resource "aws_lb_listener_rule" "backend_api" {
-  listener_arn = aws_lb_listener.frontend.arn
+  listener_arn = aws_lb_listener.https.arn
   priority     = 100
 
   action {
@@ -195,6 +237,23 @@ resource "aws_lb_listener_rule" "backend_api" {
   condition {
     path_pattern {
       values = ["/api/*", "/actuator/*", "/swagger-ui/*", "/v3/api-docs/*"]
+    }
+  }
+}
+
+# 도메인별 라우팅 (api.teckbloghub.kr -> Backend)
+resource "aws_lb_listener_rule" "api_subdomain" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 50
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.backend.arn
+  }
+
+  condition {
+    host_header {
+      values = ["api.teckbloghub.kr"]
     }
   }
 }

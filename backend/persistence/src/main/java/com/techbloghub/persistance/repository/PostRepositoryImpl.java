@@ -39,7 +39,12 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
 
         List<PostEntity> content = queryFactory
                 .selectFrom(post)
+                .distinct()
                 .leftJoin(post.blog).fetchJoin()
+                .leftJoin(post.postTags, postTag).fetchJoin()
+                .leftJoin(postTag.tag, tag).fetchJoin()
+                .leftJoin(post.postCategories, postCategory).fetchJoin()
+                .leftJoin(postCategory.category, category).fetchJoin()
                 .where(
                         keywordCondition(searchCondition.getKeyword()),
                         blogIdCondition(searchCondition.getBlogIds()),
@@ -143,11 +148,12 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     public Optional<PostEntity> findByIdWithAllRelations(Long id) {
         PostEntity result = queryFactory
                 .selectFrom(post)
+                .distinct()
                 .leftJoin(post.blog).fetchJoin()
-                .leftJoin(post.postTags).fetchJoin()
-                .leftJoin(post.postTags.any().tag).fetchJoin()
-                .leftJoin(post.postCategories).fetchJoin()
-                .leftJoin(post.postCategories.any().category).fetchJoin()
+                .leftJoin(post.postTags, postTag).fetchJoin()
+                .leftJoin(postTag.tag, tag).fetchJoin()
+                .leftJoin(post.postCategories, postCategory).fetchJoin()
+                .leftJoin(postCategory.category, category).fetchJoin()
                 .where(post.id.eq(id))
                 .fetchOne();
         
@@ -158,7 +164,12 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     public Page<PostEntity> findAllByOrderByPublishedAtDesc(Pageable pageable) {
         List<PostEntity> content = queryFactory
                 .selectFrom(post)
+                .distinct()
                 .leftJoin(post.blog).fetchJoin()
+                .leftJoin(post.postTags, postTag).fetchJoin()
+                .leftJoin(postTag.tag, tag).fetchJoin()
+                .leftJoin(post.postCategories, postCategory).fetchJoin()
+                .leftJoin(postCategory.category, category).fetchJoin()
                 .orderBy(post.publishedAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -176,7 +187,12 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     public Page<PostEntity> findAllByOrderByCreatedAtDesc(Pageable pageable) {
         List<PostEntity> content = queryFactory
                 .selectFrom(post)
+                .distinct()
                 .leftJoin(post.blog).fetchJoin()
+                .leftJoin(post.postTags, postTag).fetchJoin()
+                .leftJoin(postTag.tag, tag).fetchJoin()
+                .leftJoin(post.postCategories, postCategory).fetchJoin()
+                .leftJoin(postCategory.category, category).fetchJoin()
                 .orderBy(post.createdAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())

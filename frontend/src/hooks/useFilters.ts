@@ -12,7 +12,7 @@ export function useBlogs(initialData?: Blog[]) {
     // 서버에서 받은 초기 데이터가 있으면 사용
     ...(initialData && {
       initialData,
-      staleTime: 5 * 60 * 1000, // 5분
+      staleTime: 30 * 60 * 1000, // 30분 (정적 데이터)
     }),
   });
 }
@@ -23,7 +23,7 @@ export function useTags(initialData?: TagResponse[]) {
     queryFn: tagApi.getAll,
     ...(initialData && {
       initialData,
-      staleTime: 5 * 60 * 1000, // 5분
+      staleTime: 30 * 60 * 1000, // 30분 (정적 데이터)
     }),
   });
 }
@@ -34,7 +34,7 @@ export function useCategories(initialData?: CategoryResponse[]) {
     queryFn: categoryApi.getAll,
     ...(initialData && {
       initialData,
-      staleTime: 5 * 60 * 1000, // 5분
+      staleTime: 30 * 60 * 1000, // 30분 (정적 데이터)
     }),
   });
 }
@@ -43,8 +43,25 @@ export function useAvailableFilters(
   initialTags?: string[],
   initialCategories?: string[]
 ) {
-  const { data: tagsData } = useTags();
-  const { data: categoriesData } = useCategories();
+  // 초기 데이터를 적절한 형태로 변환하여 전달
+  const initialTagsData = initialTags?.map((name) => ({
+    id: 0,
+    name,
+    description: undefined,
+    createdAt: "",
+    updatedAt: "",
+  }));
+  const initialCategoriesData = initialCategories?.map((name) => ({
+    id: 0,
+    name,
+    description: undefined,
+    color: undefined,
+    createdAt: "",
+    updatedAt: "",
+  }));
+
+  const { data: tagsData } = useTags(initialTagsData);
+  const { data: categoriesData } = useCategories(initialCategoriesData);
 
   const filters = useMemo(() => {
     // 서버에서 받은 초기 데이터가 있으면 우선 사용

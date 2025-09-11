@@ -21,7 +21,7 @@ resource "aws_ecs_service" "backend" {
   }
 
   depends_on = [
-    aws_lb_listener.frontend,
+    aws_lb_listener.https,
     aws_lb_listener_rule.backend_api
   ]
 
@@ -54,7 +54,7 @@ resource "aws_ecs_service" "frontend" {
   }
 
   depends_on = [
-    aws_lb_listener.frontend,
+    aws_lb_listener.https,
     aws_ecs_service.backend  # Backend가 먼저 시작되어야 함
   ]
 

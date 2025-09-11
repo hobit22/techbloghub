@@ -13,6 +13,24 @@ import java.util.stream.Collectors;
 @Table(name = "posts", indexes = {
         @Index(name = "idx_post_published_at", columnList = "publishedAt")
 })
+@NamedEntityGraphs({
+        @NamedEntityGraph(
+                name = "PostEntity.withAllRelations",
+                attributeNodes = {
+                        @NamedAttributeNode("blog"),
+                        @NamedAttributeNode(value = "postTags", subgraph = "postTags"),
+                        @NamedAttributeNode(value = "postCategories", subgraph = "postCategories")
+                },
+                subgraphs = {
+                        @NamedSubgraph(name = "postTags", attributeNodes = @NamedAttributeNode("tag")),
+                        @NamedSubgraph(name = "postCategories", attributeNodes = @NamedAttributeNode("category"))
+                }
+        ),
+        @NamedEntityGraph(
+                name = "PostEntity.withBlog",
+                attributeNodes = @NamedAttributeNode("blog")
+        )
+})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter

@@ -45,16 +45,17 @@ export function useInfinitePosts(
       return lastPage.number + 1;
     },
     initialPageParam: 0,
-    // 초기 데이터는 필터가 없고 useInitialData가 true일 때만 사용
+    // 초기 데이터는 필터가 없고 useInitialData가 true이며 데이터가 있을 때만 사용
     ...(initialData &&
       useInitialData &&
-      !hasFilters && {
+      !hasFilters &&
+      initialData.content.length > 0 && {
         initialData: {
           pages: [initialData],
           pageParams: [0],
         },
       }),
-    // 필터가 있으면 항상 fresh 데이터를 요청, 없으면 5분 캐시
-    staleTime: hasFilters ? 0 : 5 * 60 * 1000,
+    // 필터가 있으면 항상 fresh 데이터를 요청, 없으면 30분 캐시
+    staleTime: hasFilters ? 0 : 30 * 60 * 1000,
   });
 }
