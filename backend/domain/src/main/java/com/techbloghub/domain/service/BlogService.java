@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -25,7 +24,6 @@ import java.util.stream.Collectors;
 public class BlogService implements BlogUseCase {
 
     private final BlogRepositoryPort blogRepositoryPort;
-    private final BlogDomainService blogDomainService;
 
     @Override
     public Page<Blog> getAllBlogs(Pageable pageable) {
@@ -37,15 +35,9 @@ public class BlogService implements BlogUseCase {
     public List<Blog> getActiveBlogs() {
         log.debug("활성 블로그 목록 조회");
         List<Blog> allBlogs = blogRepositoryPort.findAll();
-        
-        return allBlogs.stream()
-                .filter(blogDomainService::isActiveBlog)
-                .collect(Collectors.toList());
-    }
 
-    @Override
-    public Optional<Blog> getBlogById(Long id) {
-        log.debug("블로그 조회: ID={}", id);
-        return blogRepositoryPort.findById(id);
+        return allBlogs.stream()
+                .filter(Blog::isActive)
+                .collect(Collectors.toList());
     }
 }
