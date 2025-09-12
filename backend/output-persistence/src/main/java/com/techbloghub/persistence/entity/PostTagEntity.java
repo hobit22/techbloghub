@@ -1,4 +1,4 @@
-package com.techbloghub.persistance.entity;
+package com.techbloghub.persistence.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

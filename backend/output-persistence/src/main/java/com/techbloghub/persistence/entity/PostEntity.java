@@ -1,4 +1,4 @@
-package com.techbloghub.persistance.entity;
+package com.techbloghub.persistence.entity;
 
 import com.techbloghub.domain.model.Post;
 import jakarta.persistence.*;
@@ -47,8 +47,12 @@ public class PostEntity extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    @Column(nullable = false, unique = true, length = 1023)
+    @Column(nullable = false, length = 1023)
     private String originalUrl;
+
+    @Column(name = "normalized_url", length = 1023)
+    @Builder.Default
+    private String normalizedUrl = "";
 
     @Column
     private String author;
@@ -93,14 +97,20 @@ public class PostEntity extends BaseEntity {
     }
     
     public static PostEntity fromDomain(Post post) {
+        BlogEntity blogEntity = null;
+        if (post.getBlog() != null) {
+            blogEntity = BlogEntity.from(post.getBlog());
+        }
+        
         return PostEntity.builder()
                 .id(post.getId())
                 .title(post.getTitle())
                 .content(post.getContent())
                 .originalUrl(post.getOriginalUrl())
+                .normalizedUrl(post.getNormalizedUrl())
                 .author(post.getAuthor())
                 .publishedAt(post.getPublishedAt())
-                // blog, tags, categories는 별도로 설정해야 함 (Entity 변환 필요)
+                .blog(blogEntity)
                 .build();
     }
     

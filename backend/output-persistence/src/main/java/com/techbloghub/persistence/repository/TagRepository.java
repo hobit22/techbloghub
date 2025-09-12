@@ -1,9 +1,7 @@
-package com.techbloghub.persistance.repository;
+package com.techbloghub.persistence.repository;
 
-import com.techbloghub.persistance.entity.TagEntity;
+import com.techbloghub.persistence.entity.TagEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

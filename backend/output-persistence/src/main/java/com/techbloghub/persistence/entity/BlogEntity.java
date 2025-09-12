@@ -1,4 +1,4 @@
-package com.techbloghub.persistance.entity;
+package com.techbloghub.persistence.entity;
 
 import com.techbloghub.domain.model.Blog;
 import com.techbloghub.domain.model.BlogStatus;
@@ -45,6 +45,10 @@ public class BlogEntity extends BaseEntity {
     @Column(name = "last_crawled_at")
     private LocalDateTime lastCrawledAt;
 
+    @Column(name = "failure_count")
+    @Builder.Default
+    private Integer failureCount = 0;
+
     @OneToMany(mappedBy = "blog", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostEntity> postEntities;
 
@@ -75,5 +79,26 @@ public class BlogEntity extends BaseEntity {
                 .createdAt(this.getCreatedAt())
                 .updatedAt(this.getUpdatedAt())
                 .build();
+    }
+
+    /**
+     * 마지막 크롤링 시간 업데이트
+     */
+    public void updateLastCrawledAt(LocalDateTime lastCrawledAt) {
+        this.lastCrawledAt = lastCrawledAt;
+    }
+
+    /**
+     * 실패 횟수 증가
+     */
+    public void incrementFailureCount() {
+        this.failureCount = (this.failureCount != null ? this.failureCount : 0) + 1;
+    }
+
+    /**
+     * 실패 횟수 초기화
+     */
+    public void resetFailureCount() {
+        this.failureCount = 0;
     }
 }

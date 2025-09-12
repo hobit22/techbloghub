@@ -1,4 +1,4 @@
-package com.techbloghub.persistance.repository;
+package com.techbloghub.persistence.repository;
 
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
@@ -7,7 +7,7 @@ import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.techbloghub.domain.model.SearchCondition;
-import com.techbloghub.persistance.entity.*;
+import com.techbloghub.persistence.entity.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -17,7 +17,6 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 import static org.springframework.util.StringUtils.hasText;
 
@@ -131,78 +130,5 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         Order order = direction == Sort.Direction.ASC ? Order.ASC : Order.DESC;
 
         return new OrderSpecifier(order, pathBuilder.get(sortBy));
-    }
-
-    @Override
-    public Optional<PostEntity> findByIdWithBlog(Long id) {
-        PostEntity result = queryFactory
-                .selectFrom(post)
-                .leftJoin(post.blog).fetchJoin()
-                .where(post.id.eq(id))
-                .fetchOne();
-        
-        return Optional.ofNullable(result);
-    }
-
-    @Override
-    public Optional<PostEntity> findByIdWithAllRelations(Long id) {
-        PostEntity result = queryFactory
-                .selectFrom(post)
-                .distinct()
-                .leftJoin(post.blog).fetchJoin()
-                .leftJoin(post.postTags, postTag).fetchJoin()
-                .leftJoin(postTag.tag, tag).fetchJoin()
-                .leftJoin(post.postCategories, postCategory).fetchJoin()
-                .leftJoin(postCategory.category, category).fetchJoin()
-                .where(post.id.eq(id))
-                .fetchOne();
-        
-        return Optional.ofNullable(result);
-    }
-
-    @Override
-    public Page<PostEntity> findAllByOrderByPublishedAtDesc(Pageable pageable) {
-        List<PostEntity> content = queryFactory
-                .selectFrom(post)
-                .distinct()
-                .leftJoin(post.blog).fetchJoin()
-                .leftJoin(post.postTags, postTag).fetchJoin()
-                .leftJoin(postTag.tag, tag).fetchJoin()
-                .leftJoin(post.postCategories, postCategory).fetchJoin()
-                .leftJoin(postCategory.category, category).fetchJoin()
-                .orderBy(post.publishedAt.desc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
-
-        Long total = queryFactory
-                .select(post.count())
-                .from(post)
-                .fetchOne();
-
-        return new PageImpl<>(content, pageable, total != null ? total : 0L);
-    }
-
-    @Override
-    public Page<PostEntity> findAllByOrderByCreatedAtDesc(Pageable pageable) {
-        List<PostEntity> content = queryFactory
-                .selectFrom(post)
-                .distinct()
-                .leftJoin(post.blog).fetchJoin()
-                .leftJoin(post.postTags, postTag).fetchJoin()
-                .leftJoin(postTag.tag, tag).fetchJoin()
-                .leftJoin(post.postCategories, postCategory).fetchJoin()
-                .leftJoin(postCategory.category, category).fetchJoin()
-                .orderBy(post.createdAt.desc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
-
-        Long total = queryFactory
-                .select(post.count())
-                .from(post)
-                .fetchOne();
-
-        return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
 }
