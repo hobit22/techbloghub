@@ -1,4 +1,4 @@
-package com.techbloghub.config;
+package com.techbloghub.api.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
