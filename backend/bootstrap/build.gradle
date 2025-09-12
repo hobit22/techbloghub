@@ -6,7 +6,9 @@ dependencies {
     implementation project(':domain')
     implementation project(':api-web')
     implementation project(':admin-web')
-    implementation project(':persistence')
+    implementation project(':output-persistence')
+    implementation project(':output-web')
+    implementation project(':batch')
     
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-web'

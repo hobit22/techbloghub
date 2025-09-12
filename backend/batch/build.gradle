@@ -1,0 +1,11 @@
+dependencies {
+    implementation project(':domain')
+
+    // Scheduling and basic Spring Boot support
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework:spring-context'
+    
+    // Test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.mockito:mockito-junit-jupiter'
+}
