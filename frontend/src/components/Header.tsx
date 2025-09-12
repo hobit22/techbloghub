@@ -42,7 +42,7 @@ export default function Header({ onSearch, onSearchSubmit, onTagsChange, onReset
               </div>
               <div>
                 <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-                  TechBlogHub
+                  TeckBlogHub
                 </h1>
                 <p className="hidden sm:block text-xs text-slate-500 -mt-1">
                   기술 블로그 모음

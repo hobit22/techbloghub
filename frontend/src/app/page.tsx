@@ -21,22 +21,22 @@ export async function generateMetadata({
   let description = '국내 주요 IT 기업의 최신 기술 블로그 포스트를 한 곳에서 확인하세요.';
 
   if (keyword) {
-    title = `"${keyword}" 검색 결과 - TechBlogHub`;
+    title = `"${keyword}" 검색 결과 - TeckBlogHub`;
     description = `"${keyword}" 관련 기술 블로그 포스트를 모아보세요. 국내 IT 대기업의 개발 인사이트와 기술 트렌드를 확인하세요.`;
   } else if (tags) {
     const tagList = tags.split(',').slice(0, 3).join(', ');
-    title = `${tagList} 태그 포스트 - TechBlogHub`;
+    title = `${tagList} 태그 포스트 - TeckBlogHub`;
     description = `${tagList} 태그가 포함된 기술 블로그 포스트들을 모아보세요.`;
   } else if (categories) {
     const categoryList = categories.split(',').slice(0, 2).join(', ');
-    title = `${categoryList} 카테고리 포스트 - TechBlogHub`;
+    title = `${categoryList} 카테고리 포스트 - TeckBlogHub`;
     description = `${categoryList} 분야의 기술 블로그 포스트들을 모아보세요.`;
   }
 
   return {
     title: {
       default: title,
-      template: '%s | TechBlogHub',
+      template: '%s | TeckBlogHub',
     },
     description,
     keywords: [

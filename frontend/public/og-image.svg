@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1E40AF;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="cardBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.95" />
+      <stop offset="100%" style="stop-color:#f8fafc;stop-opacity:0.9" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  
+  <!-- Pattern overlay -->
+  <g opacity="0.1">
+    <circle cx="200" cy="150" r="100" fill="white"/>
+    <circle cx="1000" cy="200" r="120" fill="white"/>
+    <circle cx="150" cy="450" r="80" fill="white"/>
+    <circle cx="1050" cy="480" r="90" fill="white"/>
+  </g>
+  
+  <!-- Main content card -->
+  <rect x="100" y="100" width="1000" height="430" rx="20" fill="url(#cardBg)" stroke="white" stroke-width="2" opacity="0.95"/>
+  
+  <!-- Logo area with new Zap design -->
+  <g transform="translate(150, 150)">
+    <!-- Rounded square background with gradient (matching header style) -->
+    <defs>
+      <linearGradient id="logoBg" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#2563EB;stop-opacity:1" />
+      </linearGradient>
+    </defs>
+    
+    <rect x="10" y="10" width="60" height="60" rx="12" fill="url(#logoBg)"/>
+    
+    <!-- Zap/Lightning bolt icon centered -->
+    <g transform="translate(40, 40)">
+      <!-- Main lightning bolt path -->
+      <path d="M -10 -20 L 5 -2.5 L -2.5 -2.5 L 10 20 L -5 2.5 L 2.5 2.5 Z" 
+            fill="white" 
+            stroke="white" 
+            stroke-width="0.5" 
+            stroke-linejoin="round"/>
+    </g>
+    
+    <!-- Hub connections around the logo -->
+    <circle cx="5" cy="25" r="3" fill="#3B82F6"/>
+    <circle cx="75" cy="25" r="3" fill="#3B82F6"/>
+    <circle cx="25" cy="5" r="3" fill="#3B82F6"/>
+    <circle cx="55" cy="75" r="3" fill="#3B82F6"/>
+    <line x1="8" y1="28" x2="32" y2="32" stroke="#3B82F6" stroke-width="2" opacity="0.6"/>
+    <line x1="72" y1="28" x2="48" y2="32" stroke="#3B82F6" stroke-width="2" opacity="0.6"/>
+    <line x1="28" y1="8" x2="32" y2="32" stroke="#3B82F6" stroke-width="2" opacity="0.6"/>
+    <line x1="52" y1="72" x2="48" y2="48" stroke="#3B82F6" stroke-width="2" opacity="0.6"/>
+  </g>
+  
+  <!-- Title -->
+  <text x="300" y="220" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#1E40AF">
+    TechBlogHub
+  </text>
+  
+  <!-- Subtitle -->
+  <text x="300" y="270" font-family="Arial, sans-serif" font-size="28" fill="#64748B">
+    기술 블로그 모음 서비스
+  </text>
+  
+  <!-- Description -->
+  <text x="300" y="320" font-family="Arial, sans-serif" font-size="24" fill="#64748B">
+    국내 IT 대기업 기술 블로그를 한 곳에서
+  </text>
+  <text x="300" y="350" font-family="Arial, sans-serif" font-size="24" fill="#64748B">
+    모아보세요
+  </text>
+  
+  <!-- Company logos representation -->
+  <g transform="translate(300, 400)">
+    <rect x="0" y="0" width="80" height="40" rx="8" fill="#03C75A" opacity="0.8"/>
+    <text x="40" y="28" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">NAVER</text>
+    
+    <rect x="100" y="0" width="80" height="40" rx="8" fill="#FFCD00" opacity="0.8"/>
+    <text x="140" y="28" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="black" text-anchor="middle">KAKAO</text>
+    
+    <rect x="200" y="0" width="80" height="40" rx="8" fill="#FA622F" opacity="0.8"/>
+    <text x="240" y="28" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">COUPANG</text>
+    
+    <rect x="300" y="0" width="80" height="40" rx="8" fill="#FF6B35" opacity="0.8"/>
+    <text x="340" y="28" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">CARROT</text>
+    
+    <text x="400" y="28" font-family="Arial, sans-serif" font-size="18" fill="#64748B">그 외 다수</text>
+  </g>
+  
+  <!-- URL -->
+  <text x="300" y="500" font-family="Arial, sans-serif" font-size="20" fill="#3B82F6">
+    teckbloghub.kr
+  </text>
+</svg>
