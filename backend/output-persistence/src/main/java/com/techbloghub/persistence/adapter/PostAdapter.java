@@ -2,6 +2,7 @@ package com.techbloghub.persistence.adapter;
 
 import com.techbloghub.domain.model.Post;
 import com.techbloghub.domain.model.SearchCondition;
+import com.techbloghub.domain.model.TaggingProcessStatus;
 import com.techbloghub.domain.port.out.PostRepositoryPort;
 import com.techbloghub.persistence.entity.PostEntity;
 import com.techbloghub.persistence.repository.PostRepository;
@@ -12,6 +13,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Repository
@@ -57,6 +60,20 @@ public class PostAdapter implements PostRepositoryPort {
             return false;
         }
         return postRepository.existsByNormalizedUrl(normalizedUrl);
+    }
+
+    @Override
+    public void updateTaggingStatus(Long postId, TaggingProcessStatus status) {
+        PostEntity entity = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("Post not found: " + postId));
+        
+        postRepository.updateTaggingProcessStatus(postId, status);
+        log.debug("Updated tagging status for post {}: {}", postId, status);
+    }
+
+    @Override
+    public Optional<Post> findById(Long postId) {
+        return postRepository.findById(postId).map(PostEntity::toDomain);
     }
 
 }

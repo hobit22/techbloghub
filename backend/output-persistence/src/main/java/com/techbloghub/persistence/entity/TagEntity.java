@@ -28,6 +28,9 @@ public class TagEntity extends BaseEntity {
     @Column(length = 500)
     private String description;
 
+    @Column(length = 50)
+    private String tagGroup;
+
     /**
      * 도메인 모델로 변환
      */
@@ -36,6 +39,7 @@ public class TagEntity extends BaseEntity {
                 .id(id)
                 .name(name)
                 .description(description)
+                .tagGroup(tagGroup)
                 .createdAt(this.getCreatedAt())
                 .updatedAt(this.getUpdatedAt())
                 .build();

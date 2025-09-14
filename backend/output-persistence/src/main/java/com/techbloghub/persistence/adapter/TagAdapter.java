@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Repository
@@ -27,5 +28,18 @@ public class TagAdapter implements TagRepositoryPort {
         return tagRepository.findByNameContaining(keyword).stream()
                 .map(TagEntity::toDomain)
                 .toList();
+    }
+
+    @Override
+    public Optional<Tag> findByName(String name) {
+        return tagRepository.findByName(name)
+                .map(TagEntity::toDomain);
+    }
+
+    @Override
+    public Tag save(Tag tag) {
+        TagEntity entity = TagEntity.fromDomain(tag);
+        TagEntity savedEntity = tagRepository.save(entity);
+        return savedEntity.toDomain();
     }
 }

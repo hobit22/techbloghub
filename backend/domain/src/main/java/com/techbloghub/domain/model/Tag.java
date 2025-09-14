@@ -18,6 +18,7 @@ public class Tag {
     private final Long id;
     private final String name;
     private final String description;
+    private final String tagGroup;  // 태그 그룹 (language, frontend-framework, etc.)
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
     

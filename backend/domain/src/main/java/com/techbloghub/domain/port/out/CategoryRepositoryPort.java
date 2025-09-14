@@ -3,6 +3,7 @@ package com.techbloghub.domain.port.out;
 import com.techbloghub.domain.model.Category;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Category Repository 포트 인터페이스
@@ -15,4 +16,15 @@ public interface CategoryRepositoryPort {
      * 모든 카테고리 조회
      */
     List<Category> findAll();
+    
+    /**
+     * 이름으로 카테고리 조회
+     */
+    Optional<Category> findByName(String name);
+    
+    /**
+     * 카테고리 저장
+     */
+    Category save(Category category);
+
 }

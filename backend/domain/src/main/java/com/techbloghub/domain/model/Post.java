@@ -33,6 +33,8 @@ public class Post {
     private final Set<Tag> tags;
     private final Set<Category> categories;
 
+    private TaggingProcessStatus taggingProcessStatus;
+
     /**
      * 포스트가 유효한지 검증하는 도메인 규칙
      */

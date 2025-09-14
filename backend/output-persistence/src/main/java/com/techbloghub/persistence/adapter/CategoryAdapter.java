@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Repository
@@ -22,4 +23,16 @@ public class CategoryAdapter implements CategoryRepositoryPort {
                 .toList();
     }
 
+    @Override
+    public Optional<Category> findByName(String name) {
+        return categoryRepository.findByName(name)
+                .map(CategoryEntity::toDomain);
+    }
+
+    @Override
+    public Category save(Category category) {
+        CategoryEntity entity = CategoryEntity.fromDomain(category);
+        CategoryEntity savedEntity = categoryRepository.save(entity);
+        return savedEntity.toDomain();
+    }
 }

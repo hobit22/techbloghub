@@ -4,6 +4,8 @@ package com.techbloghub.output.gpt.template;
 import com.techbloghub.output.gpt.model.TagDefinitions;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class PromptTemplate {
@@ -11,9 +13,7 @@ public class PromptTemplate {
     /**
      * 태깅을 위한 프롬프트 생성
      */
-    public static String getTaggingPrompt(String title, String content) {
-        String tagGroupsStr = createTagGroupsString();
-        String categoriesStr = String.join(", ", TagDefinitions.PREDEFINED_CATEGORIES);
+    public static String getTaggingPrompt(String title, String content, Map<String, List<String>> tags, List<String> categories) {
 
         return String.format("""
             Please analyze this tech blog post and extract relevant tags and categories.
@@ -37,7 +37,7 @@ public class PromptTemplate {
             - If the post is in Korean, provide English tags and categories from the lists
             - Focus on technical aspects and concrete technologies mentioned in the content
             - If you cannot find appropriate tags from the predefined list, use fewer tags rather than creating new ones
-            """, title, content, tagGroupsStr, categoriesStr);
+            """, title, content, tags, categories);
     }
 
     private static String createTagGroupsString() {
