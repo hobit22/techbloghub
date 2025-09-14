@@ -8,6 +8,8 @@ dependencies {
     implementation project(':admin-web')
     implementation project(':output-persistence')
     implementation project(':output-web')
+    implementation project(':output-web:gpt')
+    implementation project(':output-web:rss')
     implementation project(':batch')
     
     implementation 'org.springframework.boot:spring-boot-starter'
