@@ -1,70 +1,28 @@
-# Persistence 모듈 전용 설정
+# Persistence 모듈 - 환경별 설정은 PersistenceEnvironmentConfig에서 관리
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/techbloghub
-    driver-class-name: org.postgresql.Driver
-    username: admin
-    password: password
+    url: ${database.url}
+    driver-class-name: ${database.driver-class-name}
+    username: ${database.username}
+    password: ${database.password}
+  
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    database-platform: ${jpa.database-platform}
     hibernate:
       naming:
         physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: ${jpa.hibernate.ddl-auto}
+    show-sql: ${jpa.show-sql}
     properties:
       hibernate:
-        format_sql: true
-        default_batch_fetch_size: 50
-        order_inserts: true
-        order_updates: true
+        format_sql: ${jpa.hibernate.format-sql}
+        default_batch_fetch_size: ${jpa.hibernate.default-batch-fetch-size}
+        order_inserts: ${jpa.hibernate.order-inserts}
+        order_updates: ${jpa.hibernate.order-updates}
         jdbc:
-          batch_size: 20
+          batch_size: ${jpa.hibernate.jdbc.batch-size}
     defer-datasource-initialization: true
   
   sql:
     init:
-      mode: NEVER
-
----
-# Docker profile
-spring:
-  config:
-    activate:
-      on-profile: docker
-  
-  datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/techbloghub}
-    username: ${DATABASE_USERNAME:admin}
-    password: ${DATABASE_PASSWORD:password}
-    driver-class-name: org.postgresql.Driver
-  
-  jpa:
-    hibernate:
-      ddl-auto: update
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
-
----
-# Production profile
-spring:
-  config:
-    activate:
-      on-profile: prod
-  
-  datasource:
-    url: ${DATABASE_URL}
-    username: ${DATABASE_USERNAME}
-    password: ${DATABASE_PASSWORD}
-    driver-class-name: org.postgresql.Driver
-
-  jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
-    hibernate:
-      naming:
-        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
-      ddl-auto: update
-    show-sql: false
-
-  sql:
-    init:
-      mode: NEVER
+      mode: ${sql.init.mode}

@@ -6,12 +6,8 @@ spring:
   profiles:
     active: local
     # 모듈별 설정 파일 포함 (모든 환경에서 공통 적용)
-    include:
-      - persistence
-      - batch  
-      - admin
-      - api
 
+# 환경별 로깅 설정
 logging:
   level:
     com.techbloghub: DEBUG
@@ -22,6 +18,10 @@ spring:
   config:
     activate:
       on-profile: docker
+
+logging:
+  level:
+    com.techbloghub: INFO
 
 ---
 # Production profile

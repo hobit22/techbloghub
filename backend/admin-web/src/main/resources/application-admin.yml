@@ -1,17 +1,5 @@
-# Admin Web 모듈 전용 설정
+# Admin Web 모듈 - 환경별 설정은 AdminEnvironmentConfig에서 관리
 app:
   admin:
-    username: admin
-    password: admin123
-
----
-# Docker profile
-spring:
-  config:
-    activate:
-      on-profile: docker
-
-app:
-  admin:
-    username: ${ADMIN_USERNAME:admin}
-    password: ${ADMIN_PASSWORD:admin123}
+    username: ${app.admin.username}
+    password: ${app.admin.password}
