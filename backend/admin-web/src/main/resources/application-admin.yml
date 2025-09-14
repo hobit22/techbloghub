@@ -1,5 +1,0 @@
-# Admin Web 모듈 - 환경별 설정은 AdminEnvironmentConfig에서 관리
-app:
-  admin:
-    username: ${app.admin.username}
-    password: ${app.admin.password}

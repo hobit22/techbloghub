@@ -1,0 +1,21 @@
+# Admin Web 모듈 공통 설정
+server:
+  port: ${SERVER_PORT:8080}
+
+---
+# Local Profile
+spring:
+  config:
+    activate:
+      on-profile: local
+app:
+  admin:
+    username: admin
+    password: admin123
+
+---
+# Production Profile
+spring:
+  config:
+    activate:
+      on-profile: prod

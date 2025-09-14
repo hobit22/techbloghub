@@ -1,4 +1,4 @@
 # GPT Module - Environment-specific settings are managed by GptEnvironmentConfig
 gpt:
   openai:
-    api: ${gpt.openai.api}
+    api: ${OPENAI_API_KEY}

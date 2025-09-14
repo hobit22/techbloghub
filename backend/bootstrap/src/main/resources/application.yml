@@ -5,7 +5,15 @@ spring:
   
   profiles:
     active: local
-    # 모듈별 설정 파일 포함 (모든 환경에서 공통 적용)
+    
+  config:
+    import:
+      - classpath:admin-web/application.yml
+      - classpath:api-web/application.yml
+      - classpath:batch/application.yml
+      - classpath:persistence/application.yml
+      - classpath:output-web-gpt/application.yml
+      - classpath:output-web-rss/application.yml
 
 # 환경별 로깅 설정
 logging:
