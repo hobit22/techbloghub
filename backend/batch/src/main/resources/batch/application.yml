@@ -1,5 +1,11 @@
 # Batch 모듈 전용 설정
 app:
+  # 자동 태깅 설정
+  autotag:
+    enabled: true
+    batch-size: 10
+    schedule: "0 0 * * * ?"  # 매시 정각
+    
   # RSS 크롤링 설정
   crawler:
     enabled: true
