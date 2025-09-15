@@ -49,6 +49,20 @@ variable "openai_api_key" {
   # No default value for security - must be provided via terraform.tfvars
 }
 
+variable "app_admin_username" {
+  description = "App Admin UserName"
+  type        = string
+  sensitive   = true
+  # No default value for security - must be provided via terraform.tfvars
+}
+
+variable "app_admin_password" {
+  description = "App Admin Password"
+  type        = string
+  sensitive   = true
+  # No default value for security - must be provided via terraform.tfvars
+}
+
 # VPC 생성 또는 기존 VPC 사용
 data "aws_vpc" "default" {
   default = true
