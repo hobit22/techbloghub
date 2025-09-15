@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.zip.GZIPInputStream;
 
 /**
  * HTTP를 통한 RSS 피드 조회 어댑터
@@ -162,37 +163,77 @@ public class HttpRssFeedAdapter implements FetchRssPort {
      * InputStream에서 RSS 내용을 파싱하여 RssFeed 객체로 변환
      */
     private RssFeed parseRssContentFromStream(InputStream inputStream, String rssUrl) {
-        try (XmlReader xmlReader = new XmlReader(inputStream)) {
-            SyndFeedInput input = new SyndFeedInput();
-            SyndFeed syndFeed = input.build(xmlReader);
+        try {
+            // Read the content first to debug and clean it
+            byte[] content = inputStream.readAllBytes();
 
-            List<RssEntry> entries = new ArrayList<>();
+            // Check if content is gzip compressed (starts with magic bytes 0x1f 0x8b)
+            boolean isGzipped = content.length >= 2 &&
+                               (content[0] & 0xFF) == 0x1F &&
+                               (content[1] & 0xFF) == 0x8B;
 
-            if (syndFeed.getEntries() != null) {
-                for (SyndEntry syndEntry : syndFeed.getEntries()) {
-                    try {
-                        RssEntry entry = convertToRssEntry(syndEntry);
-                        if (entry.isValid()) {
-                            entries.add(entry);
-                        }
-                    } catch (Exception e) {
-                        log.warn("Failed to convert RSS entry: {} - {}", syndEntry.getTitle(), e.getMessage());
-                    }
+            String contentStr;
+            if (isGzipped) {
+                log.debug("Detected gzip compressed content from {}, decompressing...", rssUrl);
+                try (GZIPInputStream gzipIn = new GZIPInputStream(new ByteArrayInputStream(content))) {
+                    byte[] decompressed = gzipIn.readAllBytes();
+                    contentStr = new String(decompressed, "UTF-8");
                 }
+            } else {
+                contentStr = new String(content, "UTF-8");
             }
 
-            LocalDateTime lastBuildDate = convertToLocalDateTime(syndFeed.getPublishedDate());
+            // Log first 500 characters for debugging
+            log.debug("RSS content from {} ({}): {}", rssUrl,
+                isGzipped ? "decompressed" : "raw",
+                contentStr.length() > 500 ? contentStr.substring(0, 500) + "..." : contentStr);
 
-            RssFeed rssFeed = RssFeed.builder()
-                    .url(rssUrl)
-                    .title(cleanText(syndFeed.getTitle()))
-                    .description(cleanText(syndFeed.getDescription()))
-                    .lastBuildDate(lastBuildDate)
-                    .entries(entries)
-                    .build();
+            // Remove BOM if present
+            if (contentStr.startsWith("\uFEFF")) {
+                contentStr = contentStr.substring(1);
+                log.debug("Removed BOM from RSS content");
+            }
 
-            log.debug("Successfully parsed RSS feed from {}: {} entries", rssUrl, entries.size());
-            return rssFeed;
+            // Check if content looks like XML
+            String trimmedContent = contentStr.trim();
+            if (!trimmedContent.startsWith("<?xml") && !trimmedContent.startsWith("<")) {
+                throw new RssFetchException("Response doesn't appear to be XML content from " + rssUrl + ": " +
+                    (contentStr.length() > 200 ? contentStr.substring(0, 200) + "..." : contentStr));
+            }
+
+            // Create new input stream from cleaned content
+            try (XmlReader xmlReader = new XmlReader(new ByteArrayInputStream(contentStr.getBytes("UTF-8")))) {
+                SyndFeedInput input = new SyndFeedInput();
+                SyndFeed syndFeed = input.build(xmlReader);
+
+                List<RssEntry> entries = new ArrayList<>();
+
+                if (syndFeed.getEntries() != null) {
+                    for (SyndEntry syndEntry : syndFeed.getEntries()) {
+                        try {
+                            RssEntry entry = convertToRssEntry(syndEntry);
+                            if (entry.isValid()) {
+                                entries.add(entry);
+                            }
+                        } catch (Exception e) {
+                            log.warn("Failed to convert RSS entry: {} - {}", syndEntry.getTitle(), e.getMessage());
+                        }
+                    }
+                }
+
+                LocalDateTime lastBuildDate = convertToLocalDateTime(syndFeed.getPublishedDate());
+
+                RssFeed rssFeed = RssFeed.builder()
+                        .url(rssUrl)
+                        .title(cleanText(syndFeed.getTitle()))
+                        .description(cleanText(syndFeed.getDescription()))
+                        .lastBuildDate(lastBuildDate)
+                        .entries(entries)
+                        .build();
+
+                log.debug("Successfully parsed RSS feed from {}: {} entries", rssUrl, entries.size());
+                return rssFeed;
+            }
 
         } catch (Exception e) {
             String errorMsg = String.format("Failed to parse RSS content from [%s]: %s", rssUrl, e.getMessage());
