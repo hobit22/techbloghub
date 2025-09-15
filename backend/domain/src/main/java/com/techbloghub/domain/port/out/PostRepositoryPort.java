@@ -60,4 +60,28 @@ public interface PostRepositoryPort {
      * @return 상태별 포스트 개수 Map
      */
     Map<TaggingProcessStatus, Long> getTaggingStatusStatistics();
+
+    /**
+     * 포스트 ID로 포스트 삭제
+     *
+     * @param postId 삭제할 포스트 ID
+     * @return 삭제 성공 여부
+     */
+    boolean deleteById(Long postId);
+
+    /**
+     * 여러 포스트를 일괄 삭제
+     *
+     * @param postIds 삭제할 포스트 ID 목록
+     * @return 삭제된 포스트 개수
+     */
+    int deleteByIds(List<Long> postIds);
+
+    /**
+     * 포스트 정보 업데이트
+     *
+     * @param post 업데이트할 포스트
+     * @return 업데이트된 포스트
+     */
+    Optional<Post> updatePost(Post post);
 }

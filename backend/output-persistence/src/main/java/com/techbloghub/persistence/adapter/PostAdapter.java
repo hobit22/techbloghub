@@ -91,4 +91,63 @@ public class PostAdapter implements PostRepositoryPort {
         return postRepository.getTaggingStatusStatistics();
     }
 
+    @Override
+    public boolean deleteById(Long postId) {
+        try {
+            if (postRepository.existsById(postId)) {
+                postRepository.deleteById(postId);
+                log.debug("Deleted post: ID={}", postId);
+                return true;
+            } else {
+                log.warn("Post not found for deletion: ID={}", postId);
+                return false;
+            }
+        } catch (Exception e) {
+            log.error("Failed to delete post: ID={}", postId, e);
+            throw new RuntimeException("Failed to delete post", e);
+        }
+    }
+
+    @Override
+    public int deleteByIds(List<Long> postIds) {
+        try {
+            List<Long> existingIds = postIds.stream()
+                    .filter(postRepository::existsById)
+                    .toList();
+
+            postRepository.deleteAllById(existingIds);
+            log.debug("Deleted {} posts out of {} requested", existingIds.size(), postIds.size());
+            return existingIds.size();
+
+        } catch (Exception e) {
+            log.error("Failed to delete posts in batch: IDs={}", postIds, e);
+            throw new RuntimeException("Failed to delete posts in batch", e);
+        }
+    }
+
+    @Override
+    public Optional<Post> updatePost(Post post) {
+        try {
+            if (post.getId() == null) {
+                throw new IllegalArgumentException("Post ID is required for update");
+            }
+
+            Optional<PostEntity> existingEntity = postRepository.findById(post.getId());
+            if (existingEntity.isEmpty()) {
+                log.warn("Post not found for update: ID={}", post.getId());
+                return Optional.empty();
+            }
+
+            PostEntity updatedEntity = PostEntity.fromDomain(post);
+            PostEntity savedEntity = postRepository.save(updatedEntity);
+
+            log.debug("Updated post: ID={}, Title={}", savedEntity.getId(), post.getTitle());
+            return Optional.of(savedEntity.toDomain());
+
+        } catch (Exception e) {
+            log.error("Failed to update post: ID={}", post.getId(), e);
+            throw new RuntimeException("Failed to update post", e);
+        }
+    }
+
 }

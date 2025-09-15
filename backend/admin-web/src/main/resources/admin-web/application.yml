@@ -19,3 +19,7 @@ spring:
   config:
     activate:
       on-profile: prod
+app:
+  admin:
+    username: ${APP_ADMIN_USERNAME}
+    password: ${APP_ADMIN_PASSWORD}

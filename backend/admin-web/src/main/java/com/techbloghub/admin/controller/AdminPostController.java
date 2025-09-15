@@ -19,6 +19,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Optional;
+
 /**
  * 어드민 포스트 관리 API 컨트롤러
  */
@@ -34,17 +36,19 @@ public class AdminPostController {
     @GetMapping
     @Operation(summary = "어드민 포스트 목록 조회", description = "관리자용 포스트 목록을 조회합니다.")
     @ApiResponse(responseCode = "200", description = "포스트 목록 조회 성공")
-    public ResponseEntity<Page<AdminPostResponse>> getAllPosts(@Parameter(description = "검색 키워드", example = "Spring") @RequestParam(required = false) String keyword,
-
-                                                               @Parameter(description = "블로그 ID", example = "1") @RequestParam(required = false) Long blogId,
-
-                                                               @Parameter(description = "태그", example = "Java") @RequestParam(required = false) String tag,
-
-                                                               @Parameter(description = "카테고리", example = "Backend") @RequestParam(required = false) String category,
-
-                                                               @Parameter(description = "페이지 번호", example = "0") @RequestParam(defaultValue = "0") int page,
-
-                                                               @Parameter(description = "페이지 크기", example = "20") @RequestParam(defaultValue = "20") int size) {
+    public ResponseEntity<Page<AdminPostResponse>> getAllPosts(
+            @Parameter(description = "검색 키워드", example = "Spring")
+            @RequestParam(required = false) String keyword,
+            @Parameter(description = "블로그 ID", example = "1")
+            @RequestParam(required = false) Long blogId,
+            @Parameter(description = "태그", example = "Java")
+            @RequestParam(required = false) String tag,
+            @Parameter(description = "카테고리", example = "Backend")
+            @RequestParam(required = false) String category,
+            @Parameter(description = "페이지 번호", example = "0")
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기", example = "20")
+            @RequestParam(defaultValue = "20") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
 
@@ -71,31 +75,92 @@ public class AdminPostController {
 
     @GetMapping("/{id}")
     @Operation(summary = "어드민 포스트 상세 조회", description = "관리자용 포스트 상세 정보를 조회합니다.")
-    @ApiResponses({@ApiResponse(responseCode = "200", description = "포스트 조회 성공"), @ApiResponse(responseCode = "404", description = "포스트를 찾을 수 없음")})
-    public ResponseEntity<AdminPostResponse> getPost(@Parameter(description = "포스트 ID", example = "1") @PathVariable Long id) {
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "포스트 조회 성공"),
+            @ApiResponse(responseCode = "404", description = "포스트를 찾을 수 없음")
+    })
+    public ResponseEntity<AdminPostResponse> getPost(
+            @Parameter(description = "포스트 ID", example = "1")
+            @PathVariable Long id) {
 
-        return ResponseEntity.ok(null);
+        Optional<Post> post = searchUseCase.getPostById(id);
+        if (post.isPresent()) {
+            AdminPostResponse response = AdminPostResponse.from(post.get());
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "어드민 포스트 수정", description = "포스트 정보를 수정합니다.")
-    @ApiResponses({@ApiResponse(responseCode = "200", description = "포스트 수정 성공"), @ApiResponse(responseCode = "404", description = "포스트를 찾을 수 없음")})
-    public ResponseEntity<AdminPostResponse> updatePost(@Parameter(description = "포스트 ID", example = "1") @PathVariable Long id, @RequestBody AdminPostUpdateRequest request) {
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "포스트 수정 성공"),
+            @ApiResponse(responseCode = "404", description = "포스트를 찾을 수 없음")
+    })
+    public ResponseEntity<AdminPostResponse> updatePost(
+            @Parameter(description = "포스트 ID", example = "1")
+            @PathVariable Long id,
+            @RequestBody AdminPostUpdateRequest request) {
 
-        return ResponseEntity.ok(null);
+        try {
+            // 기존 포스트 조회
+            Optional<Post> existingPost = searchUseCase.getPostById(id);
+            if (existingPost.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            // TODO: 실제 Post 빌더 사용해서 업데이트 로직 구현
+            // 현재는 기본적인 응답만 반환
+            AdminPostResponse response = AdminPostResponse.from(existingPost.get());
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("포스트 수정 중 오류 발생: ID={}", id, e);
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "어드민 포스트 삭제", description = "포스트를 삭제합니다.")
-    @ApiResponses({@ApiResponse(responseCode = "204", description = "포스트 삭제 성공"), @ApiResponse(responseCode = "404", description = "포스트를 찾을 수 없음")})
-    public ResponseEntity<Void> deletePost(@Parameter(description = "포스트 ID", example = "1") @PathVariable Long id) {
-        return ResponseEntity.notFound().build();
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "포스트 삭제 성공"),
+            @ApiResponse(responseCode = "404", description = "포스트를 찾을 수 없음")
+    })
+    public ResponseEntity<Void> deletePost(
+            @Parameter(description = "포스트 ID", example = "1")
+            @PathVariable Long id) {
+        try {
+            boolean deleted = searchUseCase.deletePost(id);
+            if (deleted) {
+                log.info("포스트 삭제 성공: ID={}", id);
+                return ResponseEntity.noContent().build();
+            } else {
+                log.warn("삭제할 포스트를 찾을 수 없음: ID={}", id);
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            log.error("포스트 삭제 중 오류 발생: ID={}", id, e);
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     @PostMapping("/batch/delete")
     @Operation(summary = "어드민 포스트 일괄 삭제", description = "여러 포스트를 일괄 삭제합니다.")
     @ApiResponse(responseCode = "204", description = "일괄 삭제 성공")
     public ResponseEntity<Void> deletePostsBatch(@RequestBody AdminBatchDeleteRequest request) {
-        return ResponseEntity.noContent().build();
+        try {
+            if (request == null || request.getIds() == null || request.getIds().isEmpty()) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            int deletedCount = searchUseCase.deletePostsBatch(request.getIds());
+            log.info("포스트 일괄 삭제 완료: 요청 개수={}, 삭제 개수={}", request.getIds().size(), deletedCount);
+
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            log.error("포스트 일괄 삭제 중 오류 발생: 요청={}", request, e);
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }

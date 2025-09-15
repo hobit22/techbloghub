@@ -1,6 +1,10 @@
 package com.techbloghub.admin.controller;
 
 import com.techbloghub.admin.dto.AdminBlogResponse;
+import com.techbloghub.domain.model.Blog;
+import com.techbloghub.domain.model.CrawlingResult;
+import com.techbloghub.domain.port.in.BlogUseCase;
+import com.techbloghub.domain.port.in.CrawlRssUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -9,10 +13,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * 어드민 블로그 관리 API 컨트롤러
@@ -24,6 +32,9 @@ import java.util.List;
 @Tag(name = "Admin Blogs", description = "어드민 블로그 관리 API")
 public class AdminBlogController {
 
+    private final BlogUseCase blogUseCase;
+    private final CrawlRssUseCase crawlRssUseCase;
+
     @GetMapping
     @Operation(summary = "어드민 블로그 목록 조회", description = "관리자용 블로그 목록을 조회합니다.")
     @ApiResponse(responseCode = "200", description = "블로그 목록 조회 성공")
@@ -34,7 +45,11 @@ public class AdminBlogController {
             @Parameter(description = "페이지 크기", example = "20")
             @RequestParam(defaultValue = "20") int size) {
 
-        return ResponseEntity.ok(null);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Blog> blogs = blogUseCase.getAllBlogs(pageable);
+        Page<AdminBlogResponse> adminBlogs = blogs.map(AdminBlogResponse::from);
+
+        return ResponseEntity.ok(adminBlogs);
     }
 
     @GetMapping("/active")
@@ -42,7 +57,12 @@ public class AdminBlogController {
     @ApiResponse(responseCode = "200", description = "활성 블로그 목록 조회 성공")
     public ResponseEntity<List<AdminBlogResponse>> getActiveBlogs() {
 
-        return ResponseEntity.ok(null);
+        List<Blog> activeBlogs = blogUseCase.getActiveBlogs();
+        List<AdminBlogResponse> adminBlogs = activeBlogs.stream()
+                .map(AdminBlogResponse::from)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(adminBlogs);
     }
 
     @GetMapping("/{id}")
@@ -55,7 +75,13 @@ public class AdminBlogController {
             @Parameter(description = "블로그 ID", example = "1")
             @PathVariable Long id) {
 
-        return ResponseEntity.ok(null);
+        Optional<Blog> blog = blogUseCase.getBlogById(id);
+        if (blog.isPresent()) {
+            AdminBlogResponse response = AdminBlogResponse.from(blog.get());
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping("/{id}/recrawl")
@@ -68,7 +94,15 @@ public class AdminBlogController {
             @Parameter(description = "블로그 ID", example = "1")
             @PathVariable Long id) {
 
-        return ResponseEntity.ok("재크롤링 요청이 성공적으로 전송되었습니다.");
+        try {
+            CrawlingResult crawlingResult = crawlRssUseCase.crawlSpecificBlog(id);
+            return ResponseEntity.ok("재크롤링 요청이 성공적으로 전송되었습니다.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            log.error("재크롤링 요청 중 오류 발생: ID={}", id, e);
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     @PostMapping("/recrawl/all")
@@ -76,7 +110,13 @@ public class AdminBlogController {
     @ApiResponse(responseCode = "200", description = "전체 재크롤링 요청 성공")
     public ResponseEntity<String> triggerAllRecrawling() {
 
-        return ResponseEntity.ok(null);
+        try {
+            crawlRssUseCase.crawlAllActiveBlogs();
+            return ResponseEntity.ok("전체 재크롤링 요청이 성공적으로 전송되었습니다.");
+        } catch (Exception e) {
+            log.error("전체 재크롤링 요청 중 오류 발생", e);
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     @GetMapping("/{id}/stats")
@@ -89,7 +129,14 @@ public class AdminBlogController {
             @Parameter(description = "블로그 ID", example = "1")
             @PathVariable Long id) {
 
-
-        return ResponseEntity.ok("{\"message\": \"통계 데이터 준비 중\"}");
+        try {
+            java.util.Map<String, Object> stats = blogUseCase.getBlogStats(id);
+            return ResponseEntity.ok(stats);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            log.error("블로그 통계 조회 중 오류 발생: ID={}", id, e);
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }
