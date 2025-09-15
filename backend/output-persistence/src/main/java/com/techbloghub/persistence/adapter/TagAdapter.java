@@ -5,6 +5,8 @@ import com.techbloghub.domain.port.out.TagRepositoryPort;
 import com.techbloghub.persistence.entity.TagEntity;
 import com.techbloghub.persistence.repository.TagRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -17,6 +19,7 @@ public class TagAdapter implements TagRepositoryPort {
     private final TagRepository tagRepository;
 
     @Override
+    @Cacheable("tags")
     public List<Tag> findAll() {
         return tagRepository.findAll().stream()
                 .map(TagEntity::toDomain)
@@ -37,6 +40,7 @@ public class TagAdapter implements TagRepositoryPort {
     }
 
     @Override
+    @CacheEvict(value = {"tags", "tagSearch"}, allEntries = true)
     public Tag save(Tag tag) {
         TagEntity entity = TagEntity.fromDomain(tag);
         TagEntity savedEntity = tagRepository.save(entity);
