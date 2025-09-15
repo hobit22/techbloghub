@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -66,7 +67,7 @@ public class PostAdapter implements PostRepositoryPort {
     public void updateTaggingStatus(Long postId, TaggingProcessStatus status) {
         PostEntity entity = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("Post not found: " + postId));
-        
+
         postRepository.updateTaggingProcessStatus(postId, status);
         log.debug("Updated tagging status for post {}: {}", postId, status);
     }
@@ -74,6 +75,14 @@ public class PostAdapter implements PostRepositoryPort {
     @Override
     public Optional<Post> findById(Long postId) {
         return postRepository.findById(postId).map(PostEntity::toDomain);
+    }
+
+    @Override
+    public List<Post> findByTaggingStatus(TaggingProcessStatus taggingProcessStatus, int limit) {
+        return postRepository.findByTaggingStatus(taggingProcessStatus, limit)
+                .stream()
+                .map(PostEntity::toDomain)
+                .toList();
     }
 
 }

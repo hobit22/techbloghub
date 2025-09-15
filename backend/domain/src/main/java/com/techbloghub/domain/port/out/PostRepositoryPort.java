@@ -6,6 +6,7 @@ import com.techbloghub.domain.model.TaggingProcessStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -49,4 +50,6 @@ public interface PostRepositoryPort {
      * @return 포스트 (없으면 Optional.empty())
      */
     Optional<Post> findById(Long postId);
+
+    List<Post> findByTaggingStatus(TaggingProcessStatus taggingProcessStatus, int limit);
 }

@@ -7,6 +7,7 @@ import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.techbloghub.domain.model.SearchCondition;
+import com.techbloghub.domain.model.TaggingProcessStatus;
 import com.techbloghub.persistence.entity.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -71,6 +72,15 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .fetchOne();
 
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    @Override
+    public List<PostEntity> findByTaggingStatus(TaggingProcessStatus status, int limit) {
+        return queryFactory.selectFrom(post)
+                .where(post.taggingProcessStatus.eq(status))
+                .orderBy(post.publishedAt.desc())
+                .limit(limit)
+                .fetch();
     }
 
 

@@ -33,52 +33,84 @@ public class AutoTaggingService implements AutoTaggingUseCase {
         Post post = postRepositoryPort.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("Post not found: " + postId));
 
+        log.debug("Starting LLM tagging for post: {}", post.getTitle());
+
+        // 카테고리 리스트
+        List<String> existingCategories = getExistingCategories();
+
+        // 태그 그룹
+        Map<String, List<String>> groupedTags = getGroupedTags();
+
+        // 태깅 받아오기
+        TaggingResult result = getTaggingResult(existingCategories, groupedTags, post);
+
+        // 태깅 결과 저장
+        TaggingProcessStatus newStatus = saveTaggingResult(post, result);
+        postRepositoryPort.updateTaggingStatus(post.getId(), newStatus);
+
+        // 거절된 item 저장
+        saveRejectedItems(post, result);
+
+        log.info("LLM tagging completed for post {}: {} tags, {} categories, {} rejected tags, {} rejected categories, status: {}",
+                post.getId(),
+                result.tags().size(),
+                result.categories().size(),
+                result.rejectedTags().size(),
+                result.rejectedCategories().size(),
+                newStatus);
+
+        return result;
+    }
+
+    @Override
+    public List<TaggingResult> autoTagUnprocessedPosts(int count) {
+        List<Post> postList = postRepositoryPort.findByTaggingStatus(TaggingProcessStatus.NOT_PROCESSED, count);
+
+        List<String> existingCategories = getExistingCategories();
+
+        Map<String, List<String>> groupedTags = getGroupedTags();
+
+        return postList.stream()
+                .map(post -> {
+                    TaggingResult result = getTaggingResult(existingCategories, groupedTags, post);
+                    TaggingProcessStatus newStatus = saveTaggingResult(post, result);
+                    postRepositoryPort.updateTaggingStatus(post.getId(), newStatus);
+                    saveRejectedItems(post, result);
+                    return result;
+                })
+                .toList();
+    }
+
+    private List<String> getExistingCategories() {
+        return categoryRepositoryPort.findAll()
+                .stream()
+                .map(Category::getName)
+                .toList();
+    }
+
+    private Map<String, List<String>> getGroupedTags() {
+        return tagRepositoryPort
+                .findAll()
+                .stream()
+                .collect(
+                        Collectors.groupingBy(
+                                Tag::getTagGroup,
+                                Collectors.mapping(Tag::getName, Collectors.toList())
+                        )
+                );
+    }
+
+    private TaggingResult getTaggingResult(List<String> existingCategories, Map<String, List<String>> groupedTags, Post post) {
         try {
-            log.debug("Starting LLM tagging for post: {}", post.getTitle());
-
-            // 1. 기존 태그와 카테고리 조회
-            List<String> existingCategories = categoryRepositoryPort.findAll()
-                    .stream()
-                    .map(Category::getName)
-                    .toList();
-
-            Map<String, List<String>> groupedTags = tagRepositoryPort
-                    .findAll()
-                    .stream()
-                    .collect(
-                            Collectors.groupingBy(
-                                    Tag::getTagGroup,
-                                    Collectors.mapping(Tag::getName, Collectors.toList())
-                            )
-                    );
-
             log.debug("Existing tag groups: {}, categories count: {}",
                     groupedTags.size(), existingCategories.size());
 
-            // 2. 기존 태그/카테고리 목록과 함께 LLM 태깅 실행
-            TaggingResult result = llmTaggerPort.tagContent(
+            return llmTaggerPort.tagContent(
                     post.getTitle(),
                     post.getContent(),
                     groupedTags,
                     existingCategories
             );
-
-            // 3. 결과에 따른 저장 + 상태 업데이트
-            TaggingProcessStatus newStatus = saveTaggingResult(post, result);
-            postRepositoryPort.updateTaggingStatus(post.getId(), newStatus);
-
-            // 4. 거부된 태그/카테고리 저장
-            saveRejectedItems(post, result);
-
-            log.info("LLM tagging completed for post {}: {} tags, {} categories, {} rejected tags, {} rejected categories, status: {}",
-                    post.getId(),
-                    result.tags().size(),
-                    result.categories().size(),
-                    result.rejectedTags().size(),
-                    result.rejectedCategories().size(),
-                    newStatus);
-
-            return result;
 
         } catch (Exception e) {
             log.error("Error tagging post {} with LLM: {}", post.getId(), e.getMessage());
