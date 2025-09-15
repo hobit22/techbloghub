@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -83,6 +84,11 @@ public class PostAdapter implements PostRepositoryPort {
                 .stream()
                 .map(PostEntity::toDomain)
                 .toList();
+    }
+
+    @Override
+    public Map<TaggingProcessStatus, Long> getTaggingStatusStatistics() {
+        return postRepository.getTaggingStatusStatistics();
     }
 
 }

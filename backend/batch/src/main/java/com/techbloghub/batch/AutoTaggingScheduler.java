@@ -76,7 +76,7 @@ public class AutoTaggingScheduler {
             for (TaggingProcessStatus status : TaggingProcessStatus.values()) {
                 Long count = statistics.getOrDefault(status, 0L);
                 double percentage = totalPosts > 0 ? (count * 100.0 / totalPosts) : 0.0;
-                log.info("{}: {} posts ({:.1f}%)", status, count, percentage);
+                log.info("{}: {} posts ({}%)", status, count, String.format("%.1f", percentage));
             }
 
             log.info("=== End Statistics ===");

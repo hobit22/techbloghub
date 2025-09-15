@@ -1,5 +1,6 @@
 package com.techbloghub.persistence.repository;
 
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -18,6 +19,8 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.springframework.util.StringUtils.hasText;
 
@@ -81,6 +84,21 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .orderBy(post.publishedAt.desc())
                 .limit(limit)
                 .fetch();
+    }
+
+    @Override
+    public Map<TaggingProcessStatus, Long> getTaggingStatusStatistics() {
+        List<Tuple> results = queryFactory
+                .select(post.taggingProcessStatus, post.count())
+                .from(post)
+                .groupBy(post.taggingProcessStatus)
+                .fetch();
+
+        return results.stream()
+                .collect(Collectors.toMap(
+                        tuple -> tuple.get(post.taggingProcessStatus),
+                        tuple -> tuple.get(post.count())
+                ));
     }
 
 

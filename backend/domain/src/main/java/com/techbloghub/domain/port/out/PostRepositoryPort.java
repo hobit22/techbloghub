@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -52,4 +53,11 @@ public interface PostRepositoryPort {
     Optional<Post> findById(Long postId);
 
     List<Post> findByTaggingStatus(TaggingProcessStatus taggingProcessStatus, int limit);
+
+    /**
+     * 태깅 처리 상태별 포스트 개수 통계
+     *
+     * @return 상태별 포스트 개수 Map
+     */
+    Map<TaggingProcessStatus, Long> getTaggingStatusStatistics();
 }
