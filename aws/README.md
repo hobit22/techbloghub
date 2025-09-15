@@ -32,7 +32,10 @@ cd aws
 
 # 보안 변수 설정
 cp terraform.tfvars.example terraform.tfvars
-# terraform.tfvars 파일을 편집하여 db_password 등 설정
+# terraform.tfvars 파일을 편집하여 필수 변수들 설정:
+# - db_username: 데이터베이스 관리자 계정명
+# - db_password: 데이터베이스 비밀번호  
+# - openai_api_key: OpenAI API 키 (LLM 태깅 기능용)
 
 terraform init
 terraform plan
