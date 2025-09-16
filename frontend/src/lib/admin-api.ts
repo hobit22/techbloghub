@@ -83,6 +83,16 @@ export const adminBlogApi = {
   getById: (id: number): Promise<Blog> =>
     adminApi.get(`/api/admin/blogs/${id}`).then((res) => res.data),
 
+  create: (data: {
+    name: string;
+    company: string;
+    rssUrl: string;
+    siteUrl: string;
+    logoUrl?: string;
+    description?: string;
+  }): Promise<Blog> =>
+    adminApi.post("/api/admin/blogs", data).then((res) => res.data),
+
   triggerRecrawl: (id: number): Promise<string> =>
     adminApi.post(`/api/admin/blogs/${id}/recrawl`).then((res) => res.data),
 
