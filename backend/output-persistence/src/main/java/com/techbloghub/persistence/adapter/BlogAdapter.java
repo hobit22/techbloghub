@@ -77,4 +77,14 @@ public class BlogAdapter implements BlogRepositoryPort {
 
         log.debug("Reset failure count for blog {}", blogId);
     }
+
+    @Override
+    @Transactional
+    public Blog save(Blog blog) {
+        BlogEntity blogEntity = BlogEntity.from(blog);
+        BlogEntity savedEntity = blogRepository.save(blogEntity);
+
+        log.debug("Saved blog: ID={}, name={}", savedEntity.getId(), savedEntity.getName());
+        return savedEntity.toDomain();
+    }
 }

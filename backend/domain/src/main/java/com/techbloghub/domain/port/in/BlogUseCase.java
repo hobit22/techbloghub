@@ -31,4 +31,9 @@ public interface BlogUseCase {
      * 블로그 통계 정보 조회
      */
     java.util.Map<String, Object> getBlogStats(Long blogId);
+
+    /**
+     * 새로운 블로그 생성
+     */
+    Blog createBlog(String name, String company, String rssUrl, String siteUrl, String logoUrl, String description);
 }

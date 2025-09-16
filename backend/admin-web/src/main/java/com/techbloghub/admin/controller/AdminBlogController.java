@@ -1,5 +1,6 @@
 package com.techbloghub.admin.controller;
 
+import com.techbloghub.admin.dto.AdminBlogCreateRequest;
 import com.techbloghub.admin.dto.AdminBlogResponse;
 import com.techbloghub.domain.model.Blog;
 import com.techbloghub.domain.model.CrawlingResult;
@@ -10,11 +11,13 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -136,6 +139,37 @@ public class AdminBlogController {
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
             log.error("블로그 통계 조회 중 오류 발생: ID={}", id, e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping
+    @Operation(summary = "새로운 블로그 생성", description = "새로운 블로그를 생성합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "블로그 생성 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터")
+    })
+    public ResponseEntity<AdminBlogResponse> createBlog(
+            @Valid @RequestBody AdminBlogCreateRequest request) {
+
+        try {
+            Blog createdBlog = blogUseCase.createBlog(
+                    request.getName(),
+                    request.getCompany(),
+                    request.getRssUrl(),
+                    request.getSiteUrl(),
+                    request.getLogoUrl(),
+                    request.getDescription()
+            );
+
+            AdminBlogResponse response = AdminBlogResponse.from(createdBlog);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        } catch (IllegalArgumentException e) {
+            log.error("블로그 생성 중 유효성 검사 오류: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            log.error("블로그 생성 중 오류 발생", e);
             return ResponseEntity.internalServerError().build();
         }
     }

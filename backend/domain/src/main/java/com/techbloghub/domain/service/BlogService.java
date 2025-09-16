@@ -1,6 +1,7 @@
 package com.techbloghub.domain.service;
 
 import com.techbloghub.domain.model.Blog;
+import com.techbloghub.domain.model.BlogStatus;
 import com.techbloghub.domain.port.in.BlogUseCase;
 import com.techbloghub.domain.port.out.BlogRepositoryPort;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -70,5 +72,20 @@ public class BlogService implements BlogUseCase {
         stats.put("status", blog.get().getStatus());
 
         return stats;
+    }
+
+    @Override
+    @Transactional
+    public Blog createBlog(String name, String company, String rssUrl, String siteUrl, String logoUrl, String description) {
+        log.debug("블로그 생성: name={}, company={}, rssUrl={}, logoUrl={}", name, company, rssUrl, logoUrl);
+
+        // 새 블로그 도메인 모델 생성
+        Blog newBlog = Blog.of(name, company, rssUrl, siteUrl, logoUrl, description);
+
+        // 블로그 저장
+        Blog savedBlog = blogRepositoryPort.save(newBlog);
+
+        log.info("블로그가 성공적으로 생성되었습니다: ID={}, name={}", savedBlog.getId(), savedBlog.getName());
+        return savedBlog;
     }
 }

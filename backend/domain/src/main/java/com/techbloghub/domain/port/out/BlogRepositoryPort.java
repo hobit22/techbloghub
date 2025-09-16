@@ -33,4 +33,9 @@ public interface BlogRepositoryPort {
     void incrementFailureCount(Long blogId);
 
     void updateLastCrawledAt(Long blogId, LocalDateTime crawlStartTime);
+
+    /**
+     * 블로그 저장
+     */
+    Blog save(Blog blog);
 }

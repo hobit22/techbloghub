@@ -51,4 +51,16 @@ public class Blog {
                 !rssUrl.trim().isEmpty() &&
                 (rssUrl.startsWith("http://") || rssUrl.startsWith("https://"));
     }
+
+    public static Blog of(String name, String company, String rssUrl, String siteUrl, String logoUrl, String description) {
+        return Blog.builder()
+                .name(name.trim())
+                .company(company.trim())
+                .rssUrl(rssUrl.trim())
+                .siteUrl(siteUrl.trim())
+                .logoUrl(logoUrl != null && !logoUrl.trim().isEmpty() ? logoUrl.trim() : null)
+                .description(description != null ? description.trim() : null)
+                .status(BlogStatus.ACTIVE) // 기본적으로 활성 상태로 생성
+                .build();
+    }
 }

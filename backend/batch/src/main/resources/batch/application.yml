@@ -1,11 +1,5 @@
 # Batch 모듈 전용 설정
 app:
-  # 자동 태깅 설정
-  autotag:
-    enabled: true
-    batch-size: 10
-    schedule: "0 0 * * * ?"  # 매시 정각
-    
   # RSS 크롤링 설정
   crawler:
     enabled: true
@@ -22,3 +16,32 @@ app:
       timeout-seconds: 30
       user-agent: "TechBlogHub-Crawler/1.0"
       max-posts-per-feed: 50
+
+---
+# Local Profile
+spring:
+  config:
+    activate:
+      on-profile: local
+
+app:
+  # 자동 태깅 설정
+  autotag:
+    enabled: false
+    batch-size: 10
+    schedule: "0 0 * * * ?"  # 매시 정각
+
+
+---
+# Production Profile
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+app:
+  # 자동 태깅 설정
+  autotag:
+    enabled: true
+    batch-size: 10
+    schedule: "0 0 * * * ?"  # 매시 정각
