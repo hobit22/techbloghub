@@ -42,6 +42,27 @@ variable "db_password" {
   # No default value for security - must be provided via terraform.tfvars
 }
 
+variable "openai_api_key" {
+  description = "OpenAI API key for LLM tagging functionality - Set via terraform.tfvars or TF_VAR_openai_api_key environment variable"
+  type        = string
+  sensitive   = true
+  # No default value for security - must be provided via terraform.tfvars
+}
+
+variable "app_admin_username" {
+  description = "App Admin UserName"
+  type        = string
+  sensitive   = true
+  # No default value for security - must be provided via terraform.tfvars
+}
+
+variable "app_admin_password" {
+  description = "App Admin Password"
+  type        = string
+  sensitive   = true
+  # No default value for security - must be provided via terraform.tfvars
+}
+
 # VPC 생성 또는 기존 VPC 사용
 data "aws_vpc" "default" {
   default = true

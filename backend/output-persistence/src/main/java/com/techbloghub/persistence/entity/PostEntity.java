@@ -1,8 +1,10 @@
 package com.techbloghub.persistence.entity;
 
 import com.techbloghub.domain.model.Post;
+import com.techbloghub.domain.model.TaggingProcessStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -72,6 +74,11 @@ public class PostEntity extends BaseEntity {
     @Builder.Default
     private Set<PostCategoryEntity> postCategories = new HashSet<>();
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tagging_process_status", nullable = false, columnDefinition = "VARCHAR DEFAULT 'NOT_PROCESSED'")
+    @Builder.Default
+    private TaggingProcessStatus taggingProcessStatus = TaggingProcessStatus.NOT_PROCESSED;
+
     public Post toDomain() {
         return Post.builder()
                 .id(id)
@@ -93,6 +100,7 @@ public class PostEntity extends BaseEntity {
                         .filter(pc -> pc.getCategory() != null)
                         .map(pc -> pc.getCategory().toDomain())
                         .collect(Collectors.toSet()) : Set.of())
+                .taggingProcessStatus(taggingProcessStatus)
                 .build();
     }
     
@@ -110,35 +118,8 @@ public class PostEntity extends BaseEntity {
                 .normalizedUrl(post.getNormalizedUrl())
                 .author(post.getAuthor())
                 .publishedAt(post.getPublishedAt())
+                .taggingProcessStatus(post.getTaggingProcessStatus() != null ? post.getTaggingProcessStatus() : TaggingProcessStatus.NOT_PROCESSED)
                 .blog(blogEntity)
                 .build();
-    }
-    
-    public static PostEntity fromDomainWithRelations(Post post, BlogEntity blogEntity, 
-                                                   Set<TagEntity> tagEntities, 
-                                                   Set<CategoryEntity> categoryEntities) {
-        PostEntity postEntity = PostEntity.builder()
-                .id(post.getId())
-                .title(post.getTitle())
-                .content(post.getContent())
-                .originalUrl(post.getOriginalUrl())
-                .author(post.getAuthor())
-                .publishedAt(post.getPublishedAt())
-                .blog(blogEntity)
-                .build();
-
-        // PostTag 관계 생성
-        Set<PostTagEntity> postTags = tagEntities.stream()
-                .map(tagEntity -> PostTagEntity.create(postEntity, tagEntity))
-                .collect(Collectors.toSet());
-        postEntity.postTags = postTags;
-
-        // PostCategory 관계 생성
-        Set<PostCategoryEntity> postCategories = categoryEntities.stream()
-                .map(categoryEntity -> PostCategoryEntity.create(postEntity, categoryEntity))
-                .collect(Collectors.toSet());
-        postEntity.postCategories = postCategories;
-
-        return postEntity;
     }
 }

@@ -59,6 +59,7 @@ public class BlogEntity extends BaseEntity {
                 .company(domain.getCompany())
                 .rssUrl(domain.getRssUrl())
                 .siteUrl(domain.getSiteUrl())
+                .logoUrl(domain.getLogoUrl())
                 .description(domain.getDescription())
                 .status(domain.getStatus())
                 .lastCrawledAt(domain.getLastCrawledAt())

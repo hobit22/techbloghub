@@ -3,6 +3,7 @@ package com.techbloghub.domain.port.out;
 import com.techbloghub.domain.model.Tag;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -22,4 +23,14 @@ public interface TagRepositoryPort {
      * 이름 패턴으로 태그 검색
      */
     List<Tag> findByNameContaining(String keyword);
+    
+    /**
+     * 이름으로 태그 조회
+     */
+    Optional<Tag> findByName(String name);
+    
+    /**
+     * 태그 저장
+     */
+    Tag save(Tag tag);
 }

@@ -6,6 +6,7 @@ import com.techbloghub.persistence.entity.BlogEntity;
 import com.techbloghub.persistence.repository.BlogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
@@ -33,6 +34,7 @@ public class BlogAdapter implements BlogRepositoryPort {
     }
 
     @Override
+    @Cacheable("allBlogs")
     public List<Blog> findAll() {
         return blogRepository.findAll()
                 .stream()
@@ -74,5 +76,15 @@ public class BlogAdapter implements BlogRepositoryPort {
         blogRepository.save(blog);
 
         log.debug("Reset failure count for blog {}", blogId);
+    }
+
+    @Override
+    @Transactional
+    public Blog save(Blog blog) {
+        BlogEntity blogEntity = BlogEntity.from(blog);
+        BlogEntity savedEntity = blogRepository.save(blogEntity);
+
+        log.debug("Saved blog: ID={}, name={}", savedEntity.getId(), savedEntity.getName());
+        return savedEntity.toDomain();
     }
 }

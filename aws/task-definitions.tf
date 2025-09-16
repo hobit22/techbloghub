@@ -37,6 +37,18 @@ resource "aws_ecs_task_definition" "backend" {
         {
           name  = "DATABASE_PASSWORD"
           value = var.db_password
+        },
+        {
+          name  = "OPENAI_API_KEY"
+          value = var.openai_api_key
+        },
+        {
+          name = "APP_ADMIN_USERNAME"
+          value = var.app_admin_username
+        },
+        {
+          name = "APP_ADMIN_PASSWORD"
+          value = var.app_admin_password
         }
       ]
 

@@ -1,5 +1,6 @@
 package com.techbloghub.persistence.repository;
 
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -7,6 +8,7 @@ import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.techbloghub.domain.model.SearchCondition;
+import com.techbloghub.domain.model.TaggingProcessStatus;
 import com.techbloghub.persistence.entity.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -17,6 +19,8 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.springframework.util.StringUtils.hasText;
 
@@ -71,6 +75,30 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .fetchOne();
 
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    @Override
+    public List<PostEntity> findByTaggingStatus(TaggingProcessStatus status, int limit) {
+        return queryFactory.selectFrom(post)
+                .where(post.taggingProcessStatus.eq(status))
+                .orderBy(post.publishedAt.desc())
+                .limit(limit)
+                .fetch();
+    }
+
+    @Override
+    public Map<TaggingProcessStatus, Long> getTaggingStatusStatistics() {
+        List<Tuple> results = queryFactory
+                .select(post.taggingProcessStatus, post.count())
+                .from(post)
+                .groupBy(post.taggingProcessStatus)
+                .fetch();
+
+        return results.stream()
+                .collect(Collectors.toMap(
+                        tuple -> tuple.get(post.taggingProcessStatus),
+                        tuple -> tuple.get(post.count())
+                ));
     }
 
 

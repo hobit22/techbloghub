@@ -1,6 +1,7 @@
 package com.techbloghub.domain.service;
 
 import com.techbloghub.domain.model.Blog;
+import com.techbloghub.domain.model.BlogStatus;
 import com.techbloghub.domain.port.in.BlogUseCase;
 import com.techbloghub.domain.port.out.BlogRepositoryPort;
 import lombok.RequiredArgsConstructor;
@@ -10,7 +11,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -39,5 +42,50 @@ public class BlogService implements BlogUseCase {
         return allBlogs.stream()
                 .filter(Blog::isActive)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Optional<Blog> getBlogById(Long id) {
+        log.debug("블로그 단일 조회: ID={}", id);
+        return blogRepositoryPort.findById(id);
+    }
+
+    @Override
+    public java.util.Map<String, Object> getBlogStats(Long blogId) {
+        log.debug("블로그 통계 조회: ID={}", blogId);
+        if (blogId == null) {
+            throw new IllegalArgumentException("블로그 ID는 필수입니다.");
+        }
+
+        // 블로그 존재 여부 확인
+        Optional<Blog> blog = blogRepositoryPort.findById(blogId);
+        if (blog.isEmpty()) {
+            throw new IllegalArgumentException("존재하지 않는 블로그입니다: ID=" + blogId);
+        }
+
+        // 기본 통계 정보 반환 (추후 실제 통계 로직 구현)
+        java.util.Map<String, Object> stats = new java.util.HashMap<>();
+        stats.put("blogId", blogId);
+        stats.put("blogName", blog.get().getName());
+        stats.put("totalPosts", 0); // TODO: 실제 포스트 개수 조회
+        stats.put("lastCrawledAt", blog.get().getLastCrawledAt());
+        stats.put("status", blog.get().getStatus());
+
+        return stats;
+    }
+
+    @Override
+    @Transactional
+    public Blog createBlog(String name, String company, String rssUrl, String siteUrl, String logoUrl, String description) {
+        log.debug("블로그 생성: name={}, company={}, rssUrl={}, logoUrl={}", name, company, rssUrl, logoUrl);
+
+        // 새 블로그 도메인 모델 생성
+        Blog newBlog = Blog.of(name, company, rssUrl, siteUrl, logoUrl, description);
+
+        // 블로그 저장
+        Blog savedBlog = blogRepositoryPort.save(newBlog);
+
+        log.info("블로그가 성공적으로 생성되었습니다: ID={}, name={}", savedBlog.getId(), savedBlog.getName());
+        return savedBlog;
     }
 }

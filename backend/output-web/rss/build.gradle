@@ -1,0 +1,12 @@
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    
+    // RSS Feed Parser
+    implementation 'com.rometools:rome:2.1.0'
+    implementation 'com.rometools:rome-utils:2.1.0'
+
+    // Test
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.mockito:mockito-core'
+    testImplementation 'org.mockito:mockito-junit-jupiter'
+}
