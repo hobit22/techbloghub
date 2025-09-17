@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ReactQueryProvider } from "@/lib/react-query";
-import { GoogleAnalytics } from "@next/third-parties/google";
+import GoogleAnalyticsWrapper from "@/components/GoogleAnalyticsWrapper";
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -118,7 +118,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         {process.env.NEXT_PUBLIC_GA_ID && (
-          <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+          <GoogleAnalyticsWrapper gaId={process.env.NEXT_PUBLIC_GA_ID} />
         )}
       </head>
       <body className={`${inter.className} antialiased`}>
