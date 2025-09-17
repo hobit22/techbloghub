@@ -12,6 +12,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
@@ -20,6 +21,8 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -39,6 +42,13 @@ public class HttpRssFeedAdapter implements FetchRssPort {
     private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36";
     private static final int MAX_RETRY_ATTEMPTS = 3;
     private static final int BASE_DELAY_MS = 1000;
+
+    @Value("${app.crawler.http.proxy.enabled:false}")
+    private boolean proxyEnabled;
+
+    @Value("${app.crawler.http.proxy.url:}")
+    private String proxyUrl;
+
     private int timeoutSeconds = 30;
 
     private final RestTemplate restTemplate;
@@ -55,7 +65,22 @@ public class HttpRssFeedAdapter implements FetchRssPort {
 
     @Override
     public RssFeed fetchRssFeed(String rssUrl) {
-        log.debug("Fetching RSS feed from: {}", rssUrl);
+        String originalUrl = rssUrl;
+        boolean usingProxy = false;
+
+        // 우아한형제들 URL인 경우 프록시 사용
+        if (proxyEnabled && !proxyUrl.isEmpty() && rssUrl.contains("techblog.woowahan.com")) {
+            try {
+                rssUrl = proxyUrl + URLEncoder.encode(rssUrl, StandardCharsets.UTF_8);
+                usingProxy = true;
+                log.info("Using CloudFlare Workers proxy for Woowahan RSS: {} -> {}", originalUrl, rssUrl);
+            } catch (Exception e) {
+                log.warn("Failed to encode URL for proxy, using original URL: {}", originalUrl, e);
+                rssUrl = originalUrl;
+            }
+        }
+
+        log.debug("Fetching RSS feed from: {} (proxy: {})", rssUrl, usingProxy);
 
         Exception lastException = null;
         
@@ -74,7 +99,7 @@ public class HttpRssFeedAdapter implements FetchRssPort {
                     throw new RssFetchException("Empty RSS content received from: " + rssUrl);
                 }
 
-                return parseRssContentFromStream(inputStream, rssUrl);
+                return parseRssContentFromStream(inputStream, originalUrl);
 
             } catch (HttpClientErrorException | HttpServerErrorException e) {
                 lastException = e;
@@ -131,25 +156,30 @@ public class HttpRssFeedAdapter implements FetchRssPort {
         headers.set("User-Agent", USER_AGENT);
         headers.set("Accept", "application/rss+xml, application/xml, text/xml, */*");
         headers.set("Accept-Language", "ko-KR,ko;q=0.9,en;q=0.8");
-        headers.set("Accept-Encoding", "gzip, deflate, br");
+
+        // 프록시 요청이 아닌 경우에만 압축 허용
+        if (!rssUrl.contains("workers.dev")) {
+            headers.set("Accept-Encoding", "gzip, deflate, br");
+        }
+
         headers.set("Cache-Control", "no-cache");
         headers.set("Connection", "keep-alive");
         headers.set("Referer", "https://www.google.com/");
-        
+
         HttpEntity<String> entity = new HttpEntity<>(headers);
-        
+
         ResponseEntity<byte[]> response = restTemplate.exchange(
-                rssUrl, 
-                HttpMethod.GET, 
-                entity, 
+                rssUrl,
+                HttpMethod.GET,
+                entity,
                 byte[].class
         );
-        
+
         byte[] body = response.getBody();
         if (body == null || body.length == 0) {
             throw new RssFetchException("Empty RSS content received from: " + rssUrl);
         }
-        
+
         return new ByteArrayInputStream(body);
     }
 
