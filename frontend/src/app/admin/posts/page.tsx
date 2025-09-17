@@ -156,7 +156,7 @@ export default function AdminPostsPage() {
                   placeholder="제목, 내용, 작성자 검색..."
                   value={filters.keyword}
                   onChange={(e) => handleFilterChange('keyword', e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800"
                 />
               </div>
             </div>
@@ -184,7 +184,7 @@ export default function AdminPostsPage() {
                   placeholder="블로그 ID"
                   value={filters.blogId}
                   onChange={(e) => handleFilterChange('blogId', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800"
                 />
               </div>
               <div>
@@ -194,7 +194,7 @@ export default function AdminPostsPage() {
                   placeholder="태그"
                   value={filters.tag}
                   onChange={(e) => handleFilterChange('tag', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800"
                 />
               </div>
               <div>
@@ -204,7 +204,7 @@ export default function AdminPostsPage() {
                   placeholder="카테고리"
                   value={filters.category}
                   onChange={(e) => handleFilterChange('category', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800"
                 />
               </div>
             </div>
