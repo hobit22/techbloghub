@@ -49,6 +49,10 @@ resource "aws_ecs_task_definition" "backend" {
         {
           name = "APP_ADMIN_PASSWORD"
           value = var.app_admin_password
+        },
+        {
+          name  = "RSS_PROXY_URL"
+          value = var.rss_proxy_url
         }
       ]
 

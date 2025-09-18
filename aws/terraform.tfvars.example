@@ -17,6 +17,9 @@ openai_api_key = "your_openai_api_key_here"
 # db_password = "MySecureP@ssw0rd123!"
 # openai_api_key = "sk-1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
 
-# Admin 
+# Admin
 app_admin_username = "your_app_admin_username"
 app_admin_password = "your_app_admin_password"
+
+# RSS Proxy Configuration (for bypassing IP blocking)
+rss_proxy_url     = "your_rss_proxy_url"

@@ -63,6 +63,13 @@ variable "app_admin_password" {
   # No default value for security - must be provided via terraform.tfvars
 }
 
+variable "rss_proxy_url" {
+  description = "RSS Proxy URL for bypassing IP blocking (CloudFlare Workers)"
+  type        = string
+  sensitive   = true
+  # No default value for security - must be provided via terraform.tfvars
+}
+
 # VPC 생성 또는 기존 VPC 사용
 data "aws_vpc" "default" {
   default = true
@@ -130,7 +137,7 @@ resource "aws_db_instance" "techbloghub" {
   publicly_accessible    = false
 
   # Maintenance settings
-  backup_retention_period = 7
+  backup_retention_period = 0
   backup_window          = "03:00-04:00"
   maintenance_window     = "sun:04:00-sun:05:00"
 

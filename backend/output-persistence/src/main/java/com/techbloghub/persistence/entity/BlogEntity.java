@@ -1,7 +1,7 @@
 package com.techbloghub.persistence.entity;
 
-import com.techbloghub.domain.model.Blog;
-import com.techbloghub.domain.model.BlogStatus;
+import com.techbloghub.domain.blog.model.Blog;
+import com.techbloghub.domain.blog.model.BlogStatus;
 import jakarta.persistence.*;
 import lombok.*;
 

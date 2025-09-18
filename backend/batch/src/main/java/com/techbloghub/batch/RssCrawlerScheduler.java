@@ -1,7 +1,7 @@
 package com.techbloghub.batch;
 
-import com.techbloghub.domain.model.CrawlingResult;
-import com.techbloghub.domain.port.in.CrawlRssUseCase;
+import com.techbloghub.domain.crawling.model.CrawlingResult;
+import com.techbloghub.domain.crawling.usecase.CrawlRssUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

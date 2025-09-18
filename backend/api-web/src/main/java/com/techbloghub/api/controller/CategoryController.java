@@ -1,7 +1,7 @@
 package com.techbloghub.api.controller;
 
 import com.techbloghub.api.dto.CategoryResponse;
-import com.techbloghub.domain.port.in.CategoryUseCase;
+import com.techbloghub.domain.tagging.manual.usecase.CategoryUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;

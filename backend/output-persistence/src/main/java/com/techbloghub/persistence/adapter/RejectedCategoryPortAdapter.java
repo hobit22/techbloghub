@@ -1,6 +1,6 @@
 package com.techbloghub.persistence.adapter;
 
-import com.techbloghub.domain.port.out.RejectedCategoryRepositoryPort;
+import com.techbloghub.domain.tagging.auto.port.RejectedCategoryRepositoryPort;
 import com.techbloghub.persistence.entity.PostEntity;
 import com.techbloghub.persistence.entity.RejectedCategoryEntity;
 import com.techbloghub.persistence.repository.PostRepository;

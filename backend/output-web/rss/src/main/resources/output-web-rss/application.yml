@@ -1,1 +1,10 @@
-# RSS Module - Environment-specific settings are managed by RssEnvironmentConfig
+# RSS Module Configuration
+app:
+  crawler:
+    http:
+      # CloudFlare Workers 프록시 설정 (IP 차단 우회용)
+      proxy:
+        enabled: true
+        url: ${RSS_PROXY_URL}
+        domains:
+          - "techblog.woowahan.com"

@@ -1,6 +1,6 @@
 package com.techbloghub.api.dto;
 
-import com.techbloghub.domain.model.SearchCondition;
+import com.techbloghub.domain.post.model.SearchCondition;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.springframework.data.domain.Sort;

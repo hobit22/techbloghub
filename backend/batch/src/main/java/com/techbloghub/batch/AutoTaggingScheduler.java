@@ -1,10 +1,10 @@
 package com.techbloghub.batch;
 
 
-import com.techbloghub.domain.model.TaggingProcessStatus;
-import com.techbloghub.domain.model.TaggingResult;
-import com.techbloghub.domain.port.in.AutoTaggingUseCase;
-import com.techbloghub.domain.port.out.PostRepositoryPort;
+import com.techbloghub.domain.tagging.auto.model.TaggingProcessStatus;
+import com.techbloghub.domain.tagging.auto.model.TaggingResult;
+import com.techbloghub.domain.tagging.auto.usecase.AutoTaggingUseCase;
+import com.techbloghub.domain.post.port.PostRepositoryPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

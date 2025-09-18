@@ -1,6 +1,6 @@
 package com.techbloghub.api.dto;
 
-import com.techbloghub.domain.model.Tag;
+import com.techbloghub.domain.tagging.manual.model.Tag;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;

@@ -1,6 +1,6 @@
 package com.techbloghub.api.dto;
 
-import com.techbloghub.domain.model.Blog;
+import com.techbloghub.domain.blog.model.Blog;
 import lombok.Builder;
 import lombok.Data;
 

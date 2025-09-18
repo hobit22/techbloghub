@@ -1,7 +1,7 @@
 package com.techbloghub.persistence.adapter;
 
-import com.techbloghub.domain.model.Category;
-import com.techbloghub.domain.port.out.CategoryRepositoryPort;
+import com.techbloghub.domain.tagging.manual.model.Category;
+import com.techbloghub.domain.tagging.manual.port.CategoryRepositoryPort;
 import com.techbloghub.persistence.entity.CategoryEntity;
 import com.techbloghub.persistence.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;

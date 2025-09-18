@@ -1,6 +1,6 @@
 package com.techbloghub.persistence.adapter;
 
-import com.techbloghub.domain.port.out.RejectedTagRepositoryPort;
+import com.techbloghub.domain.tagging.auto.port.RejectedTagRepositoryPort;
 import com.techbloghub.persistence.entity.PostEntity;
 import com.techbloghub.persistence.entity.RejectedTagEntity;
 import com.techbloghub.persistence.repository.PostRepository;

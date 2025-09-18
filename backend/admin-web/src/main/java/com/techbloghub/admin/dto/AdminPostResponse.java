@@ -1,7 +1,7 @@
 package com.techbloghub.admin.dto;
 
-import com.techbloghub.domain.model.Blog;
-import com.techbloghub.domain.model.Post;
+import com.techbloghub.domain.blog.model.Blog;
+import com.techbloghub.domain.post.model.Post;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;

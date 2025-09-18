@@ -2,8 +2,8 @@ package com.techbloghub.output.gpt.adapter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.techbloghub.domain.model.TaggingResult;
-import com.techbloghub.domain.port.out.LlmTaggerPort;
+import com.techbloghub.domain.tagging.auto.model.TaggingResult;
+import com.techbloghub.domain.tagging.auto.port.LlmTaggerPort;
 import com.techbloghub.output.gpt.template.PromptTemplate;
 import com.techbloghub.output.gpt.template.SchemeTemplate;
 import lombok.RequiredArgsConstructor;
