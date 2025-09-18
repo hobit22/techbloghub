@@ -34,27 +34,4 @@ public class Category {
     public String getNormalizedName() {
         return name != null ? name.trim() : null;
     }
-    
-    /**
-     * 카테고리가 특정 키워드와 매치되는지 확인
-     */
-    public boolean matches(String keyword) {
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return false;
-        }
-        return getNormalizedName().toLowerCase().contains(keyword.trim().toLowerCase());
-    }
-    
-    /**
-     * 카테고리가 기술 관련 카테고리인지 확인하는 비즈니스 로직
-     */
-    public boolean isTechCategory() {
-        if (name == null) return false;
-        String normalizedName = getNormalizedName().toLowerCase();
-        return normalizedName.contains("tech") || 
-               normalizedName.contains("development") || 
-               normalizedName.contains("programming") ||
-               normalizedName.contains("backend") ||
-               normalizedName.contains("frontend");
-    }
 }

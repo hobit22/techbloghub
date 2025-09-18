@@ -21,28 +21,5 @@ public class Tag {
     private final String tagGroup;  // 태그 그룹 (language, frontend-framework, etc.)
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
-    
-    /**
-     * 태그가 유효한지 검증하는 도메인 규칙
-     */
-    public boolean isValid() {
-        return name != null && !name.trim().isEmpty() && name.length() <= 50;
-    }
-    
-    /**
-     * 태그 이름 정규화 (소문자, 공백 제거)
-     */
-    public String getNormalizedName() {
-        return name != null ? name.trim().toLowerCase() : null;
-    }
-    
-    /**
-     * 태그가 특정 키워드와 매치되는지 확인
-     */
-    public boolean matches(String keyword) {
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return false;
-        }
-        return getNormalizedName().contains(keyword.trim().toLowerCase());
-    }
+
 }
