@@ -1,7 +1,7 @@
 package com.techbloghub.output.rss.parser;
 
-import com.techbloghub.domain.model.RssFeed;
-import com.techbloghub.domain.port.out.FetchRssPort.RssFetchException;
+import com.techbloghub.domain.crawling.model.RssFeed;
+import com.techbloghub.domain.crawling.port.FetchRssPort.RssFetchException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

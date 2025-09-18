@@ -1,6 +1,6 @@
 package com.techbloghub.output.rss.adapter;
 
-import com.techbloghub.domain.model.RssFeed;
+import com.techbloghub.domain.crawling.model.RssFeed;
 import com.techbloghub.output.rss.client.HttpRssClient;
 import com.techbloghub.output.rss.parser.RssContentParser;
 import com.techbloghub.output.rss.proxy.ProxyUrlResolver;

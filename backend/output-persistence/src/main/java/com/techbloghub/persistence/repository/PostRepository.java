@@ -1,6 +1,6 @@
 package com.techbloghub.persistence.repository;
 
-import com.techbloghub.domain.model.TaggingProcessStatus;
+import com.techbloghub.domain.tagging.auto.model.TaggingProcessStatus;
 import com.techbloghub.persistence.entity.PostEntity;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;

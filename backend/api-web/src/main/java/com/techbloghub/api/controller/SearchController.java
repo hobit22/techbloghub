@@ -2,7 +2,7 @@ package com.techbloghub.api.controller;
 
 import com.techbloghub.api.dto.PostResponse;
 import com.techbloghub.api.dto.SearchRequest;
-import com.techbloghub.domain.port.in.SearchUseCase;
+import com.techbloghub.domain.post.usecase.SearchUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

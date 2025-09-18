@@ -1,8 +1,8 @@
 package com.techbloghub.persistence.adapter;
 
-import com.techbloghub.domain.model.Post;
-import com.techbloghub.domain.model.Tag;
-import com.techbloghub.domain.port.out.PostTagRepositoryPort;
+import com.techbloghub.domain.post.model.Post;
+import com.techbloghub.domain.tagging.manual.model.Tag;
+import com.techbloghub.domain.post.port.PostTagRepositoryPort;
 import com.techbloghub.persistence.entity.PostTagEntity;
 import com.techbloghub.persistence.repository.PostTagRepository;
 import lombok.RequiredArgsConstructor;

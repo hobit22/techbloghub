@@ -1,6 +1,6 @@
 package com.techbloghub.output.rss.client;
 
-import com.techbloghub.domain.port.out.FetchRssPort.RssFetchException;
+import com.techbloghub.domain.crawling.port.FetchRssPort.RssFetchException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;

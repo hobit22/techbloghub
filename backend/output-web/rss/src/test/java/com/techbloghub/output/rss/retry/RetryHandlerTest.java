@@ -1,6 +1,6 @@
 package com.techbloghub.output.rss.retry;
 
-import com.techbloghub.domain.port.out.FetchRssPort.RssFetchException;
+import com.techbloghub.domain.crawling.port.FetchRssPort.RssFetchException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;

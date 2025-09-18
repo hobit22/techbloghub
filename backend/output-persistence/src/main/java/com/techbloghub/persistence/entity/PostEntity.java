@@ -1,10 +1,9 @@
 package com.techbloghub.persistence.entity;
 
-import com.techbloghub.domain.model.Post;
-import com.techbloghub.domain.model.TaggingProcessStatus;
+import com.techbloghub.domain.post.model.Post;
+import com.techbloghub.domain.tagging.auto.model.TaggingProcessStatus;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;

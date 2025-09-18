@@ -1,9 +1,9 @@
 package com.techbloghub.persistence.adapter;
 
-import com.techbloghub.domain.model.Post;
-import com.techbloghub.domain.model.SearchCondition;
-import com.techbloghub.domain.model.TaggingProcessStatus;
-import com.techbloghub.domain.port.out.PostRepositoryPort;
+import com.techbloghub.domain.post.model.Post;
+import com.techbloghub.domain.post.model.SearchCondition;
+import com.techbloghub.domain.tagging.auto.model.TaggingProcessStatus;
+import com.techbloghub.domain.post.port.PostRepositoryPort;
 import com.techbloghub.persistence.entity.PostEntity;
 import com.techbloghub.persistence.repository.PostRepository;
 import lombok.RequiredArgsConstructor;

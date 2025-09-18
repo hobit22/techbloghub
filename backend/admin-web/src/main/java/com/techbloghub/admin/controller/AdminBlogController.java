@@ -2,10 +2,10 @@ package com.techbloghub.admin.controller;
 
 import com.techbloghub.admin.dto.AdminBlogCreateRequest;
 import com.techbloghub.admin.dto.AdminBlogResponse;
-import com.techbloghub.domain.model.Blog;
-import com.techbloghub.domain.model.CrawlingResult;
-import com.techbloghub.domain.port.in.BlogUseCase;
-import com.techbloghub.domain.port.in.CrawlRssUseCase;
+import com.techbloghub.domain.blog.model.Blog;
+import com.techbloghub.domain.crawling.model.CrawlingResult;
+import com.techbloghub.domain.blog.usecase.BlogUseCase;
+import com.techbloghub.domain.crawling.usecase.CrawlRssUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

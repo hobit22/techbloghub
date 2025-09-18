@@ -1,6 +1,6 @@
 package com.techbloghub.persistence.entity;
 
-import com.techbloghub.domain.model.Tag;
+import com.techbloghub.domain.tagging.manual.model.Tag;
 import jakarta.persistence.*;
 import lombok.*;
 

@@ -1,8 +1,8 @@
 package com.techbloghub.api.controller;
 
 import com.techbloghub.api.dto.BlogResponse;
-import com.techbloghub.domain.model.Blog;
-import com.techbloghub.domain.port.in.BlogUseCase;
+import com.techbloghub.domain.blog.model.Blog;
+import com.techbloghub.domain.blog.usecase.BlogUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;

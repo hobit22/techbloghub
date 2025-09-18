@@ -1,7 +1,7 @@
 package com.techbloghub.persistence.adapter;
 
-import com.techbloghub.domain.model.Blog;
-import com.techbloghub.domain.port.out.BlogRepositoryPort;
+import com.techbloghub.domain.blog.model.Blog;
+import com.techbloghub.domain.blog.port.BlogRepositoryPort;
 import com.techbloghub.persistence.entity.BlogEntity;
 import com.techbloghub.persistence.repository.BlogRepository;
 import lombok.RequiredArgsConstructor;

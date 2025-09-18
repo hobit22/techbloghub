@@ -55,3 +55,27 @@ spring:
   sql:
     init:
       mode: NEVER
+---
+# Supabase profile
+spring:
+  config:
+    activate:
+      on-profile: supabase
+
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+      ddl-auto: update
+    show-sql: false
+
+  sql:
+    init:
+      mode: NEVER

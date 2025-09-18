@@ -4,9 +4,9 @@ import com.rometools.rome.feed.synd.SyndEntry;
 import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.SyndFeedInput;
 import com.rometools.rome.io.XmlReader;
-import com.techbloghub.domain.model.RssEntry;
-import com.techbloghub.domain.model.RssFeed;
-import com.techbloghub.domain.port.out.FetchRssPort.RssFetchException;
+import com.techbloghub.domain.crawling.model.RssEntry;
+import com.techbloghub.domain.crawling.model.RssFeed;
+import com.techbloghub.domain.crawling.port.FetchRssPort.RssFetchException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
