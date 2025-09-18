@@ -79,7 +79,7 @@ export default function AddBlogModal({ isOpen, onClose, onSuccess }: AddBlogModa
         rssUrl: formData.rssUrl.trim(),
         siteUrl: formData.siteUrl.trim(),
         logoUrl: formData.logoUrl.trim() || undefined,
-        description: formData.description.trim() || undefined,
+        description: formData.description.trim() || undefined
       });
 
       // 성공시 폼 초기화 및 모달 닫기

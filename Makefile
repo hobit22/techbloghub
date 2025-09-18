@@ -13,8 +13,6 @@ dev: ## Start development environment
 	cd docker && docker-compose -f docker-compose.dev.yml up -d
 	@echo "Development services started:"
 	@echo "  - PostgreSQL: localhost:5432"
-	@echo "  - Elasticsearch: localhost:9200"
-	@echo "  - Kibana: localhost:5601"
 
 dev-down: ## Stop development environment
 	@echo "Stopping development environment..."
