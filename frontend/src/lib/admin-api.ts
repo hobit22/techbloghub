@@ -16,8 +16,8 @@ const createAdminApi = () => {
   // 요청 인터셉터: Basic Auth 헤더 자동 추가
   api.interceptors.request.use(
     (config) => {
-      if (typeof window !== "undefined") {
-        const auth = localStorage.getItem("admin-auth");
+      if (typeof window !== 'undefined') {
+        const auth = localStorage.getItem('admin-auth');
         if (auth) {
           config.headers.Authorization = `Basic ${auth}`;
         }
@@ -31,9 +31,9 @@ const createAdminApi = () => {
   api.interceptors.response.use(
     (response) => response,
     (error) => {
-      if (error.response?.status === 401 && typeof window !== "undefined") {
-        localStorage.removeItem("admin-auth");
-        window.location.href = "/admin/login";
+      if (error.response?.status === 401 && typeof window !== 'undefined') {
+        localStorage.removeItem('admin-auth');
+        window.location.href = '/admin/login';
       }
       return Promise.reject(error);
     }
@@ -46,16 +46,14 @@ const adminApi = createAdminApi();
 
 // 관리자 포스트 API
 export const adminPostApi = {
-  getAll: (
-    params: {
-      keyword?: string;
-      blogId?: number;
-      tag?: string;
-      category?: string;
-      page?: number;
-      size?: number;
-    } = {}
-  ): Promise<PageResponse<Post>> =>
+  getAll: (params: {
+    keyword?: string;
+    blogId?: number;
+    tag?: string;
+    category?: string;
+    page?: number;
+    size?: number;
+  } = {}): Promise<PageResponse<Post>> =>
     adminApi.get("/api/admin/posts", { params }).then((res) => res.data),
 
   getById: (id: number): Promise<Post> =>
@@ -73,12 +71,10 @@ export const adminPostApi = {
 
 // 관리자 블로그 API
 export const adminBlogApi = {
-  getAll: (
-    params: {
-      page?: number;
-      size?: number;
-    } = {}
-  ): Promise<PageResponse<Blog>> =>
+  getAll: (params: {
+    page?: number;
+    size?: number;
+  } = {}): Promise<PageResponse<Blog>> =>
     adminApi.get("/api/admin/blogs", { params }).then((res) => res.data),
 
   getActive: (): Promise<Blog[]> =>
@@ -87,9 +83,14 @@ export const adminBlogApi = {
   getById: (id: number): Promise<Blog> =>
     adminApi.get(`/api/admin/blogs/${id}`).then((res) => res.data),
 
-  create: (
-    data: Omit<Blog, "id" | "createdAt" | "updatedAt" | "status">
-  ): Promise<Blog> =>
+  create: (data: {
+    name: string;
+    company: string;
+    rssUrl: string;
+    siteUrl: string;
+    logoUrl?: string;
+    description?: string;
+  }): Promise<Blog> =>
     adminApi.post("/api/admin/blogs", data).then((res) => res.data),
 
   triggerRecrawl: (id: number): Promise<string> =>
@@ -105,20 +106,20 @@ export const adminBlogApi = {
 // 인증 관련 유틸리티
 export const adminAuth = {
   isLoggedIn: (): boolean => {
-    if (typeof window === "undefined") return false;
-    return !!localStorage.getItem("admin-auth");
+    if (typeof window === 'undefined') return false;
+    return !!localStorage.getItem('admin-auth');
   },
 
   logout: (): void => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("admin-auth");
-      window.location.href = "/admin/login";
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('admin-auth');
+      window.location.href = '/admin/login';
     }
   },
 
   getAuth: (): string | null => {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("admin-auth");
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('admin-auth');
   },
 };
 

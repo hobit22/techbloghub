@@ -3,13 +3,15 @@
 import { useEffect, useState } from 'react';
 import { adminBlogApi } from '@/lib/admin-api';
 import { Blog } from '@/types';
-import { RefreshCw, Globe, Activity, Calendar, AlertCircle, CheckCircle } from 'lucide-react';
+import { RefreshCw, Globe, Activity, Calendar, AlertCircle, CheckCircle, Plus } from 'lucide-react';
+import AddBlogModal from '@/components/admin/AddBlogModal';
 
 export default function AdminBlogsPage() {
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [triggering, setTriggering] = useState<number | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   useEffect(() => {
     loadBlogs();
@@ -96,6 +98,13 @@ export default function AdminBlogsPage() {
           <p className="text-gray-600 mt-1">등록된 블로그 목록 및 크롤링 관리</p>
         </div>
         <div className="flex space-x-3">
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            <Plus className="w-4 h-4 mr-2 inline" />
+            블로그 추가
+          </button>
           <button
             onClick={loadBlogs}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -251,6 +260,13 @@ export default function AdminBlogsPage() {
           </div>
         )}
       </div>
+
+      {/* 블로그 추가 모달 */}
+      <AddBlogModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={loadBlogs}
+      />
     </div>
   );
 }
