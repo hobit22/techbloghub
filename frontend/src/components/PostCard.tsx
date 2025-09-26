@@ -7,6 +7,7 @@ import { ko } from 'date-fns/locale';
 import { useUrlState } from '@/hooks/useUrlState';
 import { useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 interface PostCardProps {
   post: Post;
@@ -15,9 +16,10 @@ interface PostCardProps {
 export default function PostCard({ post }: PostCardProps) {
   const { setTags, setCategories, setBlogIds } = useUrlState();
   const [logoError, setLogoError] = useState(false);
-  
+  const router = useRouter();
+
   const handleClick = () => {
-    window.open(post.originalUrl, '_blank');
+    router.push(`/posts/${post.id}`);
   };
 
   const handleTagClick = (e: React.MouseEvent, tag: string) => {

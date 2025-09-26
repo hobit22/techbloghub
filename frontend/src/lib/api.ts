@@ -99,3 +99,8 @@ export const searchApi = {
       .then((res) => res.data);
   },
 };
+
+export const postApi = {
+  getById: (id: number): Promise<Post> =>
+    api.get(`/api/posts/${id}`).then((res) => res.data),
+};
