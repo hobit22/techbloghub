@@ -5,16 +5,17 @@ import { useParams, useRouter } from 'next/navigation';
 import { usePost } from '@/hooks/usePost';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { ArrowLeft, ExternalLink, User, Clock, Building2, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, ExternalLink, User, Clock, Building2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import CategoryChip from '@/components/CategoryChip';
+import ClickableTagChip from '@/components/ClickableTagChip';
 
 export default function PostDetailPage() {
   const params = useParams();
   const router = useRouter();
   const postId = parseInt(params.id as string);
   const { data: post, isLoading, error } = usePost(postId);
-  const [showFullContent, setShowFullContent] = useState(false);
   const [logoError, setLogoError] = useState(false);
 
   if (isLoading) {
@@ -129,22 +130,10 @@ export default function PostDetailPage() {
             {/* Tags and Categories */}
             <div className="flex flex-wrap gap-2">
               {post.categories && post.categories.length > 0 && post.categories.map((category) => (
-                <span
-                  key={category}
-                  className="inline-flex items-center px-3 py-1 text-sm font-medium text-emerald-700
-                           bg-emerald-50 border border-emerald-200 rounded-full"
-                >
-                  {category}
-                </span>
+                <CategoryChip key={category} category={category} />
               ))}
               {post.tags && post.tags.length > 0 && post.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center px-3 py-1 text-sm font-medium text-slate-600
-                           bg-slate-100 rounded-full"
-                >
-                  #{tag}
-                </span>
+                <ClickableTagChip key={tag} tag={tag} />
               ))}
             </div>
           </div>
@@ -152,52 +141,11 @@ export default function PostDetailPage() {
           {/* Content */}
           <div className="p-6">
             {/* Summary Content */}
+            <h2 className="text-lg font-bold text-slate-900 mb-4">AI 요약 내용</h2>
             {post.summaryContent && (
-              <div className="mb-6">
-                <h2 className="text-lg font-semibold text-slate-900 mb-3">요약</h2>
-                <div className="prose prose-slate max-w-none">
-                  <div className="whitespace-pre-wrap text-slate-700 leading-relaxed">
-                    {post.summaryContent}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Full Content Toggle */}
-            {post.totalContent && (
-              <div className="mb-6">
-                <button
-                  onClick={() => setShowFullContent(!showFullContent)}
-                  className="flex items-center space-x-2 text-blue-600 hover:text-blue-700
-                           font-medium transition-colors mb-3"
-                >
-                  <span>{showFullContent ? '전체 내용 숨기기' : '전체 내용 보기'}</span>
-                  {showFullContent ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </button>
-
-                {showFullContent && (
-                  <div className="prose prose-slate max-w-none">
-                    <div className="whitespace-pre-wrap text-slate-700 leading-relaxed bg-slate-50
-                                   rounded-lg p-4 border border-slate-200">
-                      {post.totalContent}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Original content preview */}
-            {post.content && (
-              <div className="mb-6">
-                <h2 className="text-lg font-semibold text-slate-900 mb-3">원본 미리보기</h2>
-                <div className="prose prose-slate max-w-none">
-                  <div className="whitespace-pre-wrap text-slate-700 leading-relaxed">
-                    {post.content}
-                  </div>
+              <div className="prose prose-slate max-w-none">
+                <div className="whitespace-pre-wrap text-slate-700 leading-relaxed">
+                  {post.summaryContent}
                 </div>
               </div>
             )}

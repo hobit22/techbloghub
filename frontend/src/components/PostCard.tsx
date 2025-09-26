@@ -8,6 +8,8 @@ import { useUrlState } from '@/hooks/useUrlState';
 import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import CategoryChip from './CategoryChip';
+import ClickableTagChip from './ClickableTagChip';
 
 interface PostCardProps {
   post: Post;
@@ -116,24 +118,18 @@ export default function PostCard({ post }: PostCardProps) {
           {/* Tags and Categories */}
           <div className="flex flex-wrap gap-2 mb-3">
             {post.categories && post.categories.length > 0 && post.categories.slice(0, 2).map((category) => (
-              <span
+              <CategoryChip
                 key={category}
-                onClick={(e) => handleCategoryClick(e, category)}
-                className="inline-flex items-center px-2 py-1 text-xs font-medium text-emerald-700 
-                         bg-emerald-50 border border-emerald-200 rounded-md cursor-pointer hover:bg-emerald-100 transition-colors"
-              >
-                {category}
-              </span>
+                category={category}
+                onClick={handleCategoryClick}
+              />
             ))}
             {post.tags && post.tags.length > 0 && post.tags.slice(0, 4).map((tag) => (
-              <span
+              <ClickableTagChip
                 key={tag}
-                onClick={(e) => handleTagClick(e, tag)}
-                className="inline-flex items-center px-2 py-1 text-xs font-medium text-slate-600 
-                         bg-slate-100 hover:bg-slate-200 rounded-md transition-colors cursor-pointer"
-              >
-                #{tag}
-              </span>
+                tag={tag}
+                onClick={handleTagClick}
+              />
             ))}
           </div>
 
