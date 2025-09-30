@@ -24,6 +24,8 @@ export interface Post {
   blog: BlogInfo;
   tags?: string[] | null;
   categories?: string[] | null;
+  totalContent?: string;
+  summaryContent?: string;
 }
 
 export interface BlogInfo {

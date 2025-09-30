@@ -78,6 +78,12 @@ public class PostEntity extends BaseEntity {
     @Builder.Default
     private TaggingProcessStatus taggingProcessStatus = TaggingProcessStatus.NOT_PROCESSED;
 
+    @Column(name = "total_content", columnDefinition = "TEXT")
+    private String totalContent;
+
+    @Column(name = "summary_content", columnDefinition = "TEXT")
+    private String summaryContent;
+
     public Post toDomain() {
         return Post.builder()
                 .id(id)
@@ -100,6 +106,8 @@ public class PostEntity extends BaseEntity {
                         .map(pc -> pc.getCategory().toDomain())
                         .collect(Collectors.toSet()) : Set.of())
                 .taggingProcessStatus(taggingProcessStatus)
+                .totalContent(totalContent)
+                .summaryContent(summaryContent)
                 .build();
     }
     
@@ -118,6 +126,8 @@ public class PostEntity extends BaseEntity {
                 .author(post.getAuthor())
                 .publishedAt(post.getPublishedAt())
                 .taggingProcessStatus(post.getTaggingProcessStatus() != null ? post.getTaggingProcessStatus() : TaggingProcessStatus.NOT_PROCESSED)
+                .totalContent(post.getTotalContent())
+                .summaryContent(post.getSummaryContent())
                 .blog(blogEntity)
                 .build();
     }

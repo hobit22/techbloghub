@@ -389,7 +389,7 @@ export default function UnifiedSearchInput({
             <div className="p-2">
               {filteredTagSuggestions.map((tag, index) => (
                 <button
-                  key={tag.id}
+                  key={tag.id && tag.id !== 0 ? tag.id : `tag-${index}-${tag.name}`}
                   ref={(el) => {
                     suggestionRefs.current[index] = el;
                   }}

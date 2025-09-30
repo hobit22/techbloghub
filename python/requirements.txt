@@ -1,0 +1,30 @@
+# LangChain ecosystem with compatible versions
+langchain==0.3.0
+langchain-openai==0.2.0
+langchain-community==0.3.0
+langchain-core==0.3.0
+
+# Web scraping
+playwright>=1.49.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+markdownify>=1.2.0
+html2text>=2025.4.15
+langchain-experimental>=0.3.0
+
+# Database
+pandas>=1.5.0
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.0
+
+# Core dependencies
+python-dotenv>=1.0.0
+pydantic==2.10.6
+requests>=2.31.0
+
+# ML for Hugging Face
+torch>=2.0.0
+transformers>=4.21.0
+
+# Development
+jupyter>=1.0.0

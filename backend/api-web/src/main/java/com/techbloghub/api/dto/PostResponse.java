@@ -43,6 +43,12 @@ public class PostResponse {
     @Schema(description = "카테고리 목록", example = "[\"Backend\", \"Framework\"]")
     private Set<String> categories;
 
+    @Schema(description = "글 전체")
+    private String totalContent;
+
+    @Schema(description = "요약 정보")
+    private String summaryContent;
+
     @Data
     @Builder
     @Schema(description = "블로그 정보")
@@ -76,6 +82,8 @@ public class PostResponse {
                 .blog(post.getBlog() != null ? BlogInfo.from(post.getBlog()) : null)
                 .tags(post.getTagNames())
                 .categories(post.getCategoryNames())
+                .totalContent(post.getTotalContent())
+                .summaryContent(post.getSummaryContent())
                 .build();
     }
 }

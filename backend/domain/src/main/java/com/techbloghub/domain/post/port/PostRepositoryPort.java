@@ -84,4 +84,12 @@ public interface PostRepositoryPort {
      * @return 업데이트된 포스트
      */
     Optional<Post> updatePost(Post post);
+
+    /**
+     * total_content가 있는 포스트들을 조회 (테스트용)
+     *
+     * @param limit 최대 조회 개수
+     * @return total_content가 있는 포스트 목록
+     */
+    List<Post> findPostsWithTotalContent(int limit);
 }
