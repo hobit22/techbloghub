@@ -16,4 +16,6 @@ public interface PostRepositoryCustom {
     List<PostEntity> findByTaggingStatus(TaggingProcessStatus status, int limit);
 
     Map<TaggingProcessStatus, Long> getTaggingStatusStatistics();
+
+    List<PostEntity> findPostsWithTotalContent(int limit);
 }

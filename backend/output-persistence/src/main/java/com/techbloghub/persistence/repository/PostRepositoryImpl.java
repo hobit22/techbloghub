@@ -101,6 +101,16 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 ));
     }
 
+    @Override
+    public List<PostEntity> findPostsWithTotalContent(int limit) {
+        return queryFactory.selectFrom(post)
+                .where(
+                        post.totalContent.isNotNull()
+                )
+                .limit(limit)
+                .fetch();
+    }
+
 
     private BooleanExpression keywordCondition(String keyword) {
         return hasText(keyword) ?

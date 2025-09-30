@@ -150,4 +150,18 @@ public class PostAdapter implements PostRepositoryPort {
         }
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<Post> findPostsWithTotalContent(int limit) {
+        try {
+            List<PostEntity> entities = postRepository.findPostsWithTotalContent(limit);
+            return entities.stream()
+                .map(PostEntity::toDomain)
+                .toList();
+        } catch (Exception e) {
+            log.error("Failed to find posts with total content", e);
+            throw new RuntimeException("Failed to find posts with total content", e);
+        }
+    }
+
 }
