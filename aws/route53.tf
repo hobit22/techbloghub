@@ -10,33 +10,25 @@ resource "aws_route53_zone" "techbloghub" {
   }
 }
 
-# 루트 도메인 A 레코드 (ALB 연결)
+# 루트 도메인 A 레코드 (Vercel)
 resource "aws_route53_record" "root" {
   zone_id = aws_route53_zone.techbloghub.zone_id
   name    = "teckbloghub.kr"
   type    = "A"
-
-  alias {
-    name                   = aws_lb.techbloghub.dns_name
-    zone_id                = aws_lb.techbloghub.zone_id
-    evaluate_target_health = true
-  }
+  ttl     = 300
+  records = ["216.198.79.1"]
 }
 
-# www 서브도메인 A 레코드 (ALB 연결)
+# www 서브도메인 CNAME 레코드 (Vercel)
 resource "aws_route53_record" "www" {
   zone_id = aws_route53_zone.techbloghub.zone_id
   name    = "www.teckbloghub.kr"
-  type    = "A"
-
-  alias {
-    name                   = aws_lb.techbloghub.dns_name
-    zone_id                = aws_lb.techbloghub.zone_id
-    evaluate_target_health = true
-  }
+  type    = "CNAME"
+  ttl     = 300
+  records = ["88676321232fb98d.vercel-dns-017.com"]
 }
 
-# API 서브도메인 A 레코드 (ALB 연결)
+# API 서브도메인 A 레코드 (ALB 연결 - Backend)
 resource "aws_route53_record" "api" {
   zone_id = aws_route53_zone.techbloghub.zone_id
   name    = "api.teckbloghub.kr"

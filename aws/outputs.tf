@@ -34,11 +34,6 @@ output "ecr_backend_repository" {
   value       = aws_ecr_repository.backend.repository_url
 }
 
-output "ecr_frontend_repository" {
-  description = "Frontend ECR repository URL"
-  value       = aws_ecr_repository.frontend.repository_url
-}
-
 # ECS
 output "ecs_cluster_arn" {
   description = "ECS Cluster ARN"
@@ -50,22 +45,16 @@ output "backend_service_name" {
   value       = aws_ecs_service.backend.name
 }
 
-output "frontend_service_name" {
-  description = "Frontend ECS service name"
-  value       = aws_ecs_service.frontend.name
-}
-
 # Deployment Information
 output "deployment_info" {
   description = "Deployment summary"
   value = {
-    application_url    = "https://teckbloghub.kr"
+    frontend_url       = "https://teckbloghub.kr (Vercel)"
     backend_api_url    = "https://api.teckbloghub.kr"
-    backend_health     = "https://teckbloghub.kr/actuator/health"
+    backend_health     = "https://api.teckbloghub.kr/actuator/health"
     swagger_ui         = "https://api.teckbloghub.kr/swagger-ui.html"
     ecs_cluster        = aws_ecs_cluster.techbloghub.name
     backend_service    = aws_ecs_service.backend.name
-    frontend_service   = aws_ecs_service.frontend.name
     ssl_certificate    = "Active"
     nameservers_info   = "가비아에서 네임서버를 변경하세요"
   }

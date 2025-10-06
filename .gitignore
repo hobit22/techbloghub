@@ -81,3 +81,4 @@ terraform.tfplan.*
 *.key
 aws-credentials
 .aws/
+.vercel
