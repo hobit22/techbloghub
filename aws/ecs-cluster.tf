@@ -143,31 +143,6 @@ resource "aws_lb" "techbloghub" {
   }
 }
 
-# Frontend Target Group (Port 3000)
-resource "aws_lb_target_group" "frontend" {
-  name        = "techbloghub-frontend-tg"
-  port        = 3000
-  protocol    = "HTTP"
-  vpc_id      = data.aws_vpc.default.id
-  target_type = "ip"
-
-  health_check {
-    enabled             = true
-    healthy_threshold   = 2
-    interval            = 30
-    matcher             = "200"
-    path                = "/health"
-    port                = "traffic-port"
-    protocol            = "HTTP"
-    timeout             = 5
-    unhealthy_threshold = 2
-  }
-
-  tags = {
-    Name = "TechBlogHub Frontend Target Group"
-  }
-}
-
 # Backend Target Group (Port 8080)
 resource "aws_lb_target_group" "backend" {
   name        = "techbloghub-backend-tg"
@@ -210,7 +185,7 @@ resource "aws_lb_listener" "http_redirect" {
   }
 }
 
-# ALB Listener (HTTPS) - 메인 리스너
+# ALB Listener (HTTPS) - 메인 리스너 (Backend로 전달)
 resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.techbloghub.arn
   port              = "443"
@@ -220,41 +195,7 @@ resource "aws_lb_listener" "https" {
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.frontend.arn
-  }
-}
-
-# Backend API용 Listener Rule (HTTPS)
-resource "aws_lb_listener_rule" "backend_api" {
-  listener_arn = aws_lb_listener.https.arn
-  priority     = 100
-
-  action {
-    type             = "forward"
     target_group_arn = aws_lb_target_group.backend.arn
-  }
-
-  condition {
-    path_pattern {
-      values = ["/api/*", "/actuator/*", "/swagger-ui/*", "/v3/api-docs/*"]
-    }
-  }
-}
-
-# 도메인별 라우팅 (api.teckbloghub.kr -> Backend)
-resource "aws_lb_listener_rule" "api_subdomain" {
-  listener_arn = aws_lb_listener.https.arn
-  priority     = 50
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.backend.arn
-  }
-
-  condition {
-    host_header {
-      values = ["api.teckbloghub.kr"]
-    }
   }
 }
 
