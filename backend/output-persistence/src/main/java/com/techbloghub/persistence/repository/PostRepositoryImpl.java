@@ -40,14 +40,27 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     public Page<PostEntity> searchPosts(SearchCondition searchCondition, Pageable pageable) {
         OrderSpecifier<?> orderSpecifier = buildOrderSpecifier(searchCondition, pageable);
 
-        List<PostEntity> content = queryFactory
+        boolean needTagJoin = searchCondition.getTags() != null && !searchCondition.getTags().isEmpty();
+        boolean needCategoryJoin = searchCondition.getCategories() != null && !searchCondition.getCategories().isEmpty();
+
+        var query = queryFactory
                 .selectFrom(post)
                 .distinct()
-                .leftJoin(post.blog).fetchJoin()
-                .leftJoin(post.postTags, postTag).fetchJoin()
-                .leftJoin(postTag.tag, tag).fetchJoin()
-                .leftJoin(post.postCategories, postCategory).fetchJoin()
-                .leftJoin(postCategory.category, category).fetchJoin()
+                .leftJoin(post.blog).fetchJoin();
+
+        // Only join tags if needed for filtering
+        if (needTagJoin) {
+            query.leftJoin(post.postTags, postTag).fetchJoin()
+                 .leftJoin(postTag.tag, tag).fetchJoin();
+        }
+
+        // Only join categories if needed for filtering
+        if (needCategoryJoin) {
+            query.leftJoin(post.postCategories, postCategory).fetchJoin()
+                 .leftJoin(postCategory.category, category).fetchJoin();
+        }
+
+        List<PostEntity> content = query
                 .where(
                         keywordCondition(searchCondition.getKeyword()),
                         blogIdCondition(searchCondition.getBlogIds()),
