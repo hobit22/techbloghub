@@ -28,15 +28,15 @@ resource "aws_ecs_task_definition" "backend" {
         },
         {
           name  = "DATABASE_URL"
-          value = "jdbc:postgresql://${aws_db_instance.techbloghub.endpoint}/${var.db_name}"
+          value = var.database_url
         },
         {
           name  = "DATABASE_USERNAME"
-          value = var.db_username
+          value = var.database_username
         },
         {
           name  = "DATABASE_PASSWORD"
-          value = var.db_password
+          value = var.database_password
         },
         {
           name  = "OPENAI_API_KEY"

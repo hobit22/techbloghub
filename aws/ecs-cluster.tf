@@ -51,20 +51,11 @@ resource "aws_security_group" "ecs_tasks" {
   vpc_id      = data.aws_vpc.default.id
 
   ingress {
-    from_port       = 3000
-    to_port         = 3000
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb.id]
-  }
-
-  ingress {
     from_port       = 8080
     to_port         = 8080
     protocol        = "tcp"
     security_groups = [aws_security_group.alb.id]
   }
-
-  # HTTP/HTTPS 및 DNS 아웃바운드 (RDS는 별도 rule로)
 
   egress {
     from_port   = 80
@@ -80,7 +71,6 @@ resource "aws_security_group" "ecs_tasks" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # DNS 해석을 위한 아웃바운드 (RDS 엔드포인트 도메인 해석용)
   egress {
     from_port   = 53
     to_port     = 53
@@ -106,26 +96,6 @@ resource "aws_security_group" "ecs_tasks" {
   tags = {
     Name = "TechBlogHub ECS Tasks Security Group"
   }
-}
-
-# ECS Tasks에서 RDS로 접근 허용 (아웃바운드)
-resource "aws_security_group_rule" "ecs_to_rds" {
-  type                     = "egress"
-  from_port                = 5432
-  to_port                  = 5432
-  protocol                 = "tcp"
-  source_security_group_id = aws_security_group.rds.id
-  security_group_id        = aws_security_group.ecs_tasks.id
-}
-
-# RDS에서 ECS Tasks 접근 허용 (별도 rule로 순환 참조 방지)  
-resource "aws_security_group_rule" "rds_from_ecs" {
-  type                     = "ingress"
-  from_port                = 5432
-  to_port                  = 5432
-  protocol                 = "tcp"
-  source_security_group_id = aws_security_group.ecs_tasks.id
-  security_group_id        = aws_security_group.rds.id
 }
 
 # Application Load Balancer

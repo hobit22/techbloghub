@@ -1,17 +1,5 @@
 # 전체 Outputs
 
-# Database
-output "database_endpoint" {
-  description = "RDS PostgreSQL endpoint"
-  value       = aws_db_instance.techbloghub.endpoint
-}
-
-output "database_connection_url" {
-  description = "Complete database connection URL"
-  value       = "jdbc:postgresql://${aws_db_instance.techbloghub.endpoint}:${aws_db_instance.techbloghub.port}/${var.db_name}"
-  sensitive   = true
-}
-
 # Load Balancer & Domain
 output "application_url" {
   description = "Application URL (HTTPS)"
