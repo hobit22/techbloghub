@@ -46,10 +46,19 @@ class DatabaseManager:
     def _create_engine(self) -> Engine:
         """Create SQLAlchemy engine"""
         try:
+            import os
             db_config = self.config['database']
+
+            # Support environment variables override
+            host = os.getenv('DATABASE_HOST', db_config.get('host'))
+            port = os.getenv('DATABASE_PORT', db_config.get('port', 5432))
+            database = os.getenv('DATABASE_NAME', db_config.get('database'))
+            username = os.getenv('DATABASE_USER', db_config.get('username'))
+            password = os.getenv('DATABASE_PASSWORD', db_config.get('password'))
+
             connection_string = (
-                f"postgresql://{db_config['username']}:{db_config['password']}"
-                f"@{db_config['host']}:{db_config['port']}/{db_config['database']}"
+                f"postgresql://{username}:{password}"
+                f"@{host}:{port}/{database}"
             )
 
             engine = create_engine(
