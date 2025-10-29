@@ -69,6 +69,13 @@ variable "rss_proxy_url" {
   # No default value for security - must be provided via terraform.tfvars
 }
 
+variable "discord_webhook_url" {
+  description = "Discord Webhook Url"
+  type        = string
+  sensitive   = true
+  # No default value for security - must be provided via terraform.tfvars
+}
+
 # VPC 및 서브넷 데이터 소스
 data "aws_vpc" "default" {
   default = true

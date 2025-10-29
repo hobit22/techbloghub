@@ -20,3 +20,5 @@ app_admin_password = "your_app_admin_password"
 
 # RSS Proxy Configuration (for bypassing IP blocking)
 rss_proxy_url     = "your_rss_proxy_url"
+
+discord_webhook_url = "your_discord_webhook_url"
