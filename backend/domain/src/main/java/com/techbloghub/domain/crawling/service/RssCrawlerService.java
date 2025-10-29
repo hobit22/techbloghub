@@ -1,16 +1,18 @@
 package com.techbloghub.domain.crawling.service;
 
 import com.techbloghub.domain.blog.model.Blog;
+import com.techbloghub.domain.blog.port.BlogRepositoryPort;
+import com.techbloghub.domain.crawling.event.CrawlingCompletedEvent;
 import com.techbloghub.domain.crawling.model.CrawlingResult;
 import com.techbloghub.domain.crawling.model.RssEntry;
 import com.techbloghub.domain.crawling.model.RssFeed;
-import com.techbloghub.domain.crawling.usecase.CrawlRssUseCase;
-import com.techbloghub.domain.blog.port.BlogRepositoryPort;
 import com.techbloghub.domain.crawling.port.FetchRssPort;
-import com.techbloghub.domain.post.port.PostRepositoryPort;
+import com.techbloghub.domain.crawling.usecase.CrawlRssUseCase;
 import com.techbloghub.domain.post.model.Post;
+import com.techbloghub.domain.post.port.PostRepositoryPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -32,6 +34,7 @@ public class RssCrawlerService implements CrawlRssUseCase {
     private final BlogRepositoryPort blogRepositoryPort;
     private final FetchRssPort fetchRssPort;
     private final PostRepositoryPort postRepositoryPort;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public CrawlingResult crawlAllActiveBlogs() {
@@ -49,6 +52,9 @@ public class RssCrawlerService implements CrawlRssUseCase {
                 result.getProcessedBlogs(), result.getTotalBlogs(),
                 result.getTotalPostsSaved(), result.getExecutionTimeInSeconds());
 
+        // 크롤링 완료 이벤트 발행
+        eventPublisher.publishEvent(new CrawlingCompletedEvent(result, LocalDateTime.now()));
+
         return result;
     }
 
@@ -64,6 +70,9 @@ public class RssCrawlerService implements CrawlRssUseCase {
 
         log.info("RSS crawling for blog {} completed. Posts saved: {}",
                 blogId, result.getTotalPostsSaved());
+
+        // 크롤링 완료 이벤트 발행
+        eventPublisher.publishEvent(new CrawlingCompletedEvent(result, LocalDateTime.now()));
 
         return result;
     }
