@@ -1,0 +1,15 @@
+# Discord Webhook Configuration
+discord:
+  webhook:
+    url: ${DISCORD_WEBHOOK_URL:}
+    enabled: ${DISCORD_WEBHOOK_ENABLED:false}
+
+# 비동기 처리를 위한 설정
+spring:
+  task:
+    execution:
+      pool:
+        core-size: 2
+        max-size: 5
+        queue-capacity: 100
+      thread-name-prefix: discord-async-

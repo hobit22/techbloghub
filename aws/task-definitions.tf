@@ -53,6 +53,14 @@ resource "aws_ecs_task_definition" "backend" {
         {
           name  = "RSS_PROXY_URL"
           value = var.rss_proxy_url
+        }, 
+        {
+          name = "DISCORD_WEBHOOK_URL"
+          value = var.discord_webhook_url
+        },
+        {
+          name  = "DISCORD_WEBHOOK_ENABLED"
+          value = "true"
         }
       ]
 

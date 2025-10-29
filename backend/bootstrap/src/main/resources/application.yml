@@ -14,6 +14,7 @@ spring:
       - classpath:persistence/application.yml
       - classpath:output-web-gpt/application.yml
       - classpath:output-web-rss/application.yml
+      - classpath:output-web-discord/application.yml
 
 # 환경별 로깅 설정
 logging:

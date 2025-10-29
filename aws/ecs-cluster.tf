@@ -6,7 +6,7 @@ resource "aws_ecs_cluster" "techbloghub" {
 
   setting {
     name  = "containerInsights"
-    value = "enabled"
+    value = "disabled"
   }
 
   tags = {
