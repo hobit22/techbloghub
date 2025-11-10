@@ -81,9 +81,23 @@ data "aws_vpc" "default" {
   default = true
 }
 
+# 가용 영역 데이터 소스
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
 data "aws_subnets" "default" {
   filter {
     name   = "vpc-id"
     values = [data.aws_vpc.default.id]
+  }
+
+  # 첫 2개의 가용 영역만 사용 (비용 최적화)
+  filter {
+    name   = "availability-zone"
+    values = [
+      data.aws_availability_zones.available.names[0],
+      data.aws_availability_zones.available.names[1]
+    ]
   }
 }
