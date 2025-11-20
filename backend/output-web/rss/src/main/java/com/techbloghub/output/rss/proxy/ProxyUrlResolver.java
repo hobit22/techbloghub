@@ -12,7 +12,12 @@ import java.util.Set;
 @Slf4j
 public class ProxyUrlResolver {
 
-    private static final Set<String> PROXY_DOMAINS = Set.of("techblog.woowahan.com");
+    private static final Set<String> PROXY_DOMAINS = Set.of(
+            "techblog.woowahan.com",
+            "medium.com/feed/musinsa-tech",
+            "medium.com/feed/daangn",
+            "techblog.gccompany.co.kr/feed"
+    );
 
     @Value("${app.crawler.http.proxy.enabled:false}")
     private boolean proxyEnabled;
