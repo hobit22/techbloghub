@@ -16,15 +16,16 @@ from app.core.config import settings
 from app.core.database import Base
 
 # 여기에 모든 모델을 import해야 autogenerate가 작동합니다
-# from app.models.post import Post
-# from app.models.blog import Blog
+from app.models import Blog, Post  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
 # config.py의 DATABASE_URL을 사용하도록 설정
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# Alembic은 동기 방식이므로 asyncpg -> psycopg2로 변경
+sync_database_url = settings.DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://")
+config.set_main_option("sqlalchemy.url", sync_database_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
