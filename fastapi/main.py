@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.api.v1 import blogs, posts
+from app.api.v1 import blogs, posts, crawler
 
 # FastAPI 앱 생성
 app = FastAPI(
@@ -23,6 +23,7 @@ app.add_middleware(
 # API 라우터 등록
 app.include_router(blogs.router, prefix="/api/v1")
 app.include_router(posts.router, prefix="/api/v1")
+app.include_router(crawler.router, prefix="/api/v1")
 
 
 @app.get("/")

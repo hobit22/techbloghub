@@ -18,6 +18,14 @@ class Settings(BaseSettings):
     # CORS 설정 (프론트엔드 연동)
     ALLOWED_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:8000"]
 
+    # RSS 크롤링 설정
+    RSS_PROXY_URL: str = "https://rss-proxy.hoqein22.workers.dev/?url="
+
+    # 컨텐츠 추출 설정
+    MIN_CONTENT_LENGTH: int = 500
+    MIN_TEXT_RATIO: float = 0.01
+    PLAYWRIGHT_TIMEOUT: int = 30000
+
     class Config:
         env_file = ".env"
         case_sensitive = True
