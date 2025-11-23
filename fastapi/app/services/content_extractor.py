@@ -95,8 +95,9 @@ class ContentExtractor:
                 include_tables=True,
                 include_images=False,
                 include_links=False,
-                no_fallback=False,
-                favor_recall=True,
+                no_fallback=True,        # True로 변경: 더 정확한 추출
+                favor_recall=False,      # False로 변경: 정확도 우선 (title 오추출 방지)
+                favor_precision=True,    # 추가: 정확도 우선
                 with_metadata=True
             )
 

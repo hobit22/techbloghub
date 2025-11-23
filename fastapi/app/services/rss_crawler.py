@@ -1,14 +1,14 @@
 """
 RSS 크롤링 서비스
-Trafilatura를 사용한 RSS 피드 파싱 및 URL 추출
+Feedparser를 사용한 RSS 피드 파싱 및 URL, Title 추출
 """
 
-from typing import List, Optional
+from typing import List, Optional, Dict
 from urllib.parse import urlparse, quote
 from datetime import datetime
 
-from trafilatura import feeds, fetch_url
-from trafilatura.feeds import FeedParameters
+import feedparser
+from trafilatura import fetch_url
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -31,15 +31,15 @@ class RSSCrawler:
         parsed = urlparse(url)
         return parsed.netloc
 
-    def extract_rss_urls(self, rss_url: str) -> List[str]:
+    def extract_rss_entries(self, rss_url: str) -> List[Dict[str, str]]:
         """
-        RSS 피드에서 URL 추출
+        RSS 피드에서 URL과 Title 추출
 
         Args:
             rss_url: RSS 피드 URL
 
         Returns:
-            추출된 URL 리스트
+            [{'url': str, 'title': str, 'published': str}, ...]
         """
         try:
             # Cloudflare 프록시를 통해 RSS 다운로드
@@ -49,24 +49,26 @@ class RSSCrawler:
             if not feed_content:
                 return []
 
-            # 도메인 추출 및 FeedParameters 생성
-            domain = self.get_domain_from_url(rss_url)
-            base_url = f"{urlparse(rss_url).scheme}://{domain}"
+            # feedparser로 RSS 파싱
+            feed = feedparser.parse(feed_content)
 
-            params = FeedParameters(
-                baseurl=base_url,
-                domain=domain,
-                reference=rss_url,
-                external=True,  # 모든 링크 허용 (cross-domain)
-                target_lang='ko'
-            )
+            entries = []
+            for entry in feed.entries:
+                url = entry.get('link', '').strip()
+                title = entry.get('title', '').strip()
+                published = entry.get('published', '')
 
-            # 링크 추출
-            urls = feeds.extract_links(feed_content, params)
-            return urls if urls else []
+                if url and title:
+                    entries.append({
+                        'url': url,
+                        'title': title,
+                        'published': published
+                    })
+
+            return entries
 
         except Exception as e:
-            print(f"RSS URL 추출 실패 ({rss_url}): {e}")
+            print(f"RSS 엔트리 추출 실패 ({rss_url}): {e}")
             return []
 
     async def get_existing_urls(self, blog_id: int) -> set[str]:
@@ -116,12 +118,12 @@ class RSSCrawler:
         }
 
         try:
-            # 1. RSS에서 URL 추출
-            urls = self.extract_rss_urls(blog.rss_url)
-            result['total_urls'] = len(urls)
+            # 1. RSS에서 엔트리(URL + Title) 추출
+            entries = self.extract_rss_entries(blog.rss_url)
+            result['total_urls'] = len(entries)
 
-            if not urls:
-                result['errors'].append("No URLs extracted from RSS")
+            if not entries:
+                result['errors'].append("No entries extracted from RSS")
                 blog.mark_crawl_failure()
                 await self.db.commit()
                 return result
@@ -129,20 +131,24 @@ class RSSCrawler:
             # 2. 기존 URL 조회 (중복 방지)
             existing_urls = await self.get_existing_urls(blog.id)
 
-            # 3. 새로운 URL만 필터링
-            new_urls = [url for url in urls if url not in existing_urls]
+            # 3. 새로운 엔트리만 필터링
+            new_entries = [entry for entry in entries if entry['url'] not in existing_urls]
 
-            if not new_urls:
+            if not new_entries:
                 blog.mark_crawl_success()
                 await self.db.commit()
                 return result
 
             # 4. max_posts 제한 적용
             if max_posts:
-                new_urls = new_urls[:max_posts]
+                new_entries = new_entries[:max_posts]
 
-            # 5. 각 URL에서 본문 추출 및 저장
-            for url in new_urls:
+            # 5. 각 엔트리에서 본문 추출 및 저장
+            for entry in new_entries:
+                url = entry['url']
+                rss_title = entry['title']
+                rss_published = entry.get('published')
+
                 try:
                     # 본문 추출 (Failover 전략)
                     extracted = await self.content_extractor.extract(url, use_proxy=True)
@@ -152,17 +158,24 @@ class RSSCrawler:
                         result['errors'].append(f"Content extraction failed: {url[:100]}")
                         continue
 
-                    # 발행일 파싱
+                    # 발행일: RSS의 published 우선, 없으면 추출된 date 사용
                     published_at = None
-                    if extracted.get('date'):
+                    if rss_published:
+                        try:
+                            from dateutil import parser
+                            published_at = parser.parse(rss_published)
+                        except:
+                            pass
+
+                    if not published_at and extracted.get('date'):
                         try:
                             published_at = datetime.fromisoformat(extracted['date'])
                         except:
                             pass
 
-                    # Post 생성
+                    # Post 생성 (RSS title 우선 사용)
                     new_post = Post(
-                        title=extracted.get('title') or 'Untitled',
+                        title=rss_title,  # RSS에서 추출한 정확한 title 사용
                         content=extracted.get('content'),
                         author=extracted.get('author'),
                         original_url=url,

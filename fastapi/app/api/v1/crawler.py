@@ -130,7 +130,7 @@ async def test_rss_extraction(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    RSS URL 추출 테스트 (본문 크롤링 없이 URL만 확인)
+    RSS 엔트리 추출 테스트 (본문 크롤링 없이 URL과 Title만 확인)
 
     - **blog_id**: 테스트할 블로그 ID
 
@@ -139,8 +139,8 @@ async def test_rss_extraction(
             'blog_id': int,
             'blog_name': str,
             'rss_url': str,
-            'total_urls': int,
-            'sample_urls': List[str]  # 최대 5개
+            'total_entries': int,
+            'sample_entries': List[dict]  # 최대 5개
         }
     """
     # 블로그 조회
@@ -153,16 +153,16 @@ async def test_rss_extraction(
             detail=f"Blog with id {blog_id} not found"
         )
 
-    # RSS URL 추출만 실행
+    # RSS 엔트리 추출 실행
     crawler = RSSCrawler(db)
-    urls = crawler.extract_rss_urls(blog.rss_url)
+    entries = crawler.extract_rss_entries(blog.rss_url)
 
     return {
         'blog_id': blog.id,
         'blog_name': blog.name,
         'rss_url': blog.rss_url,
-        'total_urls': len(urls),
-        'sample_urls': urls[:5]  # 최대 5개만
+        'total_entries': len(entries),
+        'sample_entries': entries[:5]  # 최대 5개만
     }
 
 
