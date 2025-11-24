@@ -2,7 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.api.v1 import blogs, posts, crawler
+from app.api.v1 import blogs, posts, scheduler
+from app.scheduler import start_scheduler, shutdown_scheduler
 
 # FastAPI 앱 생성
 app = FastAPI(
@@ -23,7 +24,7 @@ app.add_middleware(
 # API 라우터 등록
 app.include_router(blogs.router, prefix="/api/v1")
 app.include_router(posts.router, prefix="/api/v1")
-app.include_router(crawler.router, prefix="/api/v1")
+app.include_router(scheduler.router, prefix="/api/v1")
 
 
 @app.get("/")
@@ -48,8 +49,16 @@ async def startup():
     print(f"🚀 {settings.APP_NAME} v{settings.APP_VERSION} 시작!")
     print(f"📊 Database: {settings.DATABASE_URL.split('@')[1]}")
 
+    # 스케줄러 시작
+    start_scheduler()
+    print("⏰ Scheduler started:")
+    print("   - RSS Collection: Daily at 01:00 AM")
+    print("   - Content Processing: Daily at 02:00 AM")
+    print("   - Retry Failed Posts: Daily at 03:00 AM")
+
 
 # 서버 종료 이벤트
 @app.on_event("shutdown")
 async def shutdown():
     print("👋 서버 종료 중...")
+    shutdown_scheduler()

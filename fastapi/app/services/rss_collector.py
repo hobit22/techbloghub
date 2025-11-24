@@ -1,9 +1,9 @@
 """
-RSS 크롤링 서비스
-Feedparser를 사용한 RSS 피드 파싱 및 URL, Title 추출
+RSS 수집 서비스
+RSS 피드에서 URL과 메타데이터만 수집 (본문 추출 제외)
 """
 
-from typing import List, Optional, Dict
+from typing import List, Dict, Optional
 from urllib.parse import urlparse, quote
 from datetime import datetime
 
@@ -14,22 +14,15 @@ from sqlalchemy import select
 
 from app.core.config import settings
 from app.models.blog import Blog
-from app.models.post import Post
-from app.services.content_extractor import ContentExtractor
+from app.models.post import Post, PostStatus
 
 
-class RSSCrawler:
-    """RSS 크롤링 서비스"""
+class RSSCollector:
+    """RSS 피드에서 URL과 메타데이터만 수집"""
 
     def __init__(self, db: AsyncSession):
         self.db = db
         self.proxy_url = settings.RSS_PROXY_URL
-        self.content_extractor = ContentExtractor()
-
-    def get_domain_from_url(self, url: str) -> str:
-        """URL에서 도메인 추출"""
-        parsed = urlparse(url)
-        return parsed.netloc
 
     def extract_rss_entries(self, rss_url: str) -> List[Dict[str, str]]:
         """
@@ -73,7 +66,7 @@ class RSSCrawler:
 
     async def get_existing_urls(self, blog_id: int) -> set[str]:
         """
-        이미 크롤링된 URL 조회 (중복 방지)
+        이미 수집된 URL 조회 (중복 방지)
 
         Args:
             blog_id: 블로그 ID
@@ -86,41 +79,41 @@ class RSSCrawler:
         )
         return {row[0] for row in result.fetchall()}
 
-    async def crawl_blog(
+    async def collect_blog(
         self,
         blog: Blog,
         max_posts: Optional[int] = None
     ) -> dict:
         """
-        단일 블로그 크롤링
+        단일 블로그에서 새로운 URL 수집 (본문 추출 없이)
 
         Args:
             blog: 블로그 모델
-            max_posts: 최대 크롤링 개수 (None이면 전체)
+            max_posts: 최대 수집 개수 (None이면 전체)
 
         Returns:
             {
                 'blog_id': int,
                 'blog_name': str,
-                'total_urls': int,
+                'total_entries': int,
                 'new_posts': int,
-                'failed_posts': int,
+                'skipped_duplicates': int,
                 'errors': List[str]
             }
         """
         result = {
             'blog_id': blog.id,
             'blog_name': blog.name,
-            'total_urls': 0,
+            'total_entries': 0,
             'new_posts': 0,
-            'failed_posts': 0,
+            'skipped_duplicates': 0,
             'errors': []
         }
 
         try:
             # 1. RSS에서 엔트리(URL + Title) 추출
             entries = self.extract_rss_entries(blog.rss_url)
-            result['total_urls'] = len(entries)
+            result['total_entries'] = len(entries)
 
             if not entries:
                 result['errors'].append("No entries extracted from RSS")
@@ -133,6 +126,7 @@ class RSSCrawler:
 
             # 3. 새로운 엔트리만 필터링
             new_entries = [entry for entry in entries if entry['url'] not in existing_urls]
+            result['skipped_duplicates'] = len(entries) - len(new_entries)
 
             if not new_entries:
                 blog.mark_crawl_success()
@@ -143,22 +137,14 @@ class RSSCrawler:
             if max_posts:
                 new_entries = new_entries[:max_posts]
 
-            # 5. 각 엔트리에서 본문 추출 및 저장
+            # 5. Post 생성 (PENDING 상태, content=None)
             for entry in new_entries:
                 url = entry['url']
                 rss_title = entry['title']
                 rss_published = entry.get('published')
 
                 try:
-                    # 본문 추출 (Failover 전략)
-                    extracted = await self.content_extractor.extract(url, use_proxy=True)
-
-                    if not extracted:
-                        result['failed_posts'] += 1
-                        result['errors'].append(f"Content extraction failed: {url[:100]}")
-                        continue
-
-                    # 발행일: RSS의 published 우선, 없으면 추출된 date 사용
+                    # 발행일 파싱
                     published_at = None
                     if rss_published:
                         try:
@@ -167,29 +153,22 @@ class RSSCrawler:
                         except:
                             pass
 
-                    if not published_at and extracted.get('date'):
-                        try:
-                            published_at = datetime.fromisoformat(extracted['date'])
-                        except:
-                            pass
-
-                    # Post 생성 (RSS title 우선 사용)
+                    # Post 생성 (본문 없이 URL만)
                     new_post = Post(
-                        title=rss_title,  # RSS에서 추출한 정확한 title 사용
-                        content=extracted.get('content'),
-                        author=extracted.get('author'),
+                        title=rss_title,
+                        content=None,  # 본문 없음
                         original_url=url,
                         normalized_url=Post.normalize_url(url),
                         blog_id=blog.id,
-                        published_at=published_at
+                        published_at=published_at,
+                        status=PostStatus.PENDING  # 본문 추출 대기
                     )
 
                     self.db.add(new_post)
                     result['new_posts'] += 1
 
                 except Exception as e:
-                    result['failed_posts'] += 1
-                    result['errors'].append(f"Error processing {url[:100]}: {str(e)[:100]}")
+                    result['errors'].append(f"Error creating post {url[:100]}: {str(e)[:100]}")
 
             # 6. 크롤링 성공 마킹
             blog.mark_crawl_success()
@@ -198,22 +177,22 @@ class RSSCrawler:
         except Exception as e:
             blog.mark_crawl_failure()
             await self.db.commit()
-            result['errors'].append(f"Blog crawl failed: {str(e)}")
+            result['errors'].append(f"Blog collection failed: {str(e)}")
 
         return result
 
-    async def crawl_all_active_blogs(
+    async def collect_all_active_blogs(
         self,
         max_posts_per_blog: Optional[int] = None
     ) -> List[dict]:
         """
-        모든 활성 블로그 크롤링
+        모든 활성 블로그에서 새로운 URL 수집
 
         Args:
-            max_posts_per_blog: 블로그당 최대 크롤링 개수
+            max_posts_per_blog: 블로그당 최대 수집 개수
 
         Returns:
-            각 블로그별 크롤링 결과 리스트
+            각 블로그별 수집 결과 리스트
         """
         # 활성 블로그 조회
         result = await self.db.execute(
@@ -223,7 +202,7 @@ class RSSCrawler:
 
         results = []
         for blog in blogs:
-            result = await self.crawl_blog(blog, max_posts=max_posts_per_blog)
+            result = await self.collect_blog(blog, max_posts=max_posts_per_blog)
             results.append(result)
 
         return results
