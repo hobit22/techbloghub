@@ -1,9 +1,18 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Index
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Index, Enum as SQLEnum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import TSVECTOR
+import enum
 
 from app.core.database import Base
+
+
+class PostStatus(str, enum.Enum):
+    """포스트 처리 상태"""
+    PENDING = "PENDING"          # URL만 수집됨, 본문 추출 대기
+    PROCESSING = "PROCESSING"    # 본문 추출 중
+    COMPLETED = "COMPLETED"      # 본문 추출 완료
+    FAILED = "FAILED"            # 본문 추출 실패
 
 
 class Post(Base):
@@ -31,6 +40,17 @@ class Post(Base):
 
     # 발행 정보
     published_at = Column(DateTime(timezone=True), index=True, comment="게시글 발행 시각")
+
+    # 처리 상태
+    status = Column(
+        SQLEnum(PostStatus, name="post_status"),
+        default=PostStatus.PENDING,
+        nullable=False,
+        index=True,
+        comment="본문 추출 상태"
+    )
+    retry_count = Column(Integer, default=0, comment="본문 추출 재시도 횟수")
+    error_message = Column(Text, comment="추출 실패 시 에러 메시지")
 
     # 키워드 벡터 (PostgreSQL Full-Text Search)
     keyword_vector = Column(TSVECTOR, comment="키워드 검색을 위한 tsvector")
