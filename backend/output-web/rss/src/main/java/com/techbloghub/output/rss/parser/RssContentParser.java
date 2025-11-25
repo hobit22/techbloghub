@@ -76,6 +76,15 @@ public class RssContentParser {
             log.debug("Removed BOM from RSS content");
         }
 
+        // Remove invalid XML control characters
+        // XML 1.0 spec allows only: 0x09 (tab), 0x0A (LF), 0x0D (CR), and 0x20-0xD7FF, 0xE000-0xFFFD
+        String cleaned = removeInvalidXmlCharacters(contentStr);
+        if (cleaned.length() != contentStr.length()) {
+            log.debug("Removed {} invalid XML characters from RSS content",
+                    contentStr.length() - cleaned.length());
+            contentStr = cleaned;
+        }
+
         // Check if content looks like XML
         String trimmedContent = contentStr.trim();
         if (!trimmedContent.startsWith("<?xml") && !trimmedContent.startsWith("<")) {
@@ -84,6 +93,40 @@ public class RssContentParser {
         }
 
         return contentStr;
+    }
+
+    /**
+     * XML 1.0에서 허용하지 않는 제어 문자 제거
+     *
+     * XML 1.0 spec에서 허용하는 문자:
+     * - 0x09 (tab)
+     * - 0x0A (line feed)
+     * - 0x0D (carriage return)
+     * - 0x20-0xD7FF
+     * - 0xE000-0xFFFD
+     *
+     * @param text 원본 텍스트
+     * @return 유효하지 않은 XML 문자가 제거된 텍스트
+     */
+    private String removeInvalidXmlCharacters(String text) {
+        if (text == null) {
+            return null;
+        }
+
+        StringBuilder cleaned = new StringBuilder(text.length());
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+
+            // Valid XML 1.0 characters
+            if (c == 0x09 || c == 0x0A || c == 0x0D ||
+                (c >= 0x20 && c <= 0xD7FF) ||
+                (c >= 0xE000 && c <= 0xFFFD)) {
+                cleaned.append(c);
+            }
+            // Invalid characters are silently skipped
+        }
+
+        return cleaned.toString();
     }
 
     private RssFeed parseXmlContent(String contentStr, String rssUrl) throws Exception {
