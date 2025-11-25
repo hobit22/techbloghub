@@ -42,3 +42,14 @@ class PostListResponse(BaseModel):
     """포스트 목록 응답 스키마"""
     total: int
     posts: list[PostResponse]
+
+
+class PostSearchResponse(PostResponse):
+    """포스트 검색 결과 스키마 (연관도 포함)"""
+    rank: float = Field(..., description="검색 연관도 점수")
+
+
+class SearchResultResponse(BaseModel):
+    """검색 결과 응답 스키마"""
+    total: int
+    results: list[PostSearchResponse]

@@ -9,6 +9,8 @@ from app.schemas.post import (
     PostUpdate,
     PostResponse,
     PostListResponse,
+    PostSearchResponse,
+    SearchResultResponse,
 )
 
 __all__ = [
@@ -20,4 +22,6 @@ __all__ = [
     "PostUpdate",
     "PostResponse",
     "PostListResponse",
+    "PostSearchResponse",
+    "SearchResultResponse",
 ]

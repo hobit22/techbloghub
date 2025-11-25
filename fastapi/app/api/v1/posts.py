@@ -1,11 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, text
 from typing import Optional
 
 from app.core.database import get_db
 from app.models import Post, Blog
-from app.schemas import PostCreate, PostUpdate, PostResponse, PostListResponse
+from app.schemas import (
+    PostCreate,
+    PostUpdate,
+    PostResponse,
+    PostListResponse,
+    PostSearchResponse,
+    SearchResultResponse,
+)
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -93,6 +100,84 @@ async def list_posts(
     posts = result.scalars().all()
 
     return PostListResponse(total=total, posts=posts)
+
+
+@router.get("/search", response_model=SearchResultResponse)
+async def search_posts(
+    q: str = Query(..., min_length=1, description="검색어"),
+    limit: int = Query(20, ge=1, le=100, description="최대 결과 개수"),
+    offset: int = Query(0, ge=0, description="건너뛸 개수"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    포스트 전문 검색 (Full-Text Search)
+
+    - **q**: 검색어 (필수)
+    - **limit**: 최대 결과 개수 (1-100, 기본값 20)
+    - **offset**: 건너뛸 개수 (페이지네이션)
+
+    PostgreSQL Full-Text Search를 사용하여 title과 content에서 검색합니다.
+    결과는 연관도(rank) 순으로 정렬됩니다.
+    """
+    # 검색어를 tsquery로 변환 (simple 분석기)
+    search_query = ' & '.join(q.strip().split())  # "fastapi tutorial" -> "fastapi & tutorial"
+
+    # ts_rank를 사용한 전문 검색 쿼리
+    query = text("""
+        SELECT
+            posts.*,
+            ts_rank(posts.keyword_vector, to_tsquery('simple', :search_query)) as rank
+        FROM posts
+        WHERE posts.keyword_vector @@ to_tsquery('simple', :search_query)
+        ORDER BY rank DESC, posts.published_at DESC NULLS LAST
+        LIMIT :limit
+        OFFSET :offset
+    """)
+
+    # 검색 실행
+    result = await db.execute(
+        query,
+        {
+            "search_query": search_query,
+            "limit": limit,
+            "offset": offset
+        }
+    )
+    rows = result.fetchall()
+
+    # 총 개수 조회
+    count_query = text("""
+        SELECT COUNT(*) as total
+        FROM posts
+        WHERE posts.keyword_vector @@ to_tsquery('simple', :search_query)
+    """)
+
+    count_result = await db.execute(count_query, {"search_query": search_query})
+    total = count_result.scalar()
+
+    # 결과 변환
+    search_results = []
+    for row in rows:
+        post_dict = {
+            "id": row.id,
+            "title": row.title,
+            "content": row.content,
+            "author": row.author,
+            "original_url": row.original_url,
+            "normalized_url": row.normalized_url,
+            "blog_id": row.blog_id,
+            "published_at": row.published_at,
+            "created_at": row.created_at,
+            "updated_at": row.updated_at,
+            "keywords": [],  # TODO: 필요시 추출
+            "rank": float(row.rank)
+        }
+        search_results.append(PostSearchResponse(**post_dict))
+
+    return SearchResultResponse(
+        total=total or 0,
+        results=search_results
+    )
 
 
 @router.get("/{post_id}", response_model=PostResponse)
