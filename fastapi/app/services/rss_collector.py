@@ -101,9 +101,13 @@ class RSSCollector:
                 'errors': List[str]
             }
         """
+        # blog 속성을 미리 저장 (rollback 시 접근 불가 방지)
+        print(f"blog: {blog}")
+        blog_id = blog.id
+        blog_name = blog.name
         result = {
-            'blog_id': blog.id,
-            'blog_name': blog.name,
+            'blog_id': blog_id,
+            'blog_name': blog_name,
             'total_entries': 0,
             'new_posts': 0,
             'skipped_duplicates': 0,
@@ -122,7 +126,7 @@ class RSSCollector:
                 return result
 
             # 2. 기존 URL 조회 (중복 방지)
-            existing_urls = await self.get_existing_urls(blog.id)
+            existing_urls = await self.get_existing_urls(blog_id)
 
             # 3. 새로운 엔트리만 필터링
             new_entries = [entry for entry in entries if entry['url'] not in existing_urls]
@@ -150,16 +154,27 @@ class RSSCollector:
                         try:
                             from dateutil import parser
                             published_at = parser.parse(rss_published)
-                        except:
-                            pass
+                        except Exception as parse_error:
+                            print(f"WARNING: Failed to parse published date for {url[:100]}: "
+                                  f"RSS date='{rss_published}', error={str(parse_error)}")
+
+                    # 중복 체크 (normalized_url 기준)
+                    normalized_url = Post.normalize_url(url)
+                    existing = await self.db.execute(
+                        select(Post).where(Post.normalized_url == normalized_url)
+                    )
+                    if existing.scalar_one_or_none():
+                        print(f"INFO: Skipping duplicate URL (normalized): {url[:100]}")
+                        result['skipped_duplicates'] += 1
+                        continue
 
                     # Post 생성 (본문 없이 URL만)
                     new_post = Post(
                         title=rss_title,
                         content=None,  # 본문 없음
                         original_url=url,
-                        normalized_url=Post.normalize_url(url),
-                        blog_id=blog.id,
+                        normalized_url=normalized_url,
+                        blog_id=blog_id,
                         published_at=published_at,
                         status=PostStatus.PENDING  # 본문 추출 대기
                     )
@@ -168,16 +183,29 @@ class RSSCollector:
                     result['new_posts'] += 1
 
                 except Exception as e:
-                    result['errors'].append(f"Error creating post {url[:100]}: {str(e)[:100]}")
+                    error_msg = str(e)
+                    result['errors'].append(f"Error creating post {url[:100]}: {error_msg[:100]}")
+                    print(f"ERROR: Failed to create post {url[:100]}: {error_msg}")
 
-            # 6. 크롤링 성공 마킹
-            blog.mark_crawl_success()
-            await self.db.commit()
+            # 6. 모든 Post 한 번에 커밋
+            try:
+                await self.db.commit()
+                blog.mark_crawl_success()
+                await self.db.commit()
+            except Exception as e:
+                await self.db.rollback()
+                result['errors'].append(f"Commit failed: {str(e)}")
+                blog.mark_crawl_failure()
+                await self.db.commit()
 
         except Exception as e:
-            blog.mark_crawl_failure()
-            await self.db.commit()
+            await self.db.rollback()
             result['errors'].append(f"Blog collection failed: {str(e)}")
+            try:
+                blog.mark_crawl_failure()
+                await self.db.commit()
+            except:
+                pass  # Best effort to mark failure
 
         return result
 

@@ -5,6 +5,18 @@ from typing import Optional
 from app.models.blog import BlogStatus, BlogType
 
 
+class BlogInfo(BaseModel):
+    """포스트에 포함될 간단한 블로그 정보"""
+    id: int
+    name: str
+    company: str
+    site_url: str
+    logo_url: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
 class BlogBase(BaseModel):
     """블로그 기본 스키마"""
     name: str = Field(..., min_length=1, max_length=255, description="블로그 이름")

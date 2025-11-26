@@ -2,6 +2,8 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional
 
+from app.schemas.blog import BlogInfo
+
 
 class PostBase(BaseModel):
     """포스트 기본 스키마"""
@@ -33,6 +35,7 @@ class PostResponse(PostBase):
     created_at: datetime
     updated_at: datetime
     keywords: list[str] = Field(default_factory=list, description="추출된 키워드")
+    blog: BlogInfo = Field(..., description="블로그 정보")
 
     class Config:
         from_attributes = True

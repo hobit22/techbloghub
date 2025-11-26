@@ -4,7 +4,6 @@ PENDING 상태의 Post들을 조회하여 본문 추출
 """
 
 from typing import List
-from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -101,12 +100,13 @@ class ContentProcessor:
                 post.content = extracted.get('content')
                 post.author = extracted.get('author')
 
-                # date가 있으면 published_at 업데이트 (RSS에 없었던 경우)
-                if not post.published_at and extracted.get('date'):
-                    try:
-                        post.published_at = datetime.fromisoformat(extracted['date'])
-                    except:
-                        pass
+                # RSS 날짜를 우선 사용 (trafilatura의 날짜는 신뢰할 수 없음)
+                # RSS에서 이미 published_at이 설정되어 있으면 절대 변경하지 않음
+                if not post.published_at:
+                    # RSS에 날짜가 없었던 경우에만 경고 로그 출력
+                    print(f"WARNING: Post {post.id} has no published_at from RSS. "
+                          f"Trafilatura extracted date: {extracted.get('date')}, "
+                          f"but NOT using it (unreliable).")
 
                 post.status = PostStatus.COMPLETED
                 post.error_message = None

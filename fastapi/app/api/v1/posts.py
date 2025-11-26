@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, text
+from sqlalchemy.orm import selectinload
 from typing import Optional
 
 from app.core.database import get_db
@@ -78,8 +79,8 @@ async def list_posts(
     - **limit**: 최대 조회 개수
     - **blog_id**: 특정 블로그의 포스트만 조회 (optional)
     """
-    # 쿼리 빌드
-    query = select(Post)
+    # 쿼리 빌드 (blog 정보 함께 로드)
+    query = select(Post).options(selectinload(Post.blog))
     count_query = select(func.count(Post.id))
 
     if blog_id:
@@ -122,12 +123,18 @@ async def search_posts(
     # 검색어를 tsquery로 변환 (simple 분석기)
     search_query = ' & '.join(q.strip().split())  # "fastapi tutorial" -> "fastapi & tutorial"
 
-    # ts_rank를 사용한 전문 검색 쿼리
+    # ts_rank를 사용한 전문 검색 쿼리 (blog 정보 포함)
     query = text("""
         SELECT
-            posts.*,
+            posts.id, posts.title, posts.content, posts.author,
+            posts.original_url, posts.normalized_url, posts.blog_id,
+            posts.published_at, posts.created_at, posts.updated_at,
+            blogs.id as blog_id, blogs.name as blog_name,
+            blogs.company as blog_company, blogs.site_url as blog_site_url,
+            blogs.logo_url as blog_logo_url,
             ts_rank(posts.keyword_vector, to_tsquery('simple', :search_query)) as rank
         FROM posts
+        JOIN blogs ON posts.blog_id = blogs.id
         WHERE posts.keyword_vector @@ to_tsquery('simple', :search_query)
         ORDER BY rank DESC, posts.published_at DESC NULLS LAST
         LIMIT :limit
@@ -156,8 +163,17 @@ async def search_posts(
     total = count_result.scalar()
 
     # 결과 변환
+    from app.schemas.blog import BlogInfo
     search_results = []
     for row in rows:
+        blog_info = BlogInfo(
+            id=row.blog_id,
+            name=row.blog_name,
+            company=row.blog_company,
+            site_url=row.blog_site_url,
+            logo_url=row.blog_logo_url
+        )
+
         post_dict = {
             "id": row.id,
             "title": row.title,
@@ -169,7 +185,8 @@ async def search_posts(
             "published_at": row.published_at,
             "created_at": row.created_at,
             "updated_at": row.updated_at,
-            "keywords": [],  # TODO: 필요시 추출
+            "keywords": [],
+            "blog": blog_info,
             "rank": float(row.rank)
         }
         search_results.append(PostSearchResponse(**post_dict))
@@ -185,8 +202,12 @@ async def get_post(
     post_id: int,
     db: AsyncSession = Depends(get_db)
 ):
-    """특정 포스트 조회"""
-    result = await db.execute(select(Post).where(Post.id == post_id))
+    """특정 포스트 조회 (blog 정보 포함)"""
+    result = await db.execute(
+        select(Post)
+        .options(selectinload(Post.blog))
+        .where(Post.id == post_id)
+    )
     post = result.scalar_one_or_none()
 
     if not post:

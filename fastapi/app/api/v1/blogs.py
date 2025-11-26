@@ -72,6 +72,27 @@ async def list_blogs(
     return BlogListResponse(total=total, blogs=blogs)
 
 
+@router.get("/active", response_model=List[BlogResponse])
+async def get_active_blogs(
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    활성 상태의 블로그 목록 조회
+
+    - 상태가 ACTIVE인 블로그만 반환
+    """
+    from app.models.blog import BlogStatus
+
+    result = await db.execute(
+        select(Blog)
+        .where(Blog.status == BlogStatus.ACTIVE)
+        .order_by(Blog.created_at.desc())
+    )
+    blogs = result.scalars().all()
+
+    return blogs
+
+
 @router.get("/{blog_id}", response_model=BlogResponse)
 async def get_blog(
     blog_id: int,
