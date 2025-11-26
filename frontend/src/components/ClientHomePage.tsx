@@ -14,31 +14,15 @@ import { X } from 'lucide-react';
 
 interface ClientHomePageProps {
   // 서버에서 받은 초기 데이터
-  initialData: PageResponse<Post>;
   initialBlogs: Blog[];
-  initialCategories: string[];
-  initialTags: string[];
-  initialHasFilters: boolean;
-  searchSummary: {
-    keyword?: string;
-    totalResults: number;
-    appliedFiltersCount: number;
-  };
 }
 
 export default function ClientHomePage({
-  initialData,
   initialBlogs,
-  initialCategories,
-  initialTags,
-  initialHasFilters,
-  searchSummary,
 }: ClientHomePageProps) {
   const {
     state: urlState,
     setBlogIds,
-    setTags,
-    setCategories,
     updateMultiple,
     reset,
   } = useUrlState();
@@ -46,23 +30,18 @@ export default function ClientHomePage({
   // 모든 필터 상태를 URL 상태와 동기화
   const [searchQuery, setSearchQuery] = useState(urlState.keyword || '');
   const [selectedBlogs, setSelectedBlogs] = useState<number[]>(urlState.blogIds || []);
-  const [selectedTags, setSelectedTags] = useState<string[]>(urlState.tags || []);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(urlState.categories || []);
 
   // 서버에서 받은 초기 데이터를 우선 사용하고, 필요시 클라이언트에서 추가 fetch
   const { data: blogs = initialBlogs } = useBlogs(initialBlogs);
-  const { tags = initialTags, categories = initialCategories } = useAvailableFilters(initialTags, initialCategories);
 
   const searchRequest: SearchRequest = {
     keyword: urlState.keyword || undefined,
     blogIds: urlState.blogIds || undefined,
-    tags: urlState.tags || undefined,
-    categories: urlState.categories || undefined,
     sortBy: 'publishedAt',
     sortDirection: 'desc',
   };
 
-  const hasFilters = Boolean(urlState.keyword || urlState.blogIds?.length || urlState.tags?.length || urlState.categories?.length);
+  const hasFilters = Boolean(urlState.keyword || urlState.blogIds?.length);
 
   // SSR에서는 정적 데이터만 로드했으므로 항상 클라이언트에서 포스트 로드
   const {
@@ -71,7 +50,7 @@ export default function ClientHomePage({
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
-  } = useInfinitePosts(searchRequest, 20, undefined, false);
+  } = useInfinitePosts(searchRequest, 20);
 
   const allPosts = infiniteData?.pages.flatMap(page => page.content) || [];
 
@@ -82,10 +61,8 @@ export default function ClientHomePage({
 
   const handleSearchSubmit = (query: string) => {
     // 검색 버튼 클릭/엔터 시에만 URL 업데이트
-    // 전달받은 검색어와 현재 태그 상태를 한 번에 URL에 반영
     updateMultiple({
       keyword: query,
-      tags: selectedTags,
       page: 0
     });
   };
@@ -93,9 +70,7 @@ export default function ClientHomePage({
   const handleReset = () => {
     setSearchQuery('');
     setSelectedBlogs([]);
-    setSelectedTags([]);
-    setSelectedCategories([]);
-    
+
     reset();
   };
 
@@ -103,8 +78,6 @@ export default function ClientHomePage({
   useEffect(() => {
     setSearchQuery(urlState.keyword || '');
     setSelectedBlogs(urlState.blogIds || []);
-    setSelectedTags(urlState.tags || []);
-    setSelectedCategories(urlState.categories || []);
   }, [urlState]);
 
   // 필터 변경 시 URL 업데이트
@@ -113,41 +86,22 @@ export default function ClientHomePage({
     setBlogIds(blogIds);
   };
 
-  const handleTagChange = (tags: string[]) => {
-    setSelectedTags(tags);
-    // 태그 칩 선택 시 즉시 URL 업데이트
-    setTags(tags);
-  };
-
-  const handleCategoryChange = (categories: string[]) => {
-    setSelectedCategories(categories);
-    setCategories(categories);
-  };
-
   // 서버 데이터가 있으므로 초기 로딩 상태 제거
   // blogsLoading은 클라이언트 사이드 추가 데이터 로딩에만 사용
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Header 
+      <Header
         onSearch={handleSearch}
         onSearchSubmit={handleSearchSubmit}
-        onTagsChange={handleTagChange}
         onReset={handleReset}
         searchValue={searchQuery}
-        selectedTags={selectedTags}
       />
-      
+
       <FilterTopBar
         blogs={blogs}
-        tags={tags}
-        categories={categories}
         selectedBlogs={selectedBlogs}
-        selectedTags={selectedTags}
-        selectedCategories={selectedCategories}
         onBlogChange={handleBlogChange}
-        onTagChange={handleTagChange}
-        onCategoryChange={handleCategoryChange}
       />
 
       <main className="max-w-7xl mx-auto p-4 lg:p-6">
@@ -168,7 +122,7 @@ export default function ClientHomePage({
                 {!postsLoading && infiniteData && infiniteData.pages[0] ? (
                   <>
                     총 <span className="font-semibold text-slate-700">{infiniteData.pages[0].totalElements.toLocaleString()}</span>개의 포스트
-                    {(urlState.tags?.length || urlState.blogIds?.length || urlState.categories?.length || urlState.keyword) && (
+                    {(urlState.blogIds?.length || urlState.keyword) && (
                       <span className="ml-2 text-sm bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
                         필터 적용
                       </span>

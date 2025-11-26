@@ -2,14 +2,16 @@ export interface Blog {
   id: number;
   name: string;
   company: string;
-  rssUrl: string;
-  siteUrl: string;
+  rss_url: string;
+  site_url: string;
   description?: string;
-  logoUrl?: string;
+  logo_url?: string;
   status: string;
-  createdAt: string;
-  updatedAt: string;
-  lastCrawledAt?: string;
+  blog_type?: string;
+  created_at: string;
+  updated_at: string;
+  last_crawled_at?: string;
+  failure_count?: number;
   postCount?: number;
 }
 
@@ -17,11 +19,15 @@ export interface Post {
   id: number;
   title: string;
   content?: string;
-  originalUrl: string;
+  original_url: string;
+  normalized_url?: string;
   author?: string;
-  publishedAt: string;
-  createdAt: string;
+  published_at: string;
+  created_at: string;
+  updated_at: string;
+  blog_id: number;
   blog: BlogInfo;
+  keywords?: string[];
   tags?: string[] | null;
   categories?: string[] | null;
   totalContent?: string;
@@ -32,16 +38,16 @@ export interface BlogInfo {
   id: number;
   name: string;
   company: string;
-  siteUrl: string;
-  logoUrl?: string;
+  site_url: string;
+  logo_url?: string;
 }
 
 export interface Tag {
   id: number;
   name: string;
   description?: string;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Category {
@@ -49,8 +55,8 @@ export interface Category {
   name: string;
   description?: string;
   color?: string;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface SearchRequest {
@@ -78,8 +84,8 @@ export interface TagResponse {
   id: number;
   name: string;
   description?: string;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CategoryResponse {
@@ -87,6 +93,25 @@ export interface CategoryResponse {
   name: string;
   description?: string;
   color?: string;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BlogListResponse {
+  total: number;
+  blogs: Blog[];
+}
+
+export interface PostListResponse {
+  total: number;
+  posts: Post[];
+}
+
+export interface PostSearchResponse extends Post {
+  rank: number;
+}
+
+export interface SearchResultResponse {
+  total: number;
+  results: PostSearchResponse[];
 }

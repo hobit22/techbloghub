@@ -1,9 +1,6 @@
 import {
   Blog,
   Post,
-  PageResponse,
-  TagResponse,
-  CategoryResponse,
 } from "@/types";
 
 // API Base URL 설정: 프로덕션에서는 ECS 환경변수, 개발에서는 localhost
@@ -37,32 +34,6 @@ async function serverFetch<T>(url: string, options?: RequestInit): Promise<T> {
   return response.json();
 }
 
-// URL 파라미터를 API 요청 파라미터로 변환
-interface SearchParams {
-  keyword?: string;
-  blogIds?: string;
-  tags?: string;
-  categories?: string;
-  page?: string;
-}
-
-function parseSearchParams(searchParams: SearchParams) {
-  return {
-    keyword: searchParams.keyword || undefined,
-    blogIds: searchParams.blogIds
-      ? searchParams.blogIds.split(",").map(Number).filter(Boolean)
-      : undefined,
-    tags: searchParams.tags
-      ? searchParams.tags.split(",").filter(Boolean)
-      : undefined,
-    categories: searchParams.categories
-      ? searchParams.categories.split(",").filter(Boolean)
-      : undefined,
-    page: parseInt(searchParams.page || "0", 10),
-    sortBy: "publishedAt" as const,
-    sortDirection: "desc" as const,
-  };
-}
 
 // 배열 파라미터를 쿼리 스트링으로 변환
 function buildQueryString(params: Record<string, unknown>): string {
@@ -86,144 +57,93 @@ export const serverApi = {
   // 활성 블로그 목록 가져오기
   async getActiveBlogs(): Promise<Blog[]> {
     try {
-      return await serverFetch<Blog[]>("/api/blogs/active");
+      return await serverFetch<Blog[]>("/api/v1/blogs/active");
     } catch (error) {
       console.error("Failed to fetch blogs:", error);
       return [];
     }
   },
 
-  // 포스트 검색
-  async searchPosts(
-    searchParams: SearchParams,
-    size: number = 20
-  ): Promise<PageResponse<Post>> {
+  // 포스트 목록 가져오기 (검색 기능은 현재 FastAPI에서 제한적)
+  async getPosts(
+    params: {
+      skip?: number;
+      limit?: number;
+      blog_id?: number;
+    } = {}
+  ): Promise<{ posts: Post[]; total: number }> {
     try {
-      const parsedParams = parseSearchParams(searchParams);
       const queryString = buildQueryString({
-        ...parsedParams,
-        size,
+        skip: params.skip || 0,
+        limit: params.limit || 20,
+        blog_id: params.blog_id,
       });
 
-      return await serverFetch<PageResponse<Post>>(
-        `/api/search/posts?${queryString}`
+      const response = await serverFetch<{ total: number; posts: Post[] }>(
+        `/api/v1/posts?${queryString}`
       );
+
+      return response;
     } catch (error) {
       console.error("Failed to fetch posts:", error);
-      // 빈 응답 반환으로 graceful degradation
       return {
-        content: [],
-        totalElements: 0,
-        totalPages: 0,
-        size: size,
-        number: 0,
-        first: true,
-        last: true,
+        posts: [],
+        total: 0,
       };
     }
   },
 
-  // 태그 목록 가져오기
-  async getTags(): Promise<TagResponse[]> {
+  // 키워드 검색
+  async searchPosts(
+    keyword: string,
+    params: {
+      limit?: number;
+      offset?: number;
+    } = {}
+  ): Promise<{ results: Post[]; total: number }> {
     try {
-      return await serverFetch<TagResponse[]>("/api/tags");
+      const queryString = buildQueryString({
+        q: keyword,
+        limit: params.limit || 20,
+        offset: params.offset || 0,
+      });
+
+      const response = await serverFetch<{ total: number; results: Post[] }>(
+        `/api/v1/posts/search?${queryString}`
+      );
+
+      return response;
     } catch (error) {
-      console.error("Failed to fetch tags:", error);
-      return [];
-    }
-  },
-
-  // 카테고리 목록 가져오기
-  async getCategories(): Promise<CategoryResponse[]> {
-    try {
-      return await serverFetch<CategoryResponse[]>("/api/categories");
-    } catch (error) {
-      console.error("Failed to fetch categories:", error);
-      return [];
-    }
-  },
-
-  // 사용 가능한 필터 데이터 가져오기 (카테고리, 태그)
-  async getAvailableFilters(): Promise<{
-    categories: string[];
-    tags: string[];
-  }> {
-    try {
-      const [tags, categories] = await Promise.all([
-        this.getTags(),
-        this.getCategories(),
-      ]);
-
+      console.error("Failed to search posts:", error);
       return {
-        categories: categories.map((cat) => cat.name).sort(),
-        tags: tags.map((tag) => tag.name).sort(),
+        results: [],
+        total: 0,
       };
-    } catch (error) {
-      console.error("Failed to fetch filters:", error);
-      return { categories: [], tags: [] };
     }
   },
+
 };
 
 // 메인 서버 사이드 데이터 페칭 함수
 export interface ServerSideData {
-  initialPosts: PageResponse<Post>;
+  initialPosts: { posts: Post[]; total: number };
   blogs: Blog[];
-  categories: string[];
-  tags: string[];
-  hasFilters: boolean;
-  searchSummary: {
-    keyword?: string;
-    totalResults: number;
-    appliedFiltersCount: number;
-  };
 }
 
-export async function fetchServerSideData(
-  searchParams: SearchParams
-): Promise<ServerSideData> {
+export async function fetchServerSideData(): Promise<ServerSideData> {
   try {
-    // 정적 데이터만 병렬로 페칭 (빠른 SSR)
-    const [blogs, filters] = await Promise.all([
-      serverApi.getActiveBlogs(),
-      serverApi.getAvailableFilters(),
-    ]);
+    // 블로그 목록만 페칭
+    const blogs = await serverApi.getActiveBlogs();
 
     // 포스트 데이터는 빈 상태로 설정 (클라이언트에서 로드)
-    const initialPosts: PageResponse<Post> = {
-      content: [],
-      totalElements: 0,
-      totalPages: 0,
-      size: 20,
-      number: 0,
-      first: true,
-      last: true,
+    const initialPosts = {
+      posts: [],
+      total: 0,
     };
-
-    const parsedParams = parseSearchParams(searchParams);
-    const hasFilters = Boolean(
-      parsedParams.keyword ||
-        (parsedParams.blogIds && parsedParams.blogIds.length > 0) ||
-        (parsedParams.tags && parsedParams.tags.length > 0) ||
-        (parsedParams.categories && parsedParams.categories.length > 0)
-    );
-
-    const appliedFiltersCount =
-      (parsedParams.blogIds?.length || 0) +
-      (parsedParams.tags?.length || 0) +
-      (parsedParams.categories?.length || 0);
 
     return {
       initialPosts,
       blogs,
-      categories: filters.categories,
-      tags: filters.tags,
-      hasFilters,
-      searchSummary: {
-        keyword: parsedParams.keyword,
-        totalResults: initialPosts.totalElements,
-        appliedFiltersCount,
-      },
     };
   } catch (error) {
     console.error("Failed to fetch server-side data:", error);
@@ -231,22 +151,10 @@ export async function fetchServerSideData(
     // 에러 발생시 기본값 반환
     return {
       initialPosts: {
-        content: [],
-        totalElements: 0,
-        totalPages: 0,
-        size: 20,
-        number: 0,
-        first: true,
-        last: true,
+        posts: [],
+        total: 0,
       },
       blogs: [],
-      categories: [],
-      tags: [],
-      hasFilters: false,
-      searchSummary: {
-        totalResults: 0,
-        appliedFiltersCount: 0,
-      },
     };
   }
 }

@@ -36,11 +36,11 @@ export default function PostCard({ post }: PostCardProps) {
 
   const handleCompanyClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // 이벤트 전파 방지
-    setBlogIds([post.blog.id]); // 해당 회사의 블로그로 필터링
+    setBlogIds([post.blog?.id ?? 0]); // 해당 회사의 블로그로 필터링
   };
 
-  const publishedDate = new Date(post.publishedAt);
-  const isRecent = Date.now() - publishedDate.getTime() < 24 * 60 * 60 * 1000; // 24 hours
+  const publishedDate = new Date(post.published_at);
+  const isRecent = Date.now() - publishedDate.getTime() < 24 * 60 * 60 * 1000; // 24 hours;
 
   return (
     <article 
@@ -58,10 +58,10 @@ export default function PostCard({ post }: PostCardProps) {
                       flex items-center justify-center mb-2 cursor-pointer 
                       overflow-hidden"
           >
-            {post.blog.logoUrl && !logoError ? (
+            {post.blog?.logo_url && !logoError ? (
               <Image 
-                src={post.blog.logoUrl}
-                alt={`${post.blog.company} logo`}
+                src={post.blog?.logo_url}
+                alt={`${post.blog?.company} logo`}
                 width={24}
                 height={24}
                 className="w-full h-full object-contain"
@@ -81,7 +81,7 @@ export default function PostCard({ post }: PostCardProps) {
               className="text-xs font-medium text-slate-700 truncate w-16 cursor-pointer hover:text-blue-600 
                         transition-colors duration-200"
             >
-              {post.blog.company}
+              {post.blog?.company}
             </div>
           </div>
         </div>

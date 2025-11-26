@@ -1,19 +1,13 @@
 'use client';
 
 import { Blog } from '@/types';
-import { ChevronDown, Filter, Building2, Tag, Bookmark, Check, Search } from 'lucide-react';
+import { ChevronDown, Filter, Building2, Check, Search } from 'lucide-react';
 import { useState, useCallback, useRef, useEffect, memo } from 'react';
 
 interface FilterTopBarProps {
   blogs: Blog[];
-  tags: string[];
-  categories: string[];
   selectedBlogs: number[];
-  selectedTags: string[];
-  selectedCategories: string[];
   onBlogChange: (blogIds: number[]) => void;
-  onTagChange: (tags: string[]) => void;
-  onCategoryChange: (categories: string[]) => void;
 }
 
 interface FilterDropdownProps {
@@ -103,14 +97,8 @@ FilterDropdown.displayName = 'FilterDropdown';
 
 export default function FilterTopBar({
   blogs,
-  tags,
-  categories,
   selectedBlogs,
-  selectedTags,
-  selectedCategories,
   onBlogChange,
-  onTagChange,
-  onCategoryChange,
 }: FilterTopBarProps) {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [searchTerms, setSearchTerms] = useState<Record<string, string>>({});
@@ -127,28 +115,6 @@ export default function FilterTopBar({
     // 필터 선택 후 검색창 초기화
     setSearchTerms(prev => ({ ...prev, blogs: '' }));
   }, [selectedBlogs, onBlogChange]);
-
-  const handleTagToggle = useCallback((tag: string, event?: React.MouseEvent) => {
-    event?.stopPropagation();
-    if (selectedTags.includes(tag)) {
-      onTagChange(selectedTags.filter(t => t !== tag));
-    } else {
-      onTagChange([...selectedTags, tag]);
-    }
-    // 필터 선택 후 검색창 초기화
-    setSearchTerms(prev => ({ ...prev, tags: '' }));
-  }, [selectedTags, onTagChange]);
-
-  const handleCategoryToggle = useCallback((category: string, event?: React.MouseEvent) => {
-    event?.stopPropagation();
-    if (selectedCategories.includes(category)) {
-      onCategoryChange(selectedCategories.filter(c => c !== category));
-    } else {
-      onCategoryChange([...selectedCategories, category]);
-    }
-    // 필터 선택 후 검색창 초기화
-    setSearchTerms(prev => ({ ...prev, categories: '' }));
-  }, [selectedCategories, onCategoryChange]);
 
   const toggleDropdown = useCallback((dropdown: string) => {
     setOpenDropdown(openDropdown === dropdown ? null : dropdown);
@@ -194,35 +160,14 @@ export default function FilterTopBar({
     }
   }, [openDropdown]);
 
-  const topTags = tags?.slice(0, 30) || [];
-  const activeFiltersCount = selectedBlogs.length + selectedTags.length + selectedCategories.length;
-
   // 검색 필터링
   const getFilteredBlogs = useCallback((blogs: Blog[]) => {
     const searchTerm = searchTerms['blogs']?.toLowerCase() || '';
     if (!searchTerm) return blogs;
-    
-    return blogs.filter(blog => 
-      blog.name.toLowerCase().includes(searchTerm) || 
+
+    return blogs.filter(blog =>
+      blog.name.toLowerCase().includes(searchTerm) ||
       blog.company.toLowerCase().includes(searchTerm)
-    );
-  }, [searchTerms]);
-
-  const getFilteredCategories = useCallback((categories: string[]) => {
-    const searchTerm = searchTerms['categories']?.toLowerCase() || '';
-    if (!searchTerm) return categories;
-    
-    return categories.filter(category => 
-      category.toLowerCase().includes(searchTerm)
-    );
-  }, [searchTerms]);
-
-  const getFilteredTags = useCallback((tags: string[]) => {
-    const searchTerm = searchTerms['tags']?.toLowerCase() || '';
-    if (!searchTerm) return tags;
-    
-    return tags.filter(tag => 
-      tag.toLowerCase().includes(searchTerm)
     );
   }, [searchTerms]);
 
@@ -290,8 +235,6 @@ export default function FilterTopBar({
   );
 
   const filteredBlogs = getFilteredBlogs(blogs);
-  const filteredCategories = getFilteredCategories(categories);
-  const filteredTags = getFilteredTags(tags);
 
   return (
     <div className="bg-white/95 backdrop-blur-sm border-b border-slate-200 sticky top-16 lg:top-18 z-30">
@@ -304,23 +247,6 @@ export default function FilterTopBar({
               </div>
               <span className="text-sm font-semibold text-slate-800">필터</span>
             </div>
-            {/* {activeFiltersCount > 0 && (
-              <div className="flex items-center space-x-2">
-                <span className="bg-blue-600 text-white text-xs px-2.5 py-1 rounded-full font-medium">
-                  {activeFiltersCount}개 선택
-                </span>
-                <button
-                  onClick={() => {
-                    onBlogChange([]);
-                    onTagChange([]);
-                    onCategoryChange([]);
-                  }}
-                  className="text-slate-500 hover:text-slate-700 text-xs font-medium hover:underline transition-colors"
-                >
-                  전체 해제
-                </button>
-              </div>
-            )} */}
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -360,40 +286,6 @@ export default function FilterTopBar({
                 )}
               </div>
             </FilterDropdown>
-
-            <FilterDropdown
-              title="카테고리"
-              icon={Bookmark}
-              count={selectedCategories.length}
-              dropdownKey="categories"
-              hasSearch={categories.length > 10}
-              openDropdown={openDropdown}
-              searchTerms={searchTerms}
-              dropdownRefs={dropdownRefs}
-              toggleDropdown={toggleDropdown}
-              setSearchTerms={setSearchTerms}
-              handleScrollEvent={handleScrollEvent}
-            >
-              <div className="space-y-1">
-                {filteredCategories.length === 0 ? (
-                  <div className="text-center py-8 text-slate-500 text-sm">
-                    <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    검색 결과가 없습니다
-                  </div>
-                ) : (
-                  filteredCategories.map((category: string) => (
-                    <CheckboxItem
-                      key={category}
-                      checked={selectedCategories.includes(category)}
-                      onChange={(e) => handleCategoryToggle(category, e)}
-                    >
-                      {category}
-                    </CheckboxItem>
-                  ))
-                )}
-              </div>
-            </FilterDropdown>
-
           </div>
         </div>
       </div>

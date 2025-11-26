@@ -2,10 +2,9 @@ import axios from "axios";
 import {
   Blog,
   Post,
-  SearchRequest,
-  PageResponse,
-  TagResponse,
-  CategoryResponse,
+  BlogListResponse,
+  PostListResponse,
+  SearchResultResponse,
 } from "@/types";
 
 // API Base URL 설정: 프로덕션에서는 ECS 환경변수, 개발에서는 localhost
@@ -23,84 +22,53 @@ const api = axios.create({
   },
 });
 
-// 배열 파라미터를 쉼표로 구분된 문자열로 변환하는 함수
-function convertArrayParams(
-  params: Record<string, unknown>
-): Record<string, string | number | boolean> {
-  const converted: Record<string, string | number | boolean> = {};
-
-  Object.entries(params).forEach(([key, value]) => {
-    if (Array.isArray(value)) {
-      // 빈 배열이 아닌 경우에만 쉼표로 구분된 문자열로 변환
-      if (value.length > 0) {
-        converted[key] = value.join(",");
-      }
-      // 빈 배열은 쿼리 파라미터에서 제외
-    } else if (
-      value !== undefined &&
-      value !== null &&
-      (typeof value === "string" ||
-        typeof value === "number" ||
-        typeof value === "boolean")
-    ) {
-      converted[key] = value;
-    }
-  });
-
-  return converted;
-}
-
 export const blogApi = {
   getAll: (
     params: {
-      page?: number;
-      size?: number;
+      skip?: number;
+      limit?: number;
     } = {}
-  ): Promise<Blog[]> =>
-    api.get("/api/blogs", { params }).then((res) => res.data),
+  ): Promise<BlogListResponse> =>
+    api.get("/api/v1/blogs", { params }).then((res) => res.data),
 
   getActive: (): Promise<Blog[]> =>
-    api.get("/api/blogs/active").then((res) => res.data),
+    api.get("/api/v1/blogs/active").then((res) => res.data),
+
+  getById: (id: number): Promise<Blog> =>
+    api.get(`/api/v1/blogs/${id}`).then((res) => res.data),
 };
 
-export const tagApi = {
-  getAll: (): Promise<TagResponse[]> =>
-    api.get("/api/tags").then((res) => res.data),
-
-  search: (query?: string): Promise<TagResponse[]> =>
-    api
-      .get("/api/tags/search", { params: { q: query } })
-      .then((res) => res.data),
-};
-
-export const categoryApi = {
-  getAll: (): Promise<CategoryResponse[]> =>
-    api.get("/api/categories").then((res) => res.data),
-};
 
 export const searchApi = {
   searchPosts: (
-    searchRequest: SearchRequest,
+    keyword: string,
     params: {
-      page?: number;
-      size?: number;
+      limit?: number;
+      offset?: number;
     } = {}
-  ): Promise<PageResponse<Post>> => {
-    const queryParams = {
-      ...searchRequest,
-      ...params,
-    };
-
-    // 배열 파라미터를 변환
-    const convertedParams = convertArrayParams(queryParams);
-
+  ): Promise<SearchResultResponse> => {
     return api
-      .get("/api/search/posts", { params: convertedParams })
+      .get("/api/v1/posts/search", {
+        params: {
+          q: keyword,
+          limit: params.limit || 20,
+          offset: params.offset || 0
+        }
+      })
       .then((res) => res.data);
   },
 };
 
 export const postApi = {
+  getAll: (
+    params: {
+      skip?: number;
+      limit?: number;
+      blog_id?: number;
+    } = {}
+  ): Promise<PostListResponse> =>
+    api.get("/api/v1/posts", { params }).then((res) => res.data),
+
   getById: (id: number): Promise<Post> =>
-    api.get(`/api/posts/${id}`).then((res) => res.data),
+    api.get(`/api/v1/posts/${id}`).then((res) => res.data),
 };

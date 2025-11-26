@@ -8,8 +8,6 @@ import { ko } from 'date-fns/locale';
 import { ArrowLeft, ExternalLink, User, Clock, Building2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import CategoryChip from '@/components/CategoryChip';
-import ClickableTagChip from '@/components/ClickableTagChip';
 
 export default function PostDetailPage() {
   const params = useParams();
@@ -62,7 +60,7 @@ export default function PostDetailPage() {
     );
   }
 
-  const publishedDate = new Date(post.publishedAt);
+  const publishedDate = new Date(post.published_at);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -86,9 +84,9 @@ export default function PostDetailPage() {
               {/* Blog info */}
               <div className="flex-shrink-0 flex items-center space-x-3">
                 <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
-                  {post.blog.logoUrl && !logoError ? (
+                  {post.blog.logo_url && !logoError ? (
                     <Image
-                      src={post.blog.logoUrl}
+                      src={post.blog.logo_url}
                       alt={`${post.blog.company} logo`}
                       width={40}
                       height={40}
@@ -127,15 +125,6 @@ export default function PostDetailPage() {
               </div>
             </div>
 
-            {/* Tags and Categories */}
-            <div className="flex flex-wrap gap-2">
-              {post.categories && post.categories.length > 0 && post.categories.map((category) => (
-                <CategoryChip key={category} category={category} />
-              ))}
-              {post.tags && post.tags.length > 0 && post.tags.map((tag) => (
-                <ClickableTagChip key={tag} tag={tag} />
-              ))}
-            </div>
           </div>
 
           {/* Content */}
@@ -155,7 +144,7 @@ export default function PostDetailPage() {
           <div className="p-6 border-t border-slate-200 bg-slate-50">
             <div className="flex flex-col sm:flex-row gap-3">
               <Link
-                href={post.originalUrl}
+                href={post.original_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center space-x-2 px-4 py-2
@@ -166,7 +155,7 @@ export default function PostDetailPage() {
               </Link>
 
               <Link
-                href={post.blog.siteUrl}
+                href={post.blog.site_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center space-x-2 px-4 py-2
