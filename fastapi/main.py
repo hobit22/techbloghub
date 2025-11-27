@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.api.v1 import blogs, posts, scheduler
+from app.api.v1 import blogs, posts, scheduler, summaries
 from app.scheduler import start_scheduler, shutdown_scheduler
 
 # FastAPI 앱 생성
@@ -25,6 +25,7 @@ app.add_middleware(
 app.include_router(blogs.router, prefix="/api/v1")
 app.include_router(posts.router, prefix="/api/v1")
 app.include_router(scheduler.router, prefix="/api/v1")
+app.include_router(summaries.router, prefix="/api/v1")
 
 
 @app.get("/")

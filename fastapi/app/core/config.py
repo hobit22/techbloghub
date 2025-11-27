@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     MIN_TEXT_RATIO: float = 0.01
     PLAYWRIGHT_TIMEOUT: int = 30000
 
+    # OpenAI 설정
+    OPENAI_API_KEY: str = ""
+    OPENAI_MODEL: str = "gpt-4o-mini"
+    OPENAI_MAX_TOKENS: int = 10000
+
     class Config:
         env_file = ".env"
         case_sensitive = True
