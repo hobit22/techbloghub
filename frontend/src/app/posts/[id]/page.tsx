@@ -8,6 +8,7 @@ import { ko } from 'date-fns/locale';
 import { ArrowLeft, ExternalLink, User, Clock, Building2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { PostSummary } from '@/components/PostSummary';
 
 export default function PostDetailPage() {
   const params = useParams();
@@ -129,15 +130,8 @@ export default function PostDetailPage() {
 
           {/* Content */}
           <div className="p-6">
-            {/* Summary Content */}
-            <h2 className="text-lg font-bold text-slate-900 mb-4">AI 요약 내용</h2>
-            {post.summaryContent && (
-              <div className="prose prose-slate max-w-none">
-                <div className="whitespace-pre-wrap text-slate-700 leading-relaxed">
-                  {post.summaryContent}
-                </div>
-              </div>
-            )}
+            {/* AI Streaming Summary */}
+            <PostSummary postId={postId} />
           </div>
 
           {/* Footer */}
