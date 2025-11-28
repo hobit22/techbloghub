@@ -2,13 +2,15 @@
 
 import { useEffect } from 'react';
 import { useSummaryStream } from '@/hooks/useSummaryStream';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface PostSummaryProps {
   postId: number;
 }
 
 export function PostSummary({ postId }: PostSummaryProps) {
-  const { excerpt, tldr, detailed, status, error, currentType, startStream } =
+  const { tldr, detailed, status, error, currentType, startStream } =
     useSummaryStream(postId);
 
   useEffect(() => {
@@ -26,24 +28,18 @@ export function PostSummary({ postId }: PostSummaryProps) {
 
   return (
     <div className="space-y-6">
-      {/* 1. 원글 일부 */}
-      <section className="p-4 bg-gray-50 rounded-lg">
-        <h2 className="text-lg font-semibold mb-3 text-gray-700">원글 일부</h2>
-        <p className="text-gray-600 whitespace-pre-wrap">
-          {excerpt || '원문 로딩 중...'}
-        </p>
-      </section>
-
-      {/* 2. TL;DR 요약 */}
+      {/* TL;DR 요약 */}
       <section className="p-4 bg-blue-50 rounded-lg">
         <h2 className="text-lg font-semibold mb-3 text-blue-700 flex items-center gap-2">
-          AI TL;DR 요약
+          TL;DR
           {currentType === 'tldr' && (
             <span className="inline-block w-2 h-2 bg-blue-500 rounded-full animate-pulse " />
           )}
         </h2>
-        <div className="prose prose-slate max-w-none whitespace-pre-wrap text-slate-700">
-          {tldr || (
+        <div className="prose prose-slate max-w-none text-slate-700">
+          {tldr ? (
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{tldr}</ReactMarkdown>
+          ) : (
             <div className="flex items-center gap-2 text-gray-500">
               <span>요약 생성 중...</span>
               <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full" />
@@ -52,7 +48,7 @@ export function PostSummary({ postId }: PostSummaryProps) {
         </div>
       </section>
 
-      {/* 3. 상세 요약 */}
+      {/* 상세 요약 */}
       <section className="p-4 bg-green-50 rounded-lg">
         <h2 className="text-lg font-semibold mb-3 text-green-700 flex items-center gap-2">
           상세 요약
@@ -60,8 +56,10 @@ export function PostSummary({ postId }: PostSummaryProps) {
             <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse" />
           )}
         </h2>
-        <div className="prose prose-slate max-w-none whitespace-pre-wrap text-slate-700">
-          {detailed || (
+        <div className="prose prose-slate max-w-none text-slate-700">
+          {detailed ? (
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{detailed}</ReactMarkdown>
+          ) : (
             <div className="flex items-center gap-2 text-gray-500">
               <span>상세 요약 대기 중...</span>
             </div>

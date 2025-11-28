@@ -130,34 +130,46 @@ export default function PostDetailPage() {
 
           {/* Content */}
           <div className="p-6">
-            {/* AI Streaming Summary */}
-            <PostSummary postId={postId} />
-          </div>
+            <div className="space-y-6">
+              {/* 원문 일부 with fade effect */}
+              <section>
+                <h2 className="text-lg font-semibold mb-3 text-gray-700">원문</h2>
+                <div className="relative h-64 overflow-hidden rounded-lg bg-gray-50 p-4">
+                  <p className="text-gray-600 whitespace-pre-wrap">
+                    {post.content || '원문 내용이 없습니다.'}
+                  </p>
+                  {/* Fade overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-gray-50 via-gray-50/80 to-transparent pointer-events-none"></div>
+                </div>
+              </section>
 
-          {/* Footer */}
-          <div className="p-6 border-t border-slate-200 bg-slate-50">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Link
-                href={post.original_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center space-x-2 px-4 py-2
-                         bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex-1"
-              >
-                <span>원본 글 보기</span>
-                <ExternalLink className="h-4 w-4" />
-              </Link>
+              {/* 링크 버튼들 */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link
+                  href={post.original_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center space-x-2 px-4 py-2
+                           bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex-1"
+                >
+                  <span>원본 글 보기</span>
+                  <ExternalLink className="h-4 w-4" />
+                </Link>
 
-              <Link
-                href={post.blog.site_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center space-x-2 px-4 py-2
-                         bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors flex-1"
-              >
-                <span>{post.blog.company} 블로그</span>
-                <ExternalLink className="h-4 w-4" />
-              </Link>
+                <Link
+                  href={post.blog.site_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center space-x-2 px-4 py-2
+                           bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors flex-1"
+                >
+                  <span>{post.blog.company} 블로그</span>
+                  <ExternalLink className="h-4 w-4" />
+                </Link>
+              </div>
+
+              {/* AI Streaming Summary */}
+              <PostSummary postId={postId} />
             </div>
           </div>
         </article>

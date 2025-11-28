@@ -16,22 +16,12 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post }: PostCardProps) {
-  const { setTags, setCategories, setBlogIds } = useUrlState();
+  const { setBlogIds } = useUrlState();
   const [logoError, setLogoError] = useState(false);
   const router = useRouter();
 
   const handleClick = () => {
     router.push(`/posts/${post.id}`);
-  };
-
-  const handleTagClick = (e: React.MouseEvent, tag: string) => {
-    e.stopPropagation(); // 이벤트 전파 방지
-    setTags([tag]); // 해당 태그로 검색
-  };
-
-  const handleCategoryClick = (e: React.MouseEvent, category: string) => {
-    e.stopPropagation(); // 이벤트 전파 방지
-    setCategories([category]); // 해당 카테고리로 검색
   };
 
   const handleCompanyClick = (e: React.MouseEvent) => {
@@ -114,24 +104,6 @@ export default function PostCard({ post }: PostCardProps) {
               {post.content}
             </p>
           )}
-
-          {/* Tags and Categories */}
-          <div className="flex flex-wrap gap-2 mb-3">
-            {post.categories && post.categories.length > 0 && post.categories.slice(0, 2).map((category) => (
-              <CategoryChip
-                key={category}
-                category={category}
-                onClick={handleCategoryClick}
-              />
-            ))}
-            {post.tags && post.tags.length > 0 && post.tags.slice(0, 4).map((tag) => (
-              <ClickableTagChip
-                key={tag}
-                tag={tag}
-                onClick={handleTagClick}
-              />
-            ))}
-          </div>
 
           {/* Footer */}
           <div className="flex items-center justify-between text-sm">
