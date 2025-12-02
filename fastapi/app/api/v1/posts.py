@@ -18,7 +18,7 @@ from app.schemas import (
 router = APIRouter(prefix="/posts", tags=["posts"])
 
 
-@router.post("/", response_model=PostResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=PostResponse, status_code=status.HTTP_201_CREATED)
 async def create_post(
     post_data: PostCreate,
     db: AsyncSession = Depends(get_db)
@@ -65,7 +65,7 @@ async def create_post(
     return new_post
 
 
-@router.get("/", response_model=PostListResponse)
+@router.get("", response_model=PostListResponse)
 async def list_posts(
     skip: int = 0,
     limit: int = 20,

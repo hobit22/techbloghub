@@ -66,14 +66,14 @@ MIN_TEXT_RATIO=0.01
 PLAYWRIGHT_TIMEOUT=30000
 ```
 
-### 3. 데이터베이스 마이그레이션
+### 3. 데이터베이스 초기화
 
 ```bash
 # 로컬 PostgreSQL이 실행 중인지 확인
 docker ps | grep postgres
 
-# 마이그레이션 실행
-alembic upgrade head
+# 스키마 및 테이블 생성 (SQLAlchemy create_all 사용)
+python create_schema.py
 ```
 
 ### 4. 로컬 실행
@@ -87,6 +87,7 @@ python -m uvicorn main:app --reload
 ```
 
 서버가 실행되면:
+
 - API 문서: http://localhost:8000/docs
 - Health Check: http://localhost:8000/health
 
@@ -99,7 +100,7 @@ python -m uvicorn main:app --reload
 docker build -t techbloghub-fastapi:latest .
 
 # 특정 플랫폼용 빌드 (ECS용)
-docker build --platform linux/amd64 -t techbloghub-fastapi:latest .
+docker build --platform linux/amd64 -t techbloghub/fastapi:latest .
 ```
 
 ### 2. Docker 컨테이너 실행
@@ -119,6 +120,7 @@ docker run -d \
 ```
 
 **중요**:
+
 - `host.docker.internal`은 Docker 컨테이너에서 호스트 머신의 localhost에 접근하는 방법입니다.
 - Mac/Windows에서 작동하며, Linux에서는 `--add-host=host.docker.internal:host-gateway` 옵션 추가가 필요합니다.
 
@@ -165,11 +167,13 @@ docker restart techbloghub-fastapi
 ## API 엔드포인트
 
 ### Health Check
+
 ```bash
 GET /health
 ```
 
 ### Blogs
+
 ```bash
 GET  /api/v1/blogs          # 블로그 목록 조회
 POST /api/v1/blogs          # 블로그 추가
@@ -179,6 +183,7 @@ DELETE /api/v1/blogs/{id}   # 블로그 삭제
 ```
 
 ### Posts
+
 ```bash
 GET  /api/v1/posts          # 포스트 목록 조회
 POST /api/v1/posts          # 포스트 추가
@@ -189,12 +194,14 @@ GET  /api/v1/posts/search   # 포스트 검색
 ```
 
 ### Scheduler
+
 ```bash
 GET  /api/v1/scheduler/status           # 스케줄러 상태 확인
 POST /api/v1/scheduler/trigger/{job_id} # 수동 작업 실행
 ```
 
 ### Summaries
+
 ```bash
 POST /api/v1/summaries/generate         # AI 요약 생성
 ```
@@ -204,9 +211,11 @@ POST /api/v1/summaries/generate         # AI 요약 생성
 ### 자동 실행 작업
 
 1. **RSS 수집** - 매일 01:00 AM (KST)
+
    - 활성화된 블로그의 RSS 피드 수집
 
 2. **콘텐츠 처리** - 매일 02:00 AM (KST)
+
    - 수집된 포스트의 전체 콘텐츠 추출
 
 3. **실패 포스트 재시도** - 매일 03:00 AM (KST)
@@ -297,20 +306,20 @@ uvicorn main:app --port 8001
 
 ## 환경 변수 전체 목록
 
-| 변수명 | 기본값 | 설명 |
-|--------|--------|------|
-| `APP_NAME` | "TechBlog Hub" | 애플리케이션 이름 |
-| `APP_VERSION` | "1.0.0" | 버전 |
-| `DEBUG` | True | 디버그 모드 |
-| `DATABASE_URL` | - | PostgreSQL 연결 URL (필수) |
-| `ALLOWED_ORIGINS` | [] | CORS 허용 도메인 |
-| `OPENAI_API_KEY` | - | OpenAI API 키 (필수) |
-| `OPENAI_MODEL` | "gpt-4o-mini" | 사용할 OpenAI 모델 |
-| `OPENAI_MAX_TOKENS` | 10000 | 최대 토큰 수 |
-| `RSS_PROXY_URL` | - | RSS 프록시 URL |
-| `MIN_CONTENT_LENGTH` | 500 | 최소 콘텐츠 길이 |
-| `MIN_TEXT_RATIO` | 0.01 | 최소 텍스트 비율 |
-| `PLAYWRIGHT_TIMEOUT` | 30000 | Playwright 타임아웃 (ms) |
+| 변수명               | 기본값         | 설명                       |
+| -------------------- | -------------- | -------------------------- |
+| `APP_NAME`           | "TechBlog Hub" | 애플리케이션 이름          |
+| `APP_VERSION`        | "1.0.0"        | 버전                       |
+| `DEBUG`              | True           | 디버그 모드                |
+| `DATABASE_URL`       | -              | PostgreSQL 연결 URL (필수) |
+| `ALLOWED_ORIGINS`    | []             | CORS 허용 도메인           |
+| `OPENAI_API_KEY`     | -              | OpenAI API 키 (필수)       |
+| `OPENAI_MODEL`       | "gpt-4o-mini"  | 사용할 OpenAI 모델         |
+| `OPENAI_MAX_TOKENS`  | 10000          | 최대 토큰 수               |
+| `RSS_PROXY_URL`      | -              | RSS 프록시 URL             |
+| `MIN_CONTENT_LENGTH` | 500            | 최소 콘텐츠 길이           |
+| `MIN_TEXT_RATIO`     | 0.01           | 최소 텍스트 비율           |
+| `PLAYWRIGHT_TIMEOUT` | 30000          | Playwright 타임아웃 (ms)   |
 
 ## 라이선스
 
