@@ -12,9 +12,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const params = await searchParams;
   const keyword = params.keyword as string;
-  const blogIds = params.blogIds as string;
-  const tags = params.tags as string;
-  const categories = params.categories as string;
+
+
 
   // 필터 조합에 따른 타이틀과 설명 생성
   let title = '기술 블로그 모음';
@@ -23,14 +22,6 @@ export async function generateMetadata({
   if (keyword) {
     title = `"${keyword}" 검색 결과 - TeckBlogHub`;
     description = `"${keyword}" 관련 기술 블로그 포스트를 모아보세요. 국내 IT 대기업의 개발 인사이트와 기술 트렌드를 확인하세요.`;
-  } else if (tags) {
-    const tagList = tags.split(',').slice(0, 3).join(', ');
-    title = `${tagList} 태그 포스트 - TeckBlogHub`;
-    description = `${tagList} 태그가 포함된 기술 블로그 포스트들을 모아보세요.`;
-  } else if (categories) {
-    const categoryList = categories.split(',').slice(0, 2).join(', ');
-    title = `${categoryList} 카테고리 포스트 - TeckBlogHub`;
-    description = `${categoryList} 분야의 기술 블로그 포스트들을 모아보세요.`;
   }
 
   return {
@@ -44,8 +35,6 @@ export async function generateMetadata({
       '개발블로그',
       '개발자',
       keyword,
-      ...(tags ? tags.split(',') : []),
-      ...(categories ? categories.split(',') : []),
     ].filter(Boolean),
     openGraph: {
       title,
@@ -69,27 +58,13 @@ export async function generateMetadata({
   };
 }
 
-interface HomePageProps {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}
-
 // 메인 Server Component
-export default async function HomePage({ searchParams }: HomePageProps) {
-  const params = await searchParams;
-  // URL 파라미터를 string으로 변환
-  const normalizedSearchParams = {
-    keyword: params.keyword as string,
-    blogIds: params.blogIds as string,
-    tags: params.tags as string,
-    categories: params.categories as string,
-    page: params.page as string,
-  };
-
+export default async function HomePage() {
   // 서버에서 초기 데이터 페칭
-  const serverData = await fetchServerSideData(normalizedSearchParams);
+  const serverData = await fetchServerSideData();
 
   return (
-    <Suspense 
+    <Suspense
       fallback={
         <div className="min-h-screen bg-slate-50">
           <div className="max-w-7xl mx-auto p-4 lg:p-6">
@@ -98,13 +73,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </div>
       }
     >
-      <ClientHomePage 
-        initialData={serverData.initialPosts}
+      <ClientHomePage
         initialBlogs={serverData.blogs}
-        initialCategories={serverData.categories}
-        initialTags={serverData.tags}
-        initialHasFilters={serverData.hasFilters}
-        searchSummary={serverData.searchSummary}
       />
     </Suspense>
   );

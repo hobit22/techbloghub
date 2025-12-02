@@ -76,21 +76,22 @@ export default function AddBlogModal({ isOpen, onClose, onSuccess }: AddBlogModa
       await adminBlogApi.create({
         name: formData.name.trim(),
         company: formData.company.trim(),
-        rssUrl: formData.rssUrl.trim(),
-        siteUrl: formData.siteUrl.trim(),
-        logoUrl: formData.logoUrl.trim() || undefined,
-        description: formData.description.trim() || undefined
+        rss_url: formData.rssUrl.trim(),
+        site_url: formData.siteUrl.trim(),
+        logo_url: formData.logoUrl.trim() || undefined,
+        description: formData.description.trim() || undefined,
+        blog_type: 'COMPANY'
       });
 
       // 성공시 폼 초기화 및 모달 닫기
-      setFormData({
-        name: '',
-        company: '',
-        rssUrl: '',
-        siteUrl: '',
-        logoUrl: '',
-        description: '',
-      });
+      // setFormData({
+      //   name: '',
+      //   company: '',
+      //   rssUrl: '',
+      //   siteUrl: '',
+      //   logoUrl: '',
+      //   description: '',
+      // });
       setErrors({});
       onSuccess();
       onClose();

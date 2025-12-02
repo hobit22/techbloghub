@@ -25,7 +25,7 @@ export default function AdminLoginPage() {
       localStorage.setItem('admin-auth', auth);
 
       // 관리자 API 테스트 호출 - admin-api 클라이언트 사용
-      await adminPostApi.getAll({ page: 0, size: 1 });
+      await adminPostApi.getAll({ skip: 0, limit: 1 });
 
       // 성공하면 대시보드로 이동
       router.push('/admin/dashboard');

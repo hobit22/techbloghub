@@ -6,8 +6,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 interface UrlState {
   keyword?: string;
   blogIds?: number[];
-  tags?: string[];
-  categories?: string[];
   page?: number;
 }
 
@@ -20,16 +18,11 @@ export function useUrlState() {
     const keyword = searchParams.get("keyword") || undefined;
     const blogIds =
       searchParams.get("blogIds")?.split(",").map(Number).filter(Boolean) || [];
-    const tags = searchParams.get("tags")?.split(",").filter(Boolean) || [];
-    const categories =
-      searchParams.get("categories")?.split(",").filter(Boolean) || [];
     const page = parseInt(searchParams.get("page") || "0", 10);
 
     return {
       keyword,
       blogIds: blogIds.length > 0 ? blogIds : undefined,
-      tags: tags.length > 0 ? tags : undefined,
-      categories: categories.length > 0 ? categories : undefined,
       page,
     };
   }, [searchParams]);
@@ -48,14 +41,6 @@ export function useUrlState() {
 
       if (updatedState.blogIds && updatedState.blogIds.length > 0) {
         params.set("blogIds", updatedState.blogIds.join(","));
-      }
-
-      if (updatedState.tags && updatedState.tags.length > 0) {
-        params.set("tags", updatedState.tags.join(","));
-      }
-
-      if (updatedState.categories && updatedState.categories.length > 0) {
-        params.set("categories", updatedState.categories.join(","));
       }
 
       if (updatedState.page !== undefined && updatedState.page > 0) {
@@ -92,8 +77,6 @@ export function useUrlState() {
     updateMultiple,
     setKeyword: (keyword: string) => updateUrl({ keyword, page: 0 }),
     setBlogIds: (blogIds: number[]) => updateUrl({ blogIds, page: 0 }),
-    setTags: (tags: string[]) => updateUrl({ tags, page: 0 }),
-    setCategories: (categories: string[]) => updateUrl({ categories, page: 0 }),
     setPage: (page: number) => updateUrl({ page }),
     reset: () => router.push("/", { scroll: false }),
   };

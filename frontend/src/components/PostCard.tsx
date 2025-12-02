@@ -16,7 +16,7 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post }: PostCardProps) {
-  const { setTags, setCategories, setBlogIds } = useUrlState();
+  const { setBlogIds } = useUrlState();
   const [logoError, setLogoError] = useState(false);
   const router = useRouter();
 
@@ -24,23 +24,13 @@ export default function PostCard({ post }: PostCardProps) {
     router.push(`/posts/${post.id}`);
   };
 
-  const handleTagClick = (e: React.MouseEvent, tag: string) => {
-    e.stopPropagation(); // 이벤트 전파 방지
-    setTags([tag]); // 해당 태그로 검색
-  };
-
-  const handleCategoryClick = (e: React.MouseEvent, category: string) => {
-    e.stopPropagation(); // 이벤트 전파 방지
-    setCategories([category]); // 해당 카테고리로 검색
-  };
-
   const handleCompanyClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // 이벤트 전파 방지
-    setBlogIds([post.blog.id]); // 해당 회사의 블로그로 필터링
+    setBlogIds([post.blog?.id ?? 0]); // 해당 회사의 블로그로 필터링
   };
 
-  const publishedDate = new Date(post.publishedAt);
-  const isRecent = Date.now() - publishedDate.getTime() < 24 * 60 * 60 * 1000; // 24 hours
+  const publishedDate = new Date(post.published_at);
+  const isRecent = Date.now() - publishedDate.getTime() < 24 * 60 * 60 * 1000; // 24 hours;
 
   return (
     <article 
@@ -58,10 +48,10 @@ export default function PostCard({ post }: PostCardProps) {
                       flex items-center justify-center mb-2 cursor-pointer 
                       overflow-hidden"
           >
-            {post.blog.logoUrl && !logoError ? (
+            {post.blog?.logo_url && !logoError ? (
               <Image 
-                src={post.blog.logoUrl}
-                alt={`${post.blog.company} logo`}
+                src={post.blog?.logo_url}
+                alt={`${post.blog?.company} logo`}
                 width={24}
                 height={24}
                 className="w-full h-full object-contain"
@@ -81,7 +71,7 @@ export default function PostCard({ post }: PostCardProps) {
               className="text-xs font-medium text-slate-700 truncate w-16 cursor-pointer hover:text-blue-600 
                         transition-colors duration-200"
             >
-              {post.blog.company}
+              {post.blog?.company}
             </div>
           </div>
         </div>
@@ -114,24 +104,6 @@ export default function PostCard({ post }: PostCardProps) {
               {post.content}
             </p>
           )}
-
-          {/* Tags and Categories */}
-          <div className="flex flex-wrap gap-2 mb-3">
-            {post.categories && post.categories.length > 0 && post.categories.slice(0, 2).map((category) => (
-              <CategoryChip
-                key={category}
-                category={category}
-                onClick={handleCategoryClick}
-              />
-            ))}
-            {post.tags && post.tags.length > 0 && post.tags.slice(0, 4).map((tag) => (
-              <ClickableTagChip
-                key={tag}
-                tag={tag}
-                onClick={handleTagClick}
-              />
-            ))}
-          </div>
 
           {/* Footer */}
           <div className="flex items-center justify-between text-sm">

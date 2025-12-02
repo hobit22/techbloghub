@@ -30,17 +30,14 @@ export default function AdminPostsPage() {
     try {
       setIsLoading(true);
       const params = {
-        page: currentPage,
-        size: 20,
-        ...(filters.keyword && { keyword: filters.keyword }),
-        ...(filters.blogId && { blogId: parseInt(filters.blogId) }),
-        ...(filters.tag && { tag: filters.tag }),
-        ...(filters.category && { category: filters.category }),
+        skip: currentPage * 20,
+        limit: 20,
+        ...(filters.blogId && { blog_id: parseInt(filters.blogId) }),
       };
 
       const response = await adminPostApi.getAll(params);
-      setPosts(response.content || []);
-      setTotalElements(response.totalElements || 0);
+      setPosts(response.posts || []);
+      setTotalElements(response.total || 0);
       setError('');
     } catch (error) {
       setError('포스트 목록을 불러오는 중 오류가 발생했습니다.');
@@ -279,13 +276,13 @@ export default function AdminPostsPage() {
                     <td className="px-6 py-4 text-sm text-gray-900">
                       <div className="flex items-center">
                         <Calendar className="w-4 h-4 text-gray-400 mr-2" />
-                        {formatDate(post.publishedAt)}
+                        {formatDate(post.published_at || '')}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm font-medium">
                       <div className="flex space-x-3">
                         <a
-                          href={post.originalUrl}
+                          href={post.original_url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-600 hover:text-blue-900"

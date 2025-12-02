@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Blog, Post, PageResponse } from "@/types";
+import { Blog, Post, BlogListResponse, PostListResponse } from "@/types";
 
 // API Base URL 설정
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -44,63 +44,52 @@ const createAdminApi = () => {
 
 const adminApi = createAdminApi();
 
-// 관리자 포스트 API
+// 관리자 포스트 API (FastAPI v1)
 export const adminPostApi = {
   getAll: (params: {
-    keyword?: string;
-    blogId?: number;
-    tag?: string;
-    category?: string;
-    page?: number;
-    size?: number;
-  } = {}): Promise<PageResponse<Post>> =>
-    adminApi.get("/api/admin/posts", { params }).then((res) => res.data),
+    skip?: number;
+    limit?: number;
+    blog_id?: number;
+  } = {}): Promise<PostListResponse> =>
+    adminApi.get("/api/v1/posts", { params }).then((res) => res.data),
 
   getById: (id: number): Promise<Post> =>
-    adminApi.get(`/api/admin/posts/${id}`).then((res) => res.data),
+    adminApi.get(`/api/v1/posts/${id}`).then((res) => res.data),
 
   update: (id: number, data: Partial<Post>): Promise<Post> =>
-    adminApi.put(`/api/admin/posts/${id}`, data).then((res) => res.data),
+    adminApi.patch(`/api/v1/posts/${id}`, data).then((res) => res.data),
 
   delete: (id: number): Promise<void> =>
-    adminApi.delete(`/api/admin/posts/${id}`).then(() => {}),
-
-  deleteBatch: (ids: number[]): Promise<void> =>
-    adminApi.post("/api/admin/posts/batch/delete", { ids }).then(() => {}),
+    adminApi.delete(`/api/v1/posts/${id}`).then(() => {}),
 };
 
-// 관리자 블로그 API
+// 관리자 블로그 API (FastAPI v1)
 export const adminBlogApi = {
   getAll: (params: {
-    page?: number;
-    size?: number;
-  } = {}): Promise<PageResponse<Blog>> =>
-    adminApi.get("/api/admin/blogs", { params }).then((res) => res.data),
-
-  getActive: (): Promise<Blog[]> =>
-    adminApi.get("/api/admin/blogs/active").then((res) => res.data),
+    skip?: number;
+    limit?: number;
+  } = {}): Promise<BlogListResponse> =>
+    adminApi.get("/api/v1/blogs", { params }).then((res) => res.data),
 
   getById: (id: number): Promise<Blog> =>
-    adminApi.get(`/api/admin/blogs/${id}`).then((res) => res.data),
+    adminApi.get(`/api/v1/blogs/${id}`).then((res) => res.data),
 
   create: (data: {
     name: string;
     company: string;
-    rssUrl: string;
-    siteUrl: string;
-    logoUrl?: string;
+    rss_url: string;
+    site_url: string;
+    logo_url?: string;
     description?: string;
+    blog_type?: string;
   }): Promise<Blog> =>
-    adminApi.post("/api/admin/blogs", data).then((res) => res.data),
+    adminApi.post("/api/v1/blogs", data).then((res) => res.data),
 
-  triggerRecrawl: (id: number): Promise<string> =>
-    adminApi.post(`/api/admin/blogs/${id}/recrawl`).then((res) => res.data),
+  update: (id: number, data: Partial<Blog>): Promise<Blog> =>
+    adminApi.patch(`/api/v1/blogs/${id}`, data).then((res) => res.data),
 
-  triggerAllRecrawl: (): Promise<string> =>
-    adminApi.post("/api/admin/blogs/recrawl/all").then((res) => res.data),
-
-  getStats: (id: number): Promise<Record<string, unknown>> =>
-    adminApi.get(`/api/admin/blogs/${id}/stats`).then((res) => res.data),
+  delete: (id: number): Promise<void> =>
+    adminApi.delete(`/api/v1/blogs/${id}`).then(() => {}),
 };
 
 // 인증 관련 유틸리티
