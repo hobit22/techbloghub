@@ -20,8 +20,8 @@ export default function AdminBlogsPage() {
   const loadBlogs = async () => {
     try {
       setIsLoading(true);
-      const response = await adminBlogApi.getAll({ page: 0, size: 100 });
-      setBlogs(response.content || []);
+      const response = await adminBlogApi.getAll({ skip: 0, limit: 100 });
+      setBlogs(response.blogs || []);
       setError('');
     } catch (error) {
       setError('블로그 목록을 불러오는 중 오류가 발생했습니다.');

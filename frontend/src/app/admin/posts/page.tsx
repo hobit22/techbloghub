@@ -30,17 +30,14 @@ export default function AdminPostsPage() {
     try {
       setIsLoading(true);
       const params = {
-        page: currentPage,
-        size: 20,
-        ...(filters.keyword && { keyword: filters.keyword }),
-        ...(filters.blogId && { blogId: parseInt(filters.blogId) }),
-        ...(filters.tag && { tag: filters.tag }),
-        ...(filters.category && { category: filters.category }),
+        skip: currentPage * 20,
+        limit: 20,
+        ...(filters.blogId && { blog_id: parseInt(filters.blogId) }),
       };
 
       const response = await adminPostApi.getAll(params);
-      setPosts(response.content || []);
-      setTotalElements(response.totalElements || 0);
+      setPosts(response.posts || []);
+      setTotalElements(response.total || 0);
       setError('');
     } catch (error) {
       setError('포스트 목록을 불러오는 중 오류가 발생했습니다.');
