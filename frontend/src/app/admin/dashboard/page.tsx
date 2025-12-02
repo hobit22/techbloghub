@@ -26,16 +26,16 @@ export default function AdminDashboard() {
       try {
         // 포스트와 블로그 데이터 로드
         const [postsData, blogsData, activeBlogs] = await Promise.allSettled([
-          adminPostApi.getAll({ page: 0, size: 1 }),
-          adminBlogApi.getAll({ page: 0, size: 1 }),
-          adminBlogApi.getActive(),
+          adminPostApi.getAll({ skip: 0, limit: 1 }),
+          adminBlogApi.getAll({ skip: 0, limit: 1 }),
+          adminBlogApi.getAll({ skip: 0, limit: 1 }),
         ]);
 
         const newStats: DashboardStats = {
-          totalPosts: postsData.status === 'fulfilled' ? postsData.value.totalElements || 0 : 0,
-          totalBlogs: blogsData.status === 'fulfilled' ? blogsData.value.totalElements || 0 : 0,
-          activeBlogsCount: activeBlogs.status === 'fulfilled' ? activeBlogs.value.length : 0,
-          recentPostsCount: 0, // 임시값
+          totalPosts: postsData.status === 'fulfilled' ? postsData.value.total || 0 : 0,
+          totalBlogs: blogsData.status === 'fulfilled' ? blogsData.value.total || 0 : 0,
+          activeBlogsCount: activeBlogs.status === 'fulfilled' ? activeBlogs.value.total || 0 : 0,
+          recentPostsCount: postsData.status === 'fulfilled' ? postsData.value.posts.length || 0 : 0
         };
 
         setStats(newStats);

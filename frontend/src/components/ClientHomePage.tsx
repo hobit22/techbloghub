@@ -7,9 +7,9 @@ import FilterTopBar from '@/components/FilterTopBar';
 import InfiniteScroll from '@/components/InfiniteScroll';
 import FilterResetButton from '@/components/FilterResetButton';
 import { useInfinitePosts } from '@/hooks/useInfinitePosts';
-import { useBlogs, useAvailableFilters } from '@/hooks/useFilters';
+import { useBlogs } from '@/hooks/useFilters';
 import { useUrlState } from '@/hooks/useUrlState';
-import { SearchRequest, Post, Blog, PageResponse } from '@/types';
+import { SearchRequest, Blog } from '@/types';
 import { X } from 'lucide-react';
 
 interface ClientHomePageProps {

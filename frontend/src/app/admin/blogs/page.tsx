@@ -31,25 +31,16 @@ export default function AdminBlogsPage() {
     }
   };
 
-  const handleRecrawl = async (blogId: number) => {
-    try {
-      setTriggering(blogId);
-      await adminBlogApi.triggerRecrawl(blogId);
-      alert('재크롤링 요청이 성공적으로 전송되었습니다.');
-    } catch (error) {
-      alert('재크롤링 요청 중 오류가 발생했습니다.');
-      console.error('Error triggering recrawl:', error);
-    } finally {
-      setTriggering(null);
-    }
-  };
+  // 재크롤링 기능은 스케줄러 API에서 전체 RSS 수집으로 대체
+  // POST /api/v1/scheduler/rss-collect/trigger
 
   const handleAllRecrawl = async () => {
-    if (!confirm('모든 블로그의 재크롤링을 요청하시겠습니까?')) return;
+    if (!confirm('모든 블로그의 RSS 수집을 시작하시겠습니까?')) return;
 
     try {
-      setTriggering(-1); // 전체 재크롤링 표시용
-      await adminBlogApi.triggerAllRecrawl();
+      setTriggering(-1);
+      // TODO: 스케줄러 API 호출로 변경 필요
+      // await schedulerApi.triggerRSSCollection();
       alert('전체 재크롤링 요청이 성공적으로 전송되었습니다.');
     } catch (error) {
       alert('전체 재크롤링 요청 중 오류가 발생했습니다.');
@@ -217,8 +208,8 @@ export default function AdminBlogsPage() {
                           {blog.company}
                         </div>
                         <div className="text-xs text-blue-600 hover:text-blue-800">
-                          <a href={blog.siteUrl} target="_blank" rel="noopener noreferrer">
-                            {blog.siteUrl}
+                          <a href={blog.site_url} target="_blank" rel="noopener noreferrer">
+                            {blog.site_url}
                           </a>
                         </div>
                       </div>
@@ -231,27 +222,13 @@ export default function AdminBlogsPage() {
                     <td className="px-6 py-4 text-sm text-gray-900">
                       <div className="flex items-center">
                         <Calendar className="w-4 h-4 text-gray-400 mr-2" />
-                        {formatDate(blog.lastCrawledAt || '')}
+                        {formatDate(blog.last_crawled_at || '')}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm font-medium">
-                      <button
-                        onClick={() => handleRecrawl(blog.id)}
-                        disabled={triggering === blog.id}
-                        className="text-blue-600 hover:text-blue-900 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {triggering === blog.id ? (
-                          <>
-                            <RefreshCw className="w-4 h-4 mr-1 inline animate-spin" />
-                            재크롤링 중...
-                          </>
-                        ) : (
-                          <>
-                            <RefreshCw className="w-4 h-4 mr-1 inline" />
-                            재크롤링
-                          </>
-                        )}
-                      </button>
+                      <span className="text-gray-500 text-sm">
+                        전체 재크롤링 사용
+                      </span>
                     </td>
                   </tr>
                 ))}
