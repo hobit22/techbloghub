@@ -7,7 +7,7 @@ import {
   SearchResultResponse,
 } from "@/types";
 
-// API Base URL 설정: 프로덕션에서는 ECS 환경변수, 개발에서는 localhost
+// API Base URL 설정: 환경 변수에서 읽어옴
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // 환경 확인을 위한 로그 (개발환경에서만)

@@ -26,7 +26,7 @@ export function useSummaryStream(postId: number) {
 
     // EventSource 생성 (SSE)
     const eventSource = new EventSource(
-      `http://localhost:8000/api/v1/summaries/stream/${postId}`
+      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/summaries/stream/${postId}`
     );
 
     eventSourceRef.current = eventSource;
