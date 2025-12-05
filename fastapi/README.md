@@ -166,72 +166,120 @@ docker restart techbloghub-fastapi
 
 ## API 엔드포인트
 
-### Health Check
+API는 **Public API**와 **Admin API**로 분리되어 있습니다.
 
+### Public API (인증 불필요)
+
+#### Health Check
 ```bash
 GET /health
 ```
 
-### Blogs
-
+#### Blogs
 ```bash
-GET  /api/v1/blogs          # 블로그 목록 조회
-POST /api/v1/blogs          # 블로그 추가
-GET  /api/v1/blogs/{id}     # 블로그 상세 조회
-PUT  /api/v1/blogs/{id}     # 블로그 수정
-DELETE /api/v1/blogs/{id}   # 블로그 삭제
+GET /api/v1/blogs           # 블로그 목록 조회
+GET /api/v1/blogs/active    # 활성 블로그 목록
+GET /api/v1/blogs/{id}      # 블로그 상세 조회
 ```
 
-### Posts
-
+#### Posts
 ```bash
-GET  /api/v1/posts          # 포스트 목록 조회
-POST /api/v1/posts          # 포스트 추가
-GET  /api/v1/posts/{id}     # 포스트 상세 조회
-PUT  /api/v1/posts/{id}     # 포스트 수정
-DELETE /api/v1/posts/{id}   # 포스트 삭제
-GET  /api/v1/posts/search   # 포스트 검색
+GET /api/v1/posts           # 포스트 목록 조회
+GET /api/v1/posts/{id}      # 포스트 상세 조회
+GET /api/v1/posts/search    # 포스트 전문 검색
 ```
 
-### Scheduler
-
+#### Summaries
 ```bash
-GET  /api/v1/scheduler/status           # 스케줄러 상태 확인
-POST /api/v1/scheduler/trigger/{job_id} # 수동 작업 실행
+GET /api/v1/summaries/stream/{post_id}  # AI 요약 스트리밍 (SSE)
 ```
 
-### Summaries
+### Admin API (인증 필요)
 
+**모든 Admin API는 헤더에 `X-Admin-Key`를 포함해야 합니다.**
+
+#### Blogs (Admin)
 ```bash
-POST /api/v1/summaries/generate         # AI 요약 생성
+POST   /api/v1/admin/blogs        # 블로그 생성
+PATCH  /api/v1/admin/blogs/{id}   # 블로그 수정
+DELETE /api/v1/admin/blogs/{id}   # 블로그 삭제
+
+# 예시
+curl -X POST http://localhost:8000/api/v1/admin/blogs \
+  -H "X-Admin-Key: your-admin-key" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Example Blog", "company": "Example Inc", "rss_url": "https://example.com/rss", "site_url": "https://example.com"}'
+```
+
+#### Posts (Admin)
+```bash
+POST   /api/v1/admin/posts        # 포스트 생성
+PATCH  /api/v1/admin/posts/{id}   # 포스트 수정
+DELETE /api/v1/admin/posts/{id}   # 포스트 삭제
+```
+
+#### Scheduler (Admin)
+```bash
+GET  /api/v1/admin/scheduler/stats                  # 스케줄러 통계 조회
+POST /api/v1/admin/scheduler/rss-collect/trigger    # RSS 수집 수동 실행
+POST /api/v1/admin/scheduler/content-process/trigger # 콘텐츠 처리 수동 실행
+POST /api/v1/admin/scheduler/retry-failed/trigger   # 재시도 수동 실행
+
+# 예시
+curl -X POST http://localhost:8000/api/v1/admin/scheduler/rss-collect/trigger \
+  -H "X-Admin-Key: your-admin-key"
 ```
 
 ## 스케줄러
 
-### 자동 실행 작업
+### 자동 실행 작업 (Asia/Seoul 시간대)
 
-1. **RSS 수집** - 매일 01:00 AM (KST)
+1. **RSS 수집** - 매일 01:00 AM KST
 
    - 활성화된 블로그의 RSS 피드 수집
+   - 완료 시 Discord 알림 전송
 
-2. **콘텐츠 처리** - 매일 02:00 AM (KST)
+2. **콘텐츠 처리** - 매일 02:00 AM KST
 
    - 수집된 포스트의 전체 콘텐츠 추출
+   - 완료 시 Discord 알림 전송
 
-3. **실패 포스트 재시도** - 매일 03:00 AM (KST)
+3. **실패 포스트 재시도** - 매일 03:00 AM KST
    - 처리 실패한 포스트 재시도
+   - 완료 시 Discord 알림 전송
 
-### 수동 실행
+### 수동 실행 (Admin API Key 필요)
 
 ```bash
 # RSS 수집 수동 실행
-curl -X POST http://localhost:8000/api/v1/scheduler/trigger/rss_collection
+curl -X POST http://localhost:8000/api/v1/admin/scheduler/rss-collect/trigger \
+  -H "X-Admin-Key: your-admin-key"
 
 # 콘텐츠 처리 수동 실행
-curl -X POST http://localhost:8000/api/v1/scheduler/trigger/content_processing
+curl -X POST http://localhost:8000/api/v1/admin/scheduler/content-process/trigger \
+  -H "X-Admin-Key: your-admin-key"
 
 # 재시도 수동 실행
-curl -X POST http://localhost:8000/api/v1/scheduler/trigger/retry_failed
+curl -X POST http://localhost:8000/api/v1/admin/scheduler/retry-failed/trigger \
+  -H "X-Admin-Key: your-admin-key"
+
+# 스케줄러 통계 조회
+curl -X GET http://localhost:8000/api/v1/admin/scheduler/stats \
+  -H "X-Admin-Key: your-admin-key"
+```
+
+### Discord 알림
+
+스케줄러 작업 완료 시 Discord 웹훅으로 결과를 전송합니다:
+
+- ✅ 성공한 작업: 녹색 알림
+- ⚠️ 일부 에러: 주황색 알림
+- ❌ 실패한 작업: 빨간색 알림
+
+`.env` 파일에 Discord 웹훅 설정이 필요합니다:
+```env
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN
+DISCORD_WEBHOOK_ENABLED=true
 ```
 
 ## 테스트
@@ -306,20 +354,23 @@ uvicorn main:app --port 8001
 
 ## 환경 변수 전체 목록
 
-| 변수명               | 기본값         | 설명                       |
-| -------------------- | -------------- | -------------------------- |
-| `APP_NAME`           | "TechBlog Hub" | 애플리케이션 이름          |
-| `APP_VERSION`        | "1.0.0"        | 버전                       |
-| `DEBUG`              | True           | 디버그 모드                |
-| `DATABASE_URL`       | -              | PostgreSQL 연결 URL (필수) |
-| `ALLOWED_ORIGINS`    | []             | CORS 허용 도메인           |
-| `OPENAI_API_KEY`     | -              | OpenAI API 키 (필수)       |
-| `OPENAI_MODEL`       | "gpt-4o-mini"  | 사용할 OpenAI 모델         |
-| `OPENAI_MAX_TOKENS`  | 10000          | 최대 토큰 수               |
-| `RSS_PROXY_URL`      | -              | RSS 프록시 URL             |
-| `MIN_CONTENT_LENGTH` | 500            | 최소 콘텐츠 길이           |
-| `MIN_TEXT_RATIO`     | 0.01           | 최소 텍스트 비율           |
-| `PLAYWRIGHT_TIMEOUT` | 30000          | Playwright 타임아웃 (ms)   |
+| 변수명                    | 기본값                                      | 설명                          |
+| ------------------------- | ------------------------------------------- | ----------------------------- |
+| `APP_NAME`                | "TechBlog Hub"                              | 애플리케이션 이름             |
+| `APP_VERSION`             | "1.0.0"                                     | 버전                          |
+| `DEBUG`                   | True                                        | 디버그 모드                   |
+| `DATABASE_URL`            | -                                           | PostgreSQL 연결 URL (필수)    |
+| `ALLOWED_ORIGINS`         | []                                          | CORS 허용 도메인              |
+| `ADMIN_API_KEY`           | "your-secret-admin-key-change-in-production" | Admin API 인증 키 (필수)      |
+| `OPENAI_API_KEY`          | -                                           | OpenAI API 키 (필수)          |
+| `OPENAI_MODEL`            | "gpt-4o-mini"                               | 사용할 OpenAI 모델            |
+| `OPENAI_MAX_TOKENS`       | 10000                                       | 최대 토큰 수                  |
+| `RSS_PROXY_URL`           | -                                           | RSS 프록시 URL                |
+| `MIN_CONTENT_LENGTH`      | 500                                         | 최소 콘텐츠 길이              |
+| `MIN_TEXT_RATIO`          | 0.01                                        | 최소 텍스트 비율              |
+| `PLAYWRIGHT_TIMEOUT`      | 30000                                       | Playwright 타임아웃 (ms)      |
+| `DISCORD_WEBHOOK_URL`     | ""                                          | Discord 웹훅 URL (선택)       |
+| `DISCORD_WEBHOOK_ENABLED` | False                                       | Discord 알림 활성화 (선택)    |
 
 ## 라이선스
 

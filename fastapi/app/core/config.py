@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     # CORS 설정 (프론트엔드 연동)
     ALLOWED_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:8000"]
 
+    # Admin API 인증
+    ADMIN_API_KEY: str = "your-secret-admin-key-change-in-production"
+
     # RSS 크롤링 설정
     RSS_PROXY_URL: str
 
@@ -32,6 +35,10 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str
     OPENAI_MODEL: str = "gpt-4o-mini"
     OPENAI_MAX_TOKENS: int = 10000
+
+    # Discord 알림 설정
+    DISCORD_WEBHOOK_URL: str = ""
+    DISCORD_WEBHOOK_ENABLED: bool = False
 
     class Config:
         env_file = ".env"

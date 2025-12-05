@@ -6,15 +6,20 @@ APScheduler를 사용한 정기 작업 실행
 import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+from pytz import timezone
 
 from app.core.database import AsyncSessionLocal
 from app.services.rss_collector import RSSCollector
 from app.services.content_processor import ContentProcessor
+from app.services.discord_notifier import discord_notifier
 
 logger = logging.getLogger(__name__)
 
-# 스케줄러 인스턴스
-scheduler = AsyncIOScheduler()
+# 한국 시간대 설정
+KST = timezone('Asia/Seoul')
+
+# 스케줄러 인스턴스 (timezone 설정)
+scheduler = AsyncIOScheduler(timezone=KST)
 
 
 async def collect_rss_job():
@@ -51,8 +56,13 @@ async def collect_rss_job():
                         f"Errors: {len(result['errors'])}"
                     )
 
+            # Discord 알림 전송
+            await discord_notifier.notify_rss_collection(results)
+
         except Exception as e:
             logger.error(f"RSS collection job failed: {e}", exc_info=True)
+            # 에러 알림
+            await discord_notifier.notify_error("RSS Collection", str(e))
 
 
 async def process_content_job():
@@ -112,8 +122,13 @@ async def process_content_job():
                 for error in total_summary['errors'][:10]:  # 최대 10개만
                     logger.warning(f"  - Post {error['post_id']}: {error['error']}")
 
+            # Discord 알림 전송
+            await discord_notifier.notify_content_processing(total_summary)
+
         except Exception as e:
             logger.error(f"Content processing job failed: {e}", exc_info=True)
+            # 에러 알림
+            await discord_notifier.notify_error("Content Processing", str(e))
 
 
 async def retry_failed_job():
@@ -143,42 +158,47 @@ async def retry_failed_job():
                         f"(retry #{error['retry_count']}): {error['error']}"
                     )
 
+            # Discord 알림 전송
+            await discord_notifier.notify_retry_failed(summary)
+
         except Exception as e:
             logger.error(f"Retry failed job failed: {e}", exc_info=True)
+            # 에러 알림
+            await discord_notifier.notify_error("Retry Failed Posts", str(e))
 
 
 def start_scheduler():
     """스케줄러 시작"""
 
-    # 1. RSS 수집: 매일 오전 1시
+    # 1. RSS 수집: 매일 오전 1시 (KST)
     scheduler.add_job(
         collect_rss_job,
-        trigger=CronTrigger(hour=1, minute=0),
+        trigger=CronTrigger(hour=1, minute=0, timezone=KST),
         id='collect_rss',
         name='RSS Collection Job',
         replace_existing=True
     )
 
-    # 2. 본문 추출: 매일 오전 2시
+    # 2. 본문 추출: 매일 오전 2시 (KST)
     scheduler.add_job(
         process_content_job,
-        trigger=CronTrigger(hour=2, minute=0),
+        trigger=CronTrigger(hour=2, minute=0, timezone=KST),
         id='process_content',
         name='Content Processing Job',
         replace_existing=True
     )
 
-    # 3. 실패 재시도: 매일 오전 3시
+    # 3. 실패 재시도: 매일 오전 3시 (KST)
     scheduler.add_job(
         retry_failed_job,
-        trigger=CronTrigger(hour=3, minute=0),
+        trigger=CronTrigger(hour=3, minute=0, timezone=KST),
         id='retry_failed',
         name='Retry Failed Posts Job',
         replace_existing=True
     )
 
     scheduler.start()
-    logger.info("Scheduler started successfully")
+    logger.info("Scheduler started successfully (Timezone: Asia/Seoul)")
     logger.info("Scheduled jobs:")
     for job in scheduler.get_jobs():
         logger.info(f"  - {job.name} (ID: {job.id}): {job.next_run_time}")

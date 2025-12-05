@@ -1,13 +1,22 @@
+"""
+Admin Blogs API
+인증이 필요한 블로그 관리 API (생성, 수정, 삭제)
+"""
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
-from typing import List
+from sqlalchemy import select
 
 from app.core.database import get_db
+from app.core.auth import verify_admin_key
 from app.models import Blog
-from app.schemas import BlogCreate, BlogUpdate, BlogResponse, BlogListResponse
+from app.schemas import BlogCreate, BlogUpdate, BlogResponse
 
-router = APIRouter(prefix="/blogs", tags=["blogs"])
+router = APIRouter(
+    prefix="/admin/blogs",
+    tags=["admin-blogs"],
+    dependencies=[Depends(verify_admin_key)]
+)
 
 
 @router.post("/", response_model=BlogResponse, status_code=status.HTTP_201_CREATED)
@@ -16,12 +25,14 @@ async def create_blog(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    새로운 블로그 생성
+    새로운 블로그 생성 (Admin)
 
     - **name**: 블로그 이름 (unique)
     - **company**: 회사/개인 이름
     - **rss_url**: RSS 피드 URL (unique)
     - **site_url**: 블로그 사이트 URL
+
+    **Requires:** Admin API Key (`X-Admin-Key` header)
     """
     # 중복 체크 (name, rss_url)
     existing = await db.execute(
@@ -44,73 +55,6 @@ async def create_blog(
     return new_blog
 
 
-@router.get("/", response_model=BlogListResponse)
-async def list_blogs(
-    skip: int = 0,
-    limit: int = 20,
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    블로그 목록 조회
-
-    - **skip**: 건너뛸 개수 (pagination)
-    - **limit**: 최대 조회 개수 (기본 20)
-    """
-    # 총 개수 조회
-    total_result = await db.execute(select(func.count(Blog.id)))
-    total = total_result.scalar()
-
-    # 블로그 목록 조회
-    result = await db.execute(
-        select(Blog)
-        .order_by(Blog.created_at.desc())
-        .offset(skip)
-        .limit(limit)
-    )
-    blogs = result.scalars().all()
-
-    return BlogListResponse(total=total, blogs=blogs)
-
-
-@router.get("/active", response_model=List[BlogResponse])
-async def get_active_blogs(
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    활성 상태의 블로그 목록 조회
-
-    - 상태가 ACTIVE인 블로그만 반환
-    """
-    from app.models.blog import BlogStatus
-
-    result = await db.execute(
-        select(Blog)
-        .where(Blog.status == BlogStatus.ACTIVE)
-        .order_by(Blog.created_at.desc())
-    )
-    blogs = result.scalars().all()
-
-    return blogs
-
-
-@router.get("/{blog_id}", response_model=BlogResponse)
-async def get_blog(
-    blog_id: int,
-    db: AsyncSession = Depends(get_db)
-):
-    """특정 블로그 조회"""
-    result = await db.execute(select(Blog).where(Blog.id == blog_id))
-    blog = result.scalar_one_or_none()
-
-    if not blog:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Blog with id {blog_id} not found"
-        )
-
-    return blog
-
-
 @router.patch("/{blog_id}", response_model=BlogResponse)
 async def update_blog(
     blog_id: int,
@@ -118,9 +62,11 @@ async def update_blog(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    블로그 수정
+    블로그 수정 (Admin)
 
     제공된 필드만 업데이트됨
+
+    **Requires:** Admin API Key (`X-Admin-Key` header)
     """
     # 블로그 조회
     result = await db.execute(select(Blog).where(Blog.id == blog_id))
@@ -165,7 +111,11 @@ async def delete_blog(
     blog_id: int,
     db: AsyncSession = Depends(get_db)
 ):
-    """블로그 삭제"""
+    """
+    블로그 삭제 (Admin)
+
+    **Requires:** Admin API Key (`X-Admin-Key` header)
+    """
     result = await db.execute(select(Blog).where(Blog.id == blog_id))
     blog = result.scalar_one_or_none()
 

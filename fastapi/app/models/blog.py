@@ -25,7 +25,6 @@ class Blog(Base):
     RSS 피드를 통해 기술 블로그를 크롤링하는 대상
     """
     __tablename__ = "blogs"
-    __table_args__ = {"schema": "fastapi"}
 
     # Primary Key
     id = Column(Integer, primary_key=True, index=True)
