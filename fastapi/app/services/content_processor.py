@@ -3,13 +3,17 @@
 PENDING 상태의 Post들을 조회하여 본문 추출
 """
 
+import logging
 from typing import List
+from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.models.post import Post, PostStatus
 from app.services.content_extractor import ContentExtractor
+
+logger = logging.getLogger(__name__)
 
 
 class ContentProcessor:
@@ -36,7 +40,7 @@ class ContentProcessor:
                 Post.status == PostStatus.PENDING,
                 Post.retry_count < self.max_retries
             )
-            .order_by(Post.created_at.asc())  # 오래된 것부터
+            .order_by(Post.published_at.desc())  # 최신 것부터
             .limit(limit)
         )
         return result.scalars().all()
@@ -100,13 +104,25 @@ class ContentProcessor:
                 post.content = extracted.get('content')
                 post.author = extracted.get('author')
 
-                # RSS 날짜를 우선 사용 (trafilatura의 날짜는 신뢰할 수 없음)
-                # RSS에서 이미 published_at이 설정되어 있으면 절대 변경하지 않음
+                # 날짜 처리: RSS 날짜 우선, 없으면 Trafilatura 날짜 사용
                 if not post.published_at:
-                    # RSS에 날짜가 없었던 경우에만 경고 로그 출력
-                    print(f"WARNING: Post {post.id} has no published_at from RSS. "
-                          f"Trafilatura extracted date: {extracted.get('date')}, "
-                          f"but NOT using it (unreliable).")
+                    # RSS에 날짜가 없는 경우, Trafilatura에서 추출한 날짜 사용
+                    extracted_date = extracted.get('date')
+
+                    if extracted_date:
+                        try:
+                            # 날짜 문자열을 datetime으로 파싱
+                            if isinstance(extracted_date, str):
+                                from dateutil import parser
+                                post.published_at = parser.parse(extracted_date)
+                                logger.info(f"Post {post.id}: Using Trafilatura date - {post.published_at}")
+                            elif isinstance(extracted_date, datetime):
+                                post.published_at = extracted_date
+                                logger.info(f"Post {post.id}: Using Trafilatura date - {post.published_at}")
+                        except Exception as e:
+                            logger.warning(f"Post {post.id}: Failed to parse Trafilatura date '{extracted_date}': {e}")
+                    else:
+                        logger.warning(f"Post {post.id}: No published_at from RSS and Trafilatura")
 
                 post.status = PostStatus.COMPLETED
                 post.error_message = None
