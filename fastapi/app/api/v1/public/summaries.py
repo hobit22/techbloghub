@@ -1,5 +1,5 @@
 """
-AI 요약 스트리밍 API
+AI 요약 스트리밍 API (Public)
 """
 
 import json
@@ -12,7 +12,7 @@ from app.core.database import get_db
 from app.models import Post
 from app.services.summary_generator import summary_generator
 
-router = APIRouter(prefix="/summaries", tags=["summaries"])
+router = APIRouter(prefix="/summaries", tags=["public-summaries"])
 
 
 @router.get("/stream/{post_id}")
@@ -21,7 +21,7 @@ async def stream_summary(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    게시글 AI 요약 스트리밍 (SSE)
+    게시글 AI 요약 스트리밍 (Public, SSE)
 
     Server-Sent Events 방식으로 TL;DR 요약과 상세 요약을 순차적으로 스트리밍합니다.
 
