@@ -35,7 +35,7 @@ class Post(Base):
     normalized_url = Column(String(1000), unique=True, index=True, comment="정규화된 URL (쿼리 파라미터 제거)")
 
     # 블로그 관계
-    blog_id = Column(Integer, ForeignKey("fastapi.blogs.id"), nullable=False, index=True, comment="블로그 ID")
+    blog_id = Column(Integer, ForeignKey("blogs.id"), nullable=False, index=True, comment="블로그 ID")
     blog = relationship("Blog", backref="posts")
 
     # 발행 정보
@@ -62,8 +62,7 @@ class Post(Base):
     # 인덱스 및 스키마 정의
     __table_args__ = (
         Index('idx_posts_blog_published', 'blog_id', 'published_at'),
-        Index('idx_posts_keyword_vector', 'keyword_vector', postgresql_using='gin'),
-        {"schema": "fastapi"}
+        Index('idx_posts_keyword_vector', 'keyword_vector', postgresql_using='gin')
     )
 
     def __repr__(self):

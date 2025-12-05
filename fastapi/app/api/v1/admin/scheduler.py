@@ -7,7 +7,6 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import logging
-from typing import Optional
 
 from app.core.database import get_db
 from app.core.auth import verify_admin_key
