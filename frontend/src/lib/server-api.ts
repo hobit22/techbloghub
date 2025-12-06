@@ -122,6 +122,16 @@ export const serverApi = {
     }
   },
 
+  // 개별 포스트 가져오기 (메타데이터 생성용)
+  async getPost(id: number): Promise<Post | null> {
+    try {
+      return await serverFetch<Post>(`/api/v1/posts/${id}`);
+    } catch (error) {
+      console.error(`Failed to fetch post ${id}:`, error);
+      return null;
+    }
+  },
+
 };
 
 // 메인 서버 사이드 데이터 페칭 함수
