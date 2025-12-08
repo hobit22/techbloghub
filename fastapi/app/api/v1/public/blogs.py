@@ -5,12 +5,11 @@ Public Blogs API
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 from typing import List
 
 from app.core.database import get_db
-from app.models import Blog
 from app.schemas import BlogResponse, BlogListResponse
+from app.services.blog_service import BlogService
 
 router = APIRouter(prefix="/blogs", tags=["public-blogs"])
 
@@ -27,18 +26,8 @@ async def list_blogs(
     - **skip**: 건너뛸 개수 (pagination)
     - **limit**: 최대 조회 개수 (기본 20)
     """
-    # 총 개수 조회
-    total_result = await db.execute(select(func.count(Blog.id)))
-    total = total_result.scalar()
-
-    # 블로그 목록 조회
-    result = await db.execute(
-        select(Blog)
-        .order_by(Blog.created_at.desc())
-        .offset(skip)
-        .limit(limit)
-    )
-    blogs = result.scalars().all()
+    service = BlogService(db)
+    blogs, total = await service.get_blogs(skip=skip, limit=limit)
 
     return BlogListResponse(total=total, blogs=blogs)
 
@@ -52,14 +41,8 @@ async def get_active_blogs(
 
     - 상태가 ACTIVE인 블로그만 반환
     """
-    from app.models.blog import BlogStatus
-
-    result = await db.execute(
-        select(Blog)
-        .where(Blog.status == BlogStatus.ACTIVE)
-        .order_by(Blog.created_at.desc())
-    )
-    blogs = result.scalars().all()
+    service = BlogService(db)
+    blogs = await service.get_active_blogs()
 
     return blogs
 
@@ -70,8 +53,8 @@ async def get_blog(
     db: AsyncSession = Depends(get_db)
 ):
     """특정 블로그 조회 (Public)"""
-    result = await db.execute(select(Blog).where(Blog.id == blog_id))
-    blog = result.scalar_one_or_none()
+    service = BlogService(db)
+    blog = await service.get_blog_by_id(blog_id)
 
     if not blog:
         raise HTTPException(
