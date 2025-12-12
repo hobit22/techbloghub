@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.models.post import Post, PostStatus
-from app.services.content_extractor import ContentExtractor
+from .content_extractor import ContentExtractor
 
 logger = logging.getLogger(__name__)
 

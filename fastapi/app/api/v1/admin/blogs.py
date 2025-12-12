@@ -5,12 +5,11 @@ Admin Blogs API
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
 from app.core.database import get_db
 from app.core.auth import verify_admin_key
-from app.models import Blog
 from app.schemas import BlogCreate, BlogUpdate, BlogResponse
+from app.services import BlogService
 
 router = APIRouter(
     prefix="/admin/blogs",
@@ -34,25 +33,16 @@ async def create_blog(
 
     **Requires:** Admin API Key (`X-Admin-Key` header)
     """
-    # 중복 체크 (name, rss_url)
-    existing = await db.execute(
-        select(Blog).where(
-            (Blog.name == blog_data.name) | (Blog.rss_url == blog_data.rss_url)
-        )
-    )
-    if existing.scalar_one_or_none():
+    service = BlogService(db)
+
+    try:
+        new_blog = await service.create_blog(blog_data)
+        return new_blog
+    except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Blog with this name or RSS URL already exists"
+            detail=str(e)
         )
-
-    # 블로그 생성
-    new_blog = Blog(**blog_data.model_dump())
-    db.add(new_blog)
-    await db.commit()
-    await db.refresh(new_blog)
-
-    return new_blog
 
 
 @router.patch("/{blog_id}", response_model=BlogResponse)
@@ -68,42 +58,21 @@ async def update_blog(
 
     **Requires:** Admin API Key (`X-Admin-Key` header)
     """
-    # 블로그 조회
-    result = await db.execute(select(Blog).where(Blog.id == blog_id))
-    blog = result.scalar_one_or_none()
+    service = BlogService(db)
 
-    if not blog:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Blog with id {blog_id} not found"
-        )
-
-    # 업데이트할 데이터만 추출
-    update_data = blog_data.model_dump(exclude_unset=True)
-
-    # 중복 체크 (name, rss_url 변경 시)
-    if "name" in update_data or "rss_url" in update_data:
-        existing = await db.execute(
-            select(Blog).where(
-                Blog.id != blog_id,
-                (Blog.name == update_data.get("name", blog.name)) |
-                (Blog.rss_url == update_data.get("rss_url", blog.rss_url))
-            )
-        )
-        if existing.scalar_one_or_none():
+    try:
+        blog = await service.update_blog(blog_id, blog_data)
+        return blog
+    except ValueError as e:
+        if "not found" in str(e):
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Blog with this name or RSS URL already exists"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=str(e)
             )
-
-    # 업데이트
-    for key, value in update_data.items():
-        setattr(blog, key, value)
-
-    await db.commit()
-    await db.refresh(blog)
-
-    return blog
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
 
 
 @router.delete("/{blog_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -116,16 +85,13 @@ async def delete_blog(
 
     **Requires:** Admin API Key (`X-Admin-Key` header)
     """
-    result = await db.execute(select(Blog).where(Blog.id == blog_id))
-    blog = result.scalar_one_or_none()
+    service = BlogService(db)
 
-    if not blog:
+    try:
+        await service.delete_blog(blog_id)
+        return None
+    except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Blog with id {blog_id} not found"
+            detail=str(e)
         )
-
-    await db.delete(blog)
-    await db.commit()
-
-    return None

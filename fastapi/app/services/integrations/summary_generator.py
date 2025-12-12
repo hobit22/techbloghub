@@ -24,7 +24,7 @@ class SummaryGenerator:
 
     def _load_prompts(self) -> dict:
         """ai_prompt.json 파일에서 프롬프트 로드"""
-        prompt_file = Path(__file__).parent.parent.parent / "ai_prompt.json"
+        prompt_file = Path(__file__).parent.parent.parent.parent / "ai_prompt.json"
 
         if not prompt_file.exists():
             raise FileNotFoundError(f"프롬프트 파일을 찾을 수 없습니다: {prompt_file}")

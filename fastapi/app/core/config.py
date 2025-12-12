@@ -40,10 +40,24 @@ class Settings(BaseSettings):
     DISCORD_WEBHOOK_URL: str = ""
     DISCORD_WEBHOOK_ENABLED: bool = False
 
+    # Elasticsearch 설정
+    ELASTICSEARCH_URL: str = "http://localhost:9200"
+
     class Config:
         env_file = ".env"
         case_sensitive = True
 
 
 # 싱글톤 인스턴스
-settings = Settings()
+_settings = None
+
+
+def get_settings() -> Settings:
+    """설정 가져오기 (싱글톤 패턴)"""
+    global _settings
+    if _settings is None:
+        _settings = Settings()
+    return _settings
+
+
+settings = get_settings()

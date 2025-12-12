@@ -10,7 +10,7 @@ from sqlalchemy import select
 
 from app.core.database import get_db
 from app.models import Post
-from app.services.summary_generator import summary_generator
+from app.services import summary_generator
 
 router = APIRouter(prefix="/summaries", tags=["public-summaries"])
 
