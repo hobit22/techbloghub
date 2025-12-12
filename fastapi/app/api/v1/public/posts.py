@@ -15,6 +15,7 @@ from app.schemas import (
     SearchResultResponse,
 )
 from app.services.post_service import PostService
+from app.search import get_es_client, ElasticsearchService, POST_INDEX_NAME, POST_INDEX_NAME_NORI
 
 router = APIRouter(prefix="/posts", tags=["public-posts"])
 
@@ -52,29 +53,58 @@ async def search_posts(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    포스트 전문 검색 (Public)
+    포스트 전문 검색 - Elasticsearch + Nori (Public)
 
     - **q**: 검색어 (필수)
     - **limit**: 최대 결과 개수 (1-100, 기본값 20)
     - **offset**: 건너뛸 개수 (페이지네이션)
 
-    PostgreSQL Full-Text Search를 사용하여 title과 content에서 검색합니다.
-    결과는 연관도(rank) 순으로 정렬됩니다.
+    Elasticsearch + Nori 한글 형태소 분석기를 사용하여 검색합니다.
+    - 한글 형태소 분석 지원
+    - BM25 랭킹 알고리즘
+    - 오타 허용 (Fuzziness)
+    - 하이라이팅 지원
+
+    결과는 관련도(BM25 score) 순으로 정렬됩니다.
+    Elasticsearch 오류 시 PostgreSQL FTS로 자동 폴백됩니다.
     """
-    service = PostService(db)
-    search_results, total = await service.search_posts(
-        query=q,
-        limit=limit,
-        offset=offset
-    )
+    try:
+        es = get_es_client()
+        service = ElasticsearchService(es, db, index_name=POST_INDEX_NAME_NORI)
+        search_results, total = await service.search_posts(
+            query=q,
+            limit=limit,
+            offset=offset
+        )
 
-    # 결과를 PostSearchResponse로 변환
-    results = [PostSearchResponse(**result) for result in search_results]
+        # 결과를 PostSearchResponse로 변환
+        results = [PostSearchResponse(**result) for result in search_results]
 
-    return SearchResultResponse(
-        total=total,
-        results=results
-    )
+        return SearchResultResponse(
+            total=total,
+            results=results
+        )
+    except Exception as e:
+        # Elasticsearch 오류 시 PostgreSQL FTS로 폴백
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Elasticsearch search failed, falling back to PostgreSQL FTS: {e}")
+
+        # PostgreSQL FTS로 폴백
+        service = PostService(db)
+        search_results, total = await service.search_posts(
+            query=q,
+            limit=limit,
+            offset=offset
+        )
+
+        # 결과를 PostSearchResponse로 변환
+        results = [PostSearchResponse(**result) for result in search_results]
+
+        return SearchResultResponse(
+            total=total,
+            results=results
+        )
 
 
 @router.get("/{post_id}", response_model=PostResponse)
