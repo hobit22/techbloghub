@@ -74,6 +74,14 @@ async def startup():
     logger.info(f"🚀 {settings.APP_NAME} v{settings.APP_VERSION} 시작!")
     logger.info(f"📊 Database: {settings.DATABASE_URL.split('@')[1]}")
 
+    # Elasticsearch 초기화 (선택적)
+    try:
+        from app.search import init_elasticsearch
+        await init_elasticsearch()
+        logger.info(f"🔍 Elasticsearch initialized: {settings.ELASTICSEARCH_URL}")
+    except Exception as e:
+        logger.warning(f"⚠️  Elasticsearch initialization failed (will run without ES): {e}")
+
     # 스케줄러 시작
     start_scheduler()
     logger.info("⏰ Scheduler started (Asia/Seoul):")
@@ -89,4 +97,14 @@ async def startup():
 @app.on_event("shutdown")
 async def shutdown():
     logger.info("👋 서버 종료 중...")
+
+    # Elasticsearch 연결 종료
+    try:
+        from app.search.client import close_elasticsearch
+        await close_elasticsearch()
+        logger.info("🔌 Elasticsearch connection closed")
+    except Exception as e:
+        logger.warning(f"⚠️  Elasticsearch shutdown warning: {e}")
+
+    # 스케줄러 종료
     shutdown_scheduler()
