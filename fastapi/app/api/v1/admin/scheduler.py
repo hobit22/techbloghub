@@ -11,8 +11,7 @@ import logging
 from app.core.database import get_db
 from app.core.auth import verify_admin_key
 from app.models import Blog, Post
-from app.services.rss_collector import RSSCollector
-from app.services.content_processor import ContentProcessor
+from app.services import RSSCollector, ContentProcessor
 
 logger = logging.getLogger(__name__)
 

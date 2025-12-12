@@ -9,9 +9,7 @@ from apscheduler.triggers.cron import CronTrigger
 from pytz import timezone
 
 from app.core.database import AsyncSessionLocal
-from app.services.rss_collector import RSSCollector
-from app.services.content_processor import ContentProcessor
-from app.services.discord_notifier import discord_notifier
+from app.services import RSSCollector, ContentProcessor, discord_notifier
 
 logger = logging.getLogger(__name__)
 

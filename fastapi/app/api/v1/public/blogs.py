@@ -9,7 +9,7 @@ from typing import List
 
 from app.core.database import get_db
 from app.schemas import BlogResponse, BlogListResponse
-from app.services.blog_service import BlogService
+from app.services import BlogService
 
 router = APIRouter(prefix="/blogs", tags=["public-blogs"])
 

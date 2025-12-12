@@ -14,8 +14,7 @@ from app.schemas import (
     PostSearchResponse,
     SearchResultResponse,
 )
-from app.services.post_service import PostService
-from app.search import get_es_client, ElasticsearchService, POST_INDEX_NAME
+from app.services import PostService, get_es_client, ElasticsearchService, POST_INDEX_NAME
 
 router = APIRouter(prefix="/posts", tags=["public-posts"])
 
