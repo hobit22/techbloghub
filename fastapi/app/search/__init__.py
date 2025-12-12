@@ -2,12 +2,7 @@
 Elasticsearch Search Module
 """
 from .client import get_es_client, init_elasticsearch
-from .mappings import (
-    POST_INDEX_NAME,
-    POST_INDEX_MAPPING,
-    POST_INDEX_NAME_NORI,
-    POST_INDEX_MAPPING_NORI,
-)
+from .mappings import POST_INDEX_NAME, POST_INDEX_MAPPING
 from .service import ElasticsearchService
 
 __all__ = [
@@ -15,7 +10,5 @@ __all__ = [
     "init_elasticsearch",
     "POST_INDEX_NAME",
     "POST_INDEX_MAPPING",
-    "POST_INDEX_NAME_NORI",
-    "POST_INDEX_MAPPING_NORI",
     "ElasticsearchService",
 ]

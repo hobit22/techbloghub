@@ -15,7 +15,7 @@ from app.schemas import (
     SearchResultResponse,
 )
 from app.services.post_service import PostService
-from app.search import get_es_client, ElasticsearchService, POST_INDEX_NAME, POST_INDEX_NAME_NORI
+from app.search import get_es_client, ElasticsearchService, POST_INDEX_NAME
 
 router = APIRouter(prefix="/posts", tags=["public-posts"])
 
@@ -70,7 +70,7 @@ async def search_posts(
     """
     try:
         es = get_es_client()
-        service = ElasticsearchService(es, db, index_name=POST_INDEX_NAME_NORI)
+        service = ElasticsearchService(es, db, index_name=POST_INDEX_NAME)
         search_results, total = await service.search_posts(
             query=q,
             limit=limit,

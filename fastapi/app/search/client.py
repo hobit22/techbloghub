@@ -35,7 +35,7 @@ async def init_elasticsearch() -> None:
     """
     Elasticsearch 초기화 (앱 시작 시 호출)
     """
-    from .mappings import POST_INDEX_NAME, POST_INDEX_MAPPING_NORI
+    from .mappings import POST_INDEX_NAME, POST_INDEX_MAPPING
 
     es = get_es_client()
 
@@ -51,7 +51,7 @@ async def init_elasticsearch() -> None:
             # 인덱스 생성 (Nori 분석기 사용)
             await es.indices.create(
                 index=POST_INDEX_NAME,
-                body=POST_INDEX_MAPPING_NORI
+                body=POST_INDEX_MAPPING
             )
             logger.info(f"Created Elasticsearch index with Nori analyzer: {POST_INDEX_NAME}")
         else:
