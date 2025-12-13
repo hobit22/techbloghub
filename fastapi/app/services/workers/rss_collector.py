@@ -102,7 +102,6 @@ class RSSCollector:
             }
         """
         # blog 속성을 미리 저장 (rollback 시 접근 불가 방지)
-        print(f"blog: {blog}")
         blog_id = blog.id
         blog_name = blog.name
         result = {

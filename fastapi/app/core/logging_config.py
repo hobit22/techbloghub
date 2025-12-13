@@ -16,6 +16,15 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
 
+class HealthCheckFilter(logging.Filter):
+    """Health check 엔드포인트 로그 필터"""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        message = record.getMessage()
+        # /health와 / (루트) 엔드포인트 로그 필터링
+        return not any(path in message for path in ['"GET /health', '"GET / HTTP'])
+
+
 class Colors:
     """ANSI 색상 코드"""
     RESET = "\033[0m"
@@ -145,6 +154,7 @@ def setup_logging():
     uvicorn_access = logging.getLogger("uvicorn.access")
     uvicorn_access.handlers = []
     uvicorn_access.addHandler(console_handler)
+    uvicorn_access.addFilter(HealthCheckFilter())  # Health check 로그 필터링
     uvicorn_access.propagate = False
 
     uvicorn_error = logging.getLogger("uvicorn.error")
