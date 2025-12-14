@@ -1,25 +1,26 @@
 """
 Blog Service Layer
-블로그 관련 비즈니스 로직 및 데이터베이스 조작
+블로그 관련 비즈니스 로직 처리
 """
 
 import logging
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 
 from app.models import Blog
 from app.models.blog import BlogStatus
 from app.schemas import BlogCreate, BlogUpdate
+from app.repositories import BlogRepository
 
 logger = logging.getLogger(__name__)
 
 
 class BlogService:
-    """블로그 CRUD 및 비즈니스 로직 처리"""
+    """블로그 비즈니스 로직 처리"""
 
     def __init__(self, db: AsyncSession):
         self.db = db
+        self.repository = BlogRepository(db)
 
     async def get_blog_by_id(self, blog_id: int) -> Optional[Blog]:
         """
@@ -32,8 +33,7 @@ class BlogService:
             Blog 또는 None
         """
         logger.info(f"Fetching blog with id={blog_id}")
-        result = await self.db.execute(select(Blog).where(Blog.id == blog_id))
-        blog = result.scalar_one_or_none()
+        blog = await self.repository.get_by_id(blog_id)
 
         if blog:
             logger.info(f"Blog found: id={blog_id}, name={blog.name}")
@@ -59,21 +59,10 @@ class BlogService:
         """
         logger.info(f"Fetching blogs: skip={skip}, limit={limit}")
 
-        # 총 개수 조회
-        total_result = await self.db.execute(select(func.count(Blog.id)))
-        total = total_result.scalar()
-
-        # 블로그 목록 조회
-        result = await self.db.execute(
-            select(Blog)
-            .order_by(Blog.created_at.desc())
-            .offset(skip)
-            .limit(limit)
-        )
-        blogs = result.scalars().all()
+        blogs, total = await self.repository.get_all(skip=skip, limit=limit)
 
         logger.info(f"Fetched {len(blogs)} blogs out of {total} total")
-        return list(blogs), total
+        return blogs, total
 
     async def get_active_blogs(self) -> List[Blog]:
         """
@@ -84,15 +73,10 @@ class BlogService:
         """
         logger.info("Fetching active blogs")
 
-        result = await self.db.execute(
-            select(Blog)
-            .where(Blog.status == BlogStatus.ACTIVE)
-            .order_by(Blog.created_at.desc())
-        )
-        blogs = result.scalars().all()
+        blogs = await self.repository.get_active()
 
         logger.info(f"Fetched {len(blogs)} active blogs")
-        return list(blogs)
+        return blogs
 
     async def check_duplicate(
         self,
@@ -113,34 +97,18 @@ class BlogService:
         """
         logger.info(f"Checking duplicate: name={name}, rss_url={rss_url}, exclude_id={exclude_id}")
 
-        query = select(Blog)
-        conditions = []
+        is_duplicate = await self.repository.exists_duplicate(
+            name=name,
+            rss_url=rss_url,
+            exclude_id=exclude_id
+        )
 
-        if name:
-            conditions.append(Blog.name == name)
-        if rss_url:
-            conditions.append(Blog.rss_url == rss_url)
+        if is_duplicate:
+            logger.warning(f"Duplicate blog found")
+        else:
+            logger.info("No duplicate found")
 
-        if not conditions:
-            return False
-
-        # OR 조건으로 결합
-        from sqlalchemy import or_
-        query = query.where(or_(*conditions))
-
-        # 제외할 ID가 있으면 추가
-        if exclude_id:
-            query = query.where(Blog.id != exclude_id)
-
-        result = await self.db.execute(query)
-        duplicate = result.scalar_one_or_none()
-
-        if duplicate:
-            logger.warning(f"Duplicate blog found: id={duplicate.id}, name={duplicate.name}")
-            return True
-
-        logger.info("No duplicate found")
-        return False
+        return is_duplicate
 
     async def create_blog(self, blog_data: BlogCreate) -> Blog:
         """
@@ -164,12 +132,10 @@ class BlogService:
 
         # 블로그 생성
         new_blog = Blog(**blog_data.model_dump())
-        self.db.add(new_blog)
-        await self.db.commit()
-        await self.db.refresh(new_blog)
+        created_blog = await self.repository.create(new_blog)
 
-        logger.info(f"Blog created successfully: id={new_blog.id}, name={new_blog.name}")
-        return new_blog
+        logger.info(f"Blog created successfully: id={created_blog.id}, name={created_blog.name}")
+        return created_blog
 
     async def update_blog(
         self,
@@ -214,11 +180,10 @@ class BlogService:
         for key, value in update_data.items():
             setattr(blog, key, value)
 
-        await self.db.commit()
-        await self.db.refresh(blog)
+        updated_blog = await self.repository.update(blog)
 
         logger.info(f"Blog updated successfully: id={blog_id}")
-        return blog
+        return updated_blog
 
     async def delete_blog(self, blog_id: int) -> None:
         """
@@ -237,7 +202,6 @@ class BlogService:
             logger.error(f"Failed to delete blog: id={blog_id} not found")
             raise ValueError(f"Blog with id {blog_id} not found")
 
-        await self.db.delete(blog)
-        await self.db.commit()
+        await self.repository.delete(blog)
 
         logger.info(f"Blog deleted successfully: id={blog_id}")
