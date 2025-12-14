@@ -8,6 +8,12 @@ engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.DEBUG,  # SQL 쿼리 로깅 (개발시 True)
     future=True,
+    # Connection Pool 설정 (Supabase/PgBouncer 대응)
+    pool_pre_ping=True,  # 연결 사용 전 살아있는지 확인
+    pool_recycle=300,  # 5분마다 연결 재생성 (Supabase idle timeout 대비)
+    pool_size=5,  # 기본 연결 풀 크기
+    max_overflow=10,  # 최대 추가 연결 수
+    pool_timeout=30,  # 연결 대기 시간 (초)
 )
 
 # 세션 팩토리
