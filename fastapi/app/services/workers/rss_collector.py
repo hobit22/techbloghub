@@ -10,11 +10,11 @@ from datetime import datetime
 import feedparser
 from trafilatura import fetch_url
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
 from app.core.config import settings
 from app.models.blog import Blog
 from app.models.post import Post, PostStatus
+from app.repositories import PostRepository, BlogRepository
 
 
 class RSSCollector:
@@ -23,6 +23,8 @@ class RSSCollector:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.proxy_url = settings.RSS_PROXY_URL
+        self.post_repository = PostRepository(db)
+        self.blog_repository = BlogRepository(db)
 
     def extract_rss_entries(self, rss_url: str) -> List[Dict[str, str]]:
         """
@@ -74,10 +76,7 @@ class RSSCollector:
         Returns:
             기존 URL 집합
         """
-        result = await self.db.execute(
-            select(Post.original_url).where(Post.blog_id == blog_id)
-        )
-        return {row[0] for row in result.fetchall()}
+        return await self.post_repository.get_existing_urls(blog_id)
 
     async def collect_blog(
         self,
@@ -159,10 +158,11 @@ class RSSCollector:
 
                     # 중복 체크 (normalized_url 기준)
                     normalized_url = Post.normalize_url(url)
-                    existing = await self.db.execute(
-                        select(Post).where(Post.normalized_url == normalized_url)
+                    is_duplicate = await self.post_repository.exists_by_url(
+                        original_url=url,
+                        normalized_url=normalized_url
                     )
-                    if existing.scalar_one_or_none():
+                    if is_duplicate:
                         print(f"INFO: Skipping duplicate URL (normalized): {url[:100]}")
                         result['skipped_duplicates'] += 1
                         continue
@@ -222,10 +222,7 @@ class RSSCollector:
             각 블로그별 수집 결과 리스트
         """
         # 활성 블로그 조회
-        result = await self.db.execute(
-            select(Blog).where(Blog.status == "ACTIVE")
-        )
-        blogs = result.scalars().all()
+        blogs = await self.blog_repository.get_active()
 
         results = []
         for blog in blogs:

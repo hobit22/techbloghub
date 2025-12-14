@@ -8,9 +8,9 @@ from typing import List
 from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
 from app.models.post import Post, PostStatus
+from app.repositories import PostRepository
 from .content_extractor import ContentExtractor
 
 logger = logging.getLogger(__name__)
@@ -23,6 +23,7 @@ class ContentProcessor:
         self.db = db
         self.extractor = ContentExtractor()
         self.max_retries = 3
+        self.repository = PostRepository(db)
 
     async def get_pending_posts(self, limit: int = 10) -> List[Post]:
         """
@@ -34,16 +35,10 @@ class ContentProcessor:
         Returns:
             PENDING 상태 Post 리스트
         """
-        result = await self.db.execute(
-            select(Post)
-            .where(
-                Post.status == PostStatus.PENDING,
-                Post.retry_count < self.max_retries
-            )
-            .order_by(Post.published_at.desc())  # 최신 것부터
-            .limit(limit)
+        return await self.repository.get_pending_posts(
+            limit=limit,
+            max_retry_count=self.max_retries
         )
-        return result.scalars().all()
 
     async def get_failed_posts(self, limit: int = 10) -> List[Post]:
         """
@@ -55,16 +50,10 @@ class ContentProcessor:
         Returns:
             FAILED 상태이지만 재시도 횟수 미만인 Post 리스트
         """
-        result = await self.db.execute(
-            select(Post)
-            .where(
-                Post.status == PostStatus.FAILED,
-                Post.retry_count < self.max_retries
-            )
-            .order_by(Post.updated_at.asc())
-            .limit(limit)
+        return await self.repository.get_failed_posts(
+            limit=limit,
+            max_retry_count=self.max_retries
         )
-        return result.scalars().all()
 
     async def process_post(self, post: Post) -> dict:
         """
@@ -242,15 +231,4 @@ class ContentProcessor:
         Returns:
             상태별 포스트 개수
         """
-        from sqlalchemy import func
-
-        stats = {}
-
-        # 각 상태별 개수
-        for status in PostStatus:
-            result = await self.db.execute(
-                select(func.count(Post.id)).where(Post.status == status)
-            )
-            stats[status.value] = result.scalar()
-
-        return stats
+        return await self.repository.get_processing_stats()
