@@ -4,9 +4,9 @@ Post Repository
 """
 
 import logging
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, or_, text
+from sqlalchemy import select, func, or_
 from sqlalchemy.orm import selectinload
 
 from app.models.post import Post, PostStatus
@@ -223,7 +223,7 @@ class PostRepository:
         search_query: str,
         limit: int = 20,
         offset: int = 0
-    ) -> tuple[List[Dict[str, Any]], int]:
+    ) -> tuple[List[tuple[Post, float]], int]:
         """
         포스트 전문 검색 (PostgreSQL Full-Text Search)
 
@@ -233,68 +233,42 @@ class PostRepository:
             offset: 건너뛸 개수
 
         Returns:
-            (검색 결과 리스트, 전체 개수)
+            ((Post, rank) 튜플 리스트 (blog relationship 포함), 전체 개수)
         """
         # 검색어를 tsquery로 변환
         tsquery = ' & '.join(search_query.strip().split())
 
-        # ts_rank를 사용한 전문 검색 쿼리
-        search_sql = text("""
-            SELECT
-                posts.id, posts.title, posts.content, posts.author,
-                posts.original_url, posts.normalized_url, posts.blog_id,
-                posts.published_at, posts.created_at, posts.updated_at,
-                blogs.id as blog_id, blogs.name as blog_name,
-                blogs.company as blog_company, blogs.site_url as blog_site_url,
-                blogs.logo_url as blog_logo_url,
-                ts_rank(posts.keyword_vector, to_tsquery('simple', :tsquery)) as rank
-            FROM posts
-            JOIN blogs ON posts.blog_id = blogs.id
-            WHERE posts.keyword_vector @@ to_tsquery('simple', :tsquery)
-            ORDER BY rank DESC, posts.published_at DESC NULLS LAST
-            LIMIT :limit
-            OFFSET :offset
-        """)
+        # PostgreSQL to_tsquery 함수 생성
+        tsquery_func = func.to_tsquery('simple', tsquery)
+
+        # ts_rank를 label로 추가
+        rank_label = func.ts_rank(Post.keyword_vector, tsquery_func).label('rank')
+
+        # ORM 쿼리 작성
+        query = (
+            select(Post, rank_label)
+            .where(Post.keyword_vector.op('@@')(tsquery_func))
+            .options(selectinload(Post.blog))
+            .order_by(rank_label.desc(), Post.published_at.desc().nulls_last())
+            .offset(offset)
+            .limit(limit)
+        )
 
         # 검색 실행
-        result = await self.db.execute(
-            search_sql,
-            {"tsquery": tsquery, "limit": limit, "offset": offset}
+        result = await self.db.execute(query)
+        rows = result.all()
+
+        # (Post, rank) 튜플 리스트로 변환
+        posts_with_rank = [(row[0], float(row[1])) for row in rows]
+
+        # 총 개수 조회 (ORM 스타일)
+        count_query = select(func.count(Post.id)).where(
+            Post.keyword_vector.op('@@')(tsquery_func)
         )
-        rows = result.fetchall()
-
-        # 총 개수 조회
-        count_sql = text("""
-            SELECT COUNT(*) as total
-            FROM posts
-            WHERE posts.keyword_vector @@ to_tsquery('simple', :tsquery)
-        """)
-
-        count_result = await self.db.execute(count_sql, {"tsquery": tsquery})
+        count_result = await self.db.execute(count_query)
         total = count_result.scalar() or 0
 
-        # 결과 변환
-        search_results = []
-        for row in rows:
-            search_results.append({
-                "id": row.id,
-                "title": row.title,
-                "content": row.content,
-                "author": row.author,
-                "original_url": row.original_url,
-                "normalized_url": row.normalized_url,
-                "blog_id": row.blog_id,
-                "published_at": row.published_at,
-                "created_at": row.created_at,
-                "updated_at": row.updated_at,
-                "blog_name": row.blog_name,
-                "blog_company": row.blog_company,
-                "blog_site_url": row.blog_site_url,
-                "blog_logo_url": row.blog_logo_url,
-                "rank": float(row.rank)
-            })
-
-        return search_results, total
+        return posts_with_rank, total
 
     async def get_processing_stats(self) -> Dict[str, int]:
         """
