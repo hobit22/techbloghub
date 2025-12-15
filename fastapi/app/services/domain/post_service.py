@@ -83,7 +83,7 @@ class PostService:
         query: str,
         limit: int = 20,
         offset: int = 0
-    ) -> tuple[List[Dict[str, Any]], int]:
+    ) -> tuple[List[tuple[Post, float]], int]:
         """
         포스트 전문 검색 (PostgreSQL Full-Text Search)
 
@@ -93,47 +93,19 @@ class PostService:
             offset: 건너뛸 개수
 
         Returns:
-            (검색 결과 리스트, 전체 개수)
+            ((Post, rank) 튜플 리스트 (blog relationship 포함), 전체 개수)
         """
         logger.info(f"Searching posts: query='{query}', limit={limit}, offset={offset}")
 
-        # Repository를 통해 검색
-        raw_results, total = await self.repository.search_fulltext(
+        # Repository를 통해 검색 (ORM 모델 + rank 반환)
+        posts_with_rank, total = await self.repository.search_fulltext(
             search_query=query,
             limit=limit,
             offset=offset
         )
 
-        # 결과 변환 (BlogInfo 추가)
-        search_results = []
-        for row in raw_results:
-            blog_info = BlogInfo(
-                id=row["blog_id"],
-                name=row["blog_name"],
-                company=row["blog_company"],
-                site_url=row["blog_site_url"],
-                logo_url=row["blog_logo_url"]
-            )
-
-            post_dict = {
-                "id": row["id"],
-                "title": row["title"],
-                "content": row["content"],
-                "author": row["author"],
-                "original_url": row["original_url"],
-                "normalized_url": row["normalized_url"],
-                "blog_id": row["blog_id"],
-                "published_at": row["published_at"],
-                "created_at": row["created_at"],
-                "updated_at": row["updated_at"],
-                "keywords": [],
-                "blog": blog_info,
-                "rank": row["rank"]
-            }
-            search_results.append(post_dict)
-
-        logger.info(f"Found {len(search_results)} posts out of {total} total for query '{query}'")
-        return search_results, total
+        logger.info(f"Found {len(posts_with_rank)} posts out of {total} total for query '{query}'")
+        return posts_with_rank, total
 
     async def check_duplicate_url(
         self,

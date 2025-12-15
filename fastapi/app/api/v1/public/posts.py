@@ -91,14 +91,19 @@ async def search_posts(
 
         # PostgreSQL FTS로 폴백
         service = PostService(db)
-        search_results, total = await service.search_posts(
+        posts_with_rank, total = await service.search_posts(
             query=q,
             limit=limit,
             offset=offset
         )
 
         # 결과를 PostSearchResponse로 변환
-        results = [PostSearchResponse(**result) for result in search_results]
+        results = []
+        for post, rank in posts_with_rank:
+            # PostResponse from_attributes를 사용하여 ORM 모델 변환
+            post_data = PostResponse.model_validate(post).model_dump()
+            # rank 추가하여 PostSearchResponse 생성
+            results.append(PostSearchResponse(**post_data, rank=rank))
 
         return SearchResultResponse(
             total=total,
