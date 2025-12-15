@@ -9,9 +9,10 @@ import logging
 from typing import Optional, Dict, Any
 from urllib.parse import quote
 
+import httpx
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
-from trafilatura import fetch_url, extract
+from trafilatura import extract
 
 from app.core.config import settings
 
@@ -122,9 +123,13 @@ class ContentExtractor:
             추출 결과 또는 None (failover 필요)
         """
         try:
-            # HTML 다운로드
+            # HTML 다운로드 (비동기)
             download_url = self.proxy_url + quote(url, safe='') if use_proxy else url
-            html_content = fetch_url(download_url)
+
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.get(download_url)
+                response.raise_for_status()
+                html_content = response.text
 
             if not html_content:
                 return None

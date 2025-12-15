@@ -3,6 +3,7 @@
 PENDING 상태의 Post들을 조회하여 본문 추출
 """
 
+import asyncio
 import logging
 from typing import List
 from datetime import datetime
@@ -55,12 +56,13 @@ class ContentProcessor:
             max_retry_count=self.max_retries
         )
 
-    async def process_post(self, post: Post) -> dict:
+    async def process_post(self, post: Post, skip_commit: bool = False) -> dict:
         """
         단일 포스트 본문 추출
 
         Args:
             post: Post 모델
+            skip_commit: True면 커밋하지 않음 (배치 처리용)
 
         Returns:
             처리 결과 dict
@@ -69,13 +71,13 @@ class ContentProcessor:
             'post_id': post.id,
             'url': post.original_url,
             'status': 'unknown',
-            'error': None
+            'error': None,
+            'success': False
         }
 
         try:
             # 상태 변경: PROCESSING
             post.status = PostStatus.PROCESSING
-            await self.db.commit()
 
             # 본문 추출
             extracted = await self.extractor.extract(post.original_url, use_proxy=True)
@@ -116,16 +118,21 @@ class ContentProcessor:
                 post.status = PostStatus.COMPLETED
                 post.error_message = None
                 result['status'] = 'completed'
+                result['success'] = True
                 result['content_length'] = len(post.content) if post.content else 0
 
-            await self.db.commit()
+            # skip_commit=False인 경우만 커밋 (단일 처리용)
+            if not skip_commit:
+                await self.db.commit()
 
         except Exception as e:
             # 예외 발생 시
             post.status = PostStatus.FAILED
             post.retry_count += 1
             post.error_message = str(e)[:500]  # 에러 메시지 저장 (500자 제한)
-            await self.db.commit()
+
+            if not skip_commit:
+                await self.db.commit()
 
             result['status'] = 'error'
             result['error'] = str(e)
@@ -134,13 +141,15 @@ class ContentProcessor:
 
     async def process_pending_batch(
         self,
-        batch_size: int = 10
+        batch_size: int = 10,
+        max_concurrent: int = 5
     ) -> dict:
         """
-        대기 중인 포스트들을 배치로 처리
+        대기 중인 포스트들을 배치로 병렬 처리
 
         Args:
             batch_size: 한 번에 처리할 개수
+            max_concurrent: 최대 동시 처리 개수 (기본: 5, Playwright 메모리 고려)
 
         Returns:
             {
@@ -163,32 +172,68 @@ class ContentProcessor:
         if not pending_posts:
             return summary
 
-        # 각 포스트 처리
-        for post in pending_posts:
-            result = await self.process_post(post)
-            summary['total_processed'] += 1
+        # Semaphore로 동시 처리 제한 (Playwright 메모리 부하 고려)
+        semaphore = asyncio.Semaphore(max_concurrent)
 
-            if result['status'] == 'completed':
-                summary['completed'] += 1
-            else:
+        async def process_with_limit(post: Post):
+            async with semaphore:
+                # skip_commit=True: 개별 커밋하지 않음
+                return await self.process_post(post, skip_commit=True)
+
+        # 병렬 처리 (예외 발생 시 Exception 객체 반환)
+        results = await asyncio.gather(
+            *[process_with_limit(post) for post in pending_posts],
+            return_exceptions=True
+        )
+
+        # 결과 집계
+        for result in results:
+            if isinstance(result, Exception):
+                # 예외가 발생한 경우
+                summary['total_processed'] += 1
                 summary['failed'] += 1
                 summary['errors'].append({
-                    'post_id': result['post_id'],
-                    'url': result['url'],
-                    'error': result.get('error')
+                    'post_id': None,
+                    'url': None,
+                    'error': str(result)
                 })
+                logger.error(f"Unexpected error during batch processing: {result}")
+            else:
+                # 정상 처리된 경우
+                summary['total_processed'] += 1
+
+                if result['status'] == 'completed':
+                    summary['completed'] += 1
+                else:
+                    summary['failed'] += 1
+                    summary['errors'].append({
+                        'post_id': result['post_id'],
+                        'url': result['url'],
+                        'error': result.get('error')
+                    })
+
+        # 모든 변경사항 한 번에 커밋
+        try:
+            await self.db.commit()
+            logger.info(f"Batch commit successful: {summary['total_processed']} posts processed")
+        except Exception as e:
+            await self.db.rollback()
+            logger.error(f"Batch commit failed: {e}")
+            raise
 
         return summary
 
     async def retry_failed_posts(
         self,
-        batch_size: int = 5
+        batch_size: int = 5,
+        max_concurrent: int = 3
     ) -> dict:
         """
-        실패한 포스트들 재시도
+        실패한 포스트들 병렬 재시도
 
         Args:
             batch_size: 한 번에 재시도할 개수
+            max_concurrent: 최대 동시 처리 개수 (기본: 3, 재시도는 더 보수적으로)
 
         Returns:
             처리 결과 요약
@@ -206,21 +251,59 @@ class ContentProcessor:
         if not failed_posts:
             return summary
 
-        # 각 포스트 재시도
-        for post in failed_posts:
-            result = await self.process_post(post)
-            summary['total_retried'] += 1
+        # Semaphore로 동시 처리 제한 (재시도는 더 보수적으로)
+        semaphore = asyncio.Semaphore(max_concurrent)
 
-            if result['status'] == 'completed':
-                summary['completed'] += 1
-            else:
+        async def retry_with_limit(post: Post):
+            async with semaphore:
+                # skip_commit=True: 개별 커밋하지 않음
+                result = await self.process_post(post, skip_commit=True)
+                # retry_count는 process_post 안에서 증가됨
+                return result, post.retry_count
+
+        # 병렬 재시도
+        results = await asyncio.gather(
+            *[retry_with_limit(post) for post in failed_posts],
+            return_exceptions=True
+        )
+
+        # 결과 집계
+        for result_tuple in results:
+            if isinstance(result_tuple, Exception):
+                # 예외가 발생한 경우
+                summary['total_retried'] += 1
                 summary['failed'] += 1
                 summary['errors'].append({
-                    'post_id': result['post_id'],
-                    'url': result['url'],
-                    'retry_count': post.retry_count,
-                    'error': result.get('error')
+                    'post_id': None,
+                    'url': None,
+                    'retry_count': None,
+                    'error': str(result_tuple)
                 })
+                logger.error(f"Unexpected error during retry: {result_tuple}")
+            else:
+                # 정상 처리된 경우
+                result, retry_count = result_tuple
+                summary['total_retried'] += 1
+
+                if result['status'] == 'completed':
+                    summary['completed'] += 1
+                else:
+                    summary['failed'] += 1
+                    summary['errors'].append({
+                        'post_id': result['post_id'],
+                        'url': result['url'],
+                        'retry_count': retry_count,
+                        'error': result.get('error')
+                    })
+
+        # 모든 변경사항 한 번에 커밋
+        try:
+            await self.db.commit()
+            logger.info(f"Retry batch commit successful: {summary['total_retried']} posts retried")
+        except Exception as e:
+            await self.db.rollback()
+            logger.error(f"Retry batch commit failed: {e}")
+            raise
 
         return summary
 
