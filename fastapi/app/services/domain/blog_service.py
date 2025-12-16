@@ -66,16 +66,26 @@ class BlogService:
 
     async def get_active_blogs(self) -> List[Blog]:
         """
-        활성 상태의 블로그 목록 조회
+        활성 상태의 블로그 목록 조회 (포스트 통계 포함)
 
         Returns:
-            활성 블로그 리스트
+            활성 블로그 리스트 (post_count, latest_post_published_at 포함)
         """
         logger.info("Fetching active blogs")
 
         blogs = await self.repository.get_active()
 
-        logger.info(f"Fetched {len(blogs)} active blogs")
+        # 블로그별 포스트 통계 조회
+        blog_ids = [blog.id for blog in blogs]
+        post_stats = await self.repository.get_post_stats(blog_ids)
+
+        # 각 블로그 객체에 통계 정보 추가
+        for blog in blogs:
+            stats = post_stats.get(blog.id, {"post_count": 0, "latest_post_published_at": None})
+            blog.post_count = stats["post_count"]
+            blog.latest_post_published_at = stats["latest_post_published_at"]
+
+        logger.info(f"Fetched {len(blogs)} active blogs with post stats")
         return blogs
 
     async def check_duplicate(

@@ -53,6 +53,8 @@ class BlogResponse(BlogBase):
     failure_count: int = 0
     created_at: datetime
     updated_at: datetime
+    post_count: Optional[int] = None
+    latest_post_published_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True  # SQLAlchemy 모델을 Pydantic으로 변환 가능

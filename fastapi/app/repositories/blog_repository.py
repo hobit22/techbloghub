@@ -4,11 +4,12 @@ Blog Repository
 """
 
 import logging
-from typing import List, Optional
+from typing import List, Optional, Dict
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, or_
 
 from app.models.blog import Blog, BlogStatus
+from app.models.post import Post
 
 logger = logging.getLogger(__name__)
 
@@ -239,3 +240,37 @@ class BlogRepository:
         await self.db.commit()
         await self.db.refresh(blog)
         return blog
+
+    async def get_post_stats(self, blog_ids: Optional[List[int]] = None) -> Dict[int, Dict]:
+        """
+        블로그별 포스트 통계 조회
+
+        Args:
+            blog_ids: 특정 블로그 ID 리스트 (None이면 전체 블로그)
+
+        Returns:
+            {blog_id: {"post_count": int, "latest_post_published_at": datetime}} 형태의 딕셔너리
+        """
+        query = (
+            select(
+                Post.blog_id,
+                func.count(Post.id).label('post_count'),
+                func.max(Post.published_at).label('latest_post_published_at')
+            )
+            .group_by(Post.blog_id)
+        )
+
+        if blog_ids:
+            query = query.where(Post.blog_id.in_(blog_ids))
+
+        result = await self.db.execute(query)
+        rows = result.all()
+
+        stats = {}
+        for row in rows:
+            stats[row.blog_id] = {
+                "post_count": row.post_count,
+                "latest_post_published_at": row.latest_post_published_at
+            }
+
+        return stats
