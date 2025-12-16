@@ -1,8 +1,11 @@
 'use client';
 
 import { Blog } from '@/types';
-import { ChevronDown, Filter, Building2, Check, Search } from 'lucide-react';
+import { ChevronDown, Filter, Building2, Check, Search, FileText, Calendar } from 'lucide-react';
 import { useState, useCallback, useRef, useEffect, memo } from 'react';
+import { formatDistanceToNow } from 'date-fns';
+import { ko } from 'date-fns/locale';
+import Image from 'next/image';
 
 interface FilterTopBarProps {
   blogs: Blog[];
@@ -19,7 +22,7 @@ interface FilterDropdownProps {
   hasSearch?: boolean;
   openDropdown: string | null;
   searchTerms: Record<string, string>;
-  dropdownRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
+  dropdownRefs: React.RefObject<Record<string, HTMLDivElement | null>>;
   toggleDropdown: (dropdown: string) => void;
   setSearchTerms: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   handleScrollEvent: (e: React.WheelEvent) => void;
@@ -160,15 +163,29 @@ export default function FilterTopBar({
     }
   }, [openDropdown]);
 
-  // 검색 필터링
+  // 검색 필터링 및 정렬
   const getFilteredBlogs = useCallback((blogs: Blog[]) => {
     const searchTerm = searchTerms['blogs']?.toLowerCase() || '';
-    if (!searchTerm) return blogs;
+    let filtered = blogs;
 
-    return blogs.filter(blog =>
-      blog.name.toLowerCase().includes(searchTerm) ||
-      blog.company.toLowerCase().includes(searchTerm)
-    );
+    if (searchTerm) {
+      filtered = blogs.filter(blog =>
+        blog.name.toLowerCase().includes(searchTerm) ||
+        blog.company.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    // 최근 발행 일자 내림차순 정렬 (날짜가 없는 경우 맨 뒤로)
+    return filtered.sort((a, b) => {
+      const dateA = a.latest_post_published_at;
+      const dateB = b.latest_post_published_at;
+
+      if (!dateA && !dateB) return 0;
+      if (!dateA) return 1;
+      if (!dateB) return -1;
+
+      return new Date(dateB).getTime() - new Date(dateA).getTime();
+    });
   }, [searchTerms]);
 
 
@@ -270,19 +287,57 @@ export default function FilterTopBar({
                     검색 결과가 없습니다
                   </div>
                 ) : (
-                  filteredBlogs.map((blog: Blog) => (
-                    <CheckboxItem
-                      key={blog.id}
-                      checked={selectedBlogs.includes(blog.id)}
-                      onChange={(e) => handleBlogToggle(blog.id, e)}
-                      isCompany
-                    >
-                      <div className="flex flex-col min-w-0">
-                        <span className="font-medium truncate">{blog.name}</span>
-                        <span className="text-xs text-slate-500 truncate">{blog.company}</span>
-                      </div>
-                    </CheckboxItem>
-                  ))
+                  filteredBlogs.map((blog: Blog) => {
+                    const postCount = blog.post_count ?? blog.postCount ?? 0;
+                    const latestDate = blog.latest_post_published_at;
+
+                    return (
+                      <CheckboxItem
+                        key={blog.id}
+                        checked={selectedBlogs.includes(blog.id)}
+                        onChange={(e) => handleBlogToggle(blog.id, e)}
+                        isCompany={false}
+                      >
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          {blog.logo_url ? (
+                            <Image
+                              src={blog.logo_url}
+                              alt={`${blog.name} logo`}
+                              width={32}
+                              height={32}
+                              className="rounded-lg object-cover flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center flex-shrink-0">
+                              <Building2 className="h-4 w-4 text-blue-600" />
+                            </div>
+                          )}
+                          <div className="flex flex-col min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium truncate">{blog.name}</span>
+                            </div>
+                            <div className="flex items-center gap-3 mt-1">
+                              <div className="flex items-center gap-1 text-xs text-slate-600">
+                                <FileText className="h-3 w-3" />
+                                <span>{postCount.toLocaleString()}개</span>
+                              </div>
+                              {latestDate && (
+                                <div className="flex items-center gap-1 text-xs text-slate-600">
+                                  <Calendar className="h-3 w-3" />
+                                  <span>
+                                    {formatDistanceToNow(new Date(latestDate), {
+                                      addSuffix: true,
+                                      locale: ko
+                                    })}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </CheckboxItem>
+                    );
+                  })
                 )}
               </div>
             </FilterDropdown>

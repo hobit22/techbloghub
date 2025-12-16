@@ -1,27 +1,29 @@
 """
 Post Service Layer
-포스트 관련 비즈니스 로직 및 데이터베이스 조작
+포스트 관련 비즈니스 로직 처리
 """
 
 import logging
 from typing import List, Optional, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, text
-from sqlalchemy.orm import selectinload
+from sqlalchemy import select
 
 from app.models import Post, Blog
 from app.schemas import PostCreate, PostUpdate
 from app.schemas.blog import BlogInfo
 from app.schemas.post import PostSearchResponse
+from app.repositories import PostRepository, BlogRepository
 
 logger = logging.getLogger(__name__)
 
 
 class PostService:
-    """포스트 CRUD 및 비즈니스 로직 처리"""
+    """포스트 비즈니스 로직 처리"""
 
     def __init__(self, db: AsyncSession):
         self.db = db
+        self.repository = PostRepository(db)
+        self.blog_repository = BlogRepository(db)
 
     async def get_post_by_id(self, post_id: int, include_blog: bool = False) -> Optional[Post]:
         """
@@ -36,13 +38,7 @@ class PostService:
         """
         logger.info(f"Fetching post with id={post_id}, include_blog={include_blog}")
 
-        query = select(Post).where(Post.id == post_id)
-
-        if include_blog:
-            query = query.options(selectinload(Post.blog))
-
-        result = await self.db.execute(query)
-        post = result.scalar_one_or_none()
+        post = await self.repository.get_by_id(post_id, include_blog=include_blog)
 
         if post:
             logger.info(f"Post found: id={post_id}, title={post.title}")
@@ -72,39 +68,22 @@ class PostService:
         """
         logger.info(f"Fetching posts: skip={skip}, limit={limit}, blog_id={blog_id}")
 
-        # 쿼리 빌드
-        query = select(Post)
-        count_query = select(func.count(Post.id))
-
-        if include_blog:
-            query = query.options(selectinload(Post.blog))
-
-        if blog_id:
-            query = query.where(Post.blog_id == blog_id)
-            count_query = count_query.where(Post.blog_id == blog_id)
-
-        # 총 개수
-        total_result = await self.db.execute(count_query)
-        total = total_result.scalar()
-
-        # 포스트 목록
-        result = await self.db.execute(
-            query
-            .order_by(Post.published_at.desc().nulls_last(), Post.created_at.desc())
-            .offset(skip)
-            .limit(limit)
+        posts, total = await self.repository.get_all(
+            skip=skip,
+            limit=limit,
+            blog_id=blog_id,
+            include_blog=include_blog
         )
-        posts = result.scalars().all()
 
         logger.info(f"Fetched {len(posts)} posts out of {total} total")
-        return list(posts), total
+        return posts, total
 
     async def search_posts(
         self,
         query: str,
         limit: int = 20,
         offset: int = 0
-    ) -> tuple[List[Dict[str, Any]], int]:
+    ) -> tuple[List[tuple[Post, float]], int]:
         """
         포스트 전문 검색 (PostgreSQL Full-Text Search)
 
@@ -114,82 +93,19 @@ class PostService:
             offset: 건너뛸 개수
 
         Returns:
-            (검색 결과 리스트, 전체 개수)
+            ((Post, rank) 튜플 리스트 (blog relationship 포함), 전체 개수)
         """
         logger.info(f"Searching posts: query='{query}', limit={limit}, offset={offset}")
 
-        # 검색어를 tsquery로 변환
-        search_query = ' & '.join(query.strip().split())
-
-        # ts_rank를 사용한 전문 검색 쿼리
-        search_sql = text("""
-            SELECT
-                posts.id, posts.title, posts.content, posts.author,
-                posts.original_url, posts.normalized_url, posts.blog_id,
-                posts.published_at, posts.created_at, posts.updated_at,
-                blogs.id as blog_id, blogs.name as blog_name,
-                blogs.company as blog_company, blogs.site_url as blog_site_url,
-                blogs.logo_url as blog_logo_url,
-                ts_rank(posts.keyword_vector, to_tsquery('simple', :search_query)) as rank
-            FROM posts
-            JOIN blogs ON posts.blog_id = blogs.id
-            WHERE posts.keyword_vector @@ to_tsquery('simple', :search_query)
-            ORDER BY rank DESC, posts.published_at DESC NULLS LAST
-            LIMIT :limit
-            OFFSET :offset
-        """)
-
-        # 검색 실행
-        result = await self.db.execute(
-            search_sql,
-            {
-                "search_query": search_query,
-                "limit": limit,
-                "offset": offset
-            }
+        # Repository를 통해 검색 (ORM 모델 + rank 반환)
+        posts_with_rank, total = await self.repository.search_fulltext(
+            search_query=query,
+            limit=limit,
+            offset=offset
         )
-        rows = result.fetchall()
 
-        # 총 개수 조회
-        count_sql = text("""
-            SELECT COUNT(*) as total
-            FROM posts
-            WHERE posts.keyword_vector @@ to_tsquery('simple', :search_query)
-        """)
-
-        count_result = await self.db.execute(count_sql, {"search_query": search_query})
-        total = count_result.scalar()
-
-        # 결과 변환
-        search_results = []
-        for row in rows:
-            blog_info = BlogInfo(
-                id=row.blog_id,
-                name=row.blog_name,
-                company=row.blog_company,
-                site_url=row.blog_site_url,
-                logo_url=row.blog_logo_url
-            )
-
-            post_dict = {
-                "id": row.id,
-                "title": row.title,
-                "content": row.content,
-                "author": row.author,
-                "original_url": row.original_url,
-                "normalized_url": row.normalized_url,
-                "blog_id": row.blog_id,
-                "published_at": row.published_at,
-                "created_at": row.created_at,
-                "updated_at": row.updated_at,
-                "keywords": [],
-                "blog": blog_info,
-                "rank": float(row.rank)
-            }
-            search_results.append(post_dict)
-
-        logger.info(f"Found {len(search_results)} posts out of {total} total for query '{query}'")
-        return search_results, total or 0
+        logger.info(f"Found {len(posts_with_rank)} posts out of {total} total for query '{query}'")
+        return posts_with_rank, total
 
     async def check_duplicate_url(
         self,
@@ -210,23 +126,18 @@ class PostService:
         """
         logger.info(f"Checking duplicate URL: original={original_url}, normalized={normalized_url}")
 
-        query = select(Post).where(
-            (Post.original_url == original_url) |
-            (Post.normalized_url == normalized_url)
+        is_duplicate = await self.repository.exists_by_url(
+            original_url=original_url,
+            normalized_url=normalized_url,
+            exclude_id=exclude_id
         )
 
-        if exclude_id:
-            query = query.where(Post.id != exclude_id)
+        if is_duplicate:
+            logger.warning(f"Duplicate post URL found")
+        else:
+            logger.info("No duplicate URL found")
 
-        result = await self.db.execute(query)
-        duplicate = result.scalar_one_or_none()
-
-        if duplicate:
-            logger.warning(f"Duplicate post URL found: id={duplicate.id}")
-            return True
-
-        logger.info("No duplicate URL found")
-        return False
+        return is_duplicate
 
     async def create_post(self, post_data: PostCreate) -> Post:
         """
@@ -244,8 +155,8 @@ class PostService:
         logger.info(f"Creating post: title={post_data.title}, blog_id={post_data.blog_id}")
 
         # 블로그 존재 여부 확인
-        blog_result = await self.db.execute(select(Blog).where(Blog.id == post_data.blog_id))
-        if not blog_result.scalar_one_or_none():
+        blog = await self.blog_repository.get_by_id(post_data.blog_id)
+        if not blog:
             logger.error(f"Failed to create post: blog_id={post_data.blog_id} not found")
             raise ValueError(f"Blog with id {post_data.blog_id} not found")
 
@@ -260,12 +171,10 @@ class PostService:
         # 포스트 생성
         post_dict = post_data.model_dump()
         new_post = Post(**post_dict, normalized_url=normalized_url)
-        self.db.add(new_post)
-        await self.db.commit()
-        await self.db.refresh(new_post)
+        created_post = await self.repository.create(new_post)
 
-        logger.info(f"Post created successfully: id={new_post.id}, title={new_post.title}")
-        return new_post
+        logger.info(f"Post created successfully: id={created_post.id}, title={created_post.title}")
+        return created_post
 
     async def update_post(
         self,
@@ -298,11 +207,10 @@ class PostService:
         for key, value in update_data.items():
             setattr(post, key, value)
 
-        await self.db.commit()
-        await self.db.refresh(post)
+        updated_post = await self.repository.update(post)
 
         logger.info(f"Post updated successfully: id={post_id}")
-        return post
+        return updated_post
 
     async def delete_post(self, post_id: int) -> None:
         """
@@ -321,7 +229,6 @@ class PostService:
             logger.error(f"Failed to delete post: id={post_id} not found")
             raise ValueError(f"Post with id {post_id} not found")
 
-        await self.db.delete(post)
-        await self.db.commit()
+        await self.repository.delete(post)
 
         logger.info(f"Post deleted successfully: id={post_id}")

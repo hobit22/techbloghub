@@ -13,6 +13,8 @@ export interface Blog {
   last_crawled_at?: string;
   failure_count?: number;
   postCount?: number;
+  post_count?: number;
+  latest_post_published_at?: string;
 }
 
 export interface Post {

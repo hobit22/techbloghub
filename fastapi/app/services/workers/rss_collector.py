@@ -6,15 +6,16 @@ RSS 피드에서 URL과 메타데이터만 수집 (본문 추출 제외)
 from typing import List, Dict, Optional
 from urllib.parse import urlparse, quote
 from datetime import datetime
+import asyncio
 
 import feedparser
-from trafilatura import fetch_url
+import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
 from app.core.config import settings
 from app.models.blog import Blog
 from app.models.post import Post, PostStatus
+from app.repositories import PostRepository, BlogRepository
 
 
 class RSSCollector:
@@ -23,8 +24,10 @@ class RSSCollector:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.proxy_url = settings.RSS_PROXY_URL
+        self.post_repository = PostRepository(db)
+        self.blog_repository = BlogRepository(db)
 
-    def extract_rss_entries(self, rss_url: str) -> List[Dict[str, str]]:
+    async def extract_rss_entries(self, rss_url: str) -> List[Dict[str, str]]:
         """
         RSS 피드에서 URL과 Title 추출
 
@@ -35,14 +38,18 @@ class RSSCollector:
             [{'url': str, 'title': str, 'published': str}, ...]
         """
         try:
-            # Cloudflare 프록시를 통해 RSS 다운로드
+            # Cloudflare 프록시를 통해 RSS 다운로드 (비동기)
             proxy_url = self.proxy_url + quote(rss_url, safe='')
-            feed_content = fetch_url(proxy_url)
+
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.get(proxy_url)
+                response.raise_for_status()
+                feed_content = response.text
 
             if not feed_content:
                 return []
 
-            # feedparser로 RSS 파싱
+            # feedparser로 RSS 파싱 (CPU 작업이지만 가벼워서 그냥 실행)
             feed = feedparser.parse(feed_content)
 
             entries = []
@@ -74,10 +81,7 @@ class RSSCollector:
         Returns:
             기존 URL 집합
         """
-        result = await self.db.execute(
-            select(Post.original_url).where(Post.blog_id == blog_id)
-        )
-        return {row[0] for row in result.fetchall()}
+        return await self.post_repository.get_existing_urls(blog_id)
 
     async def collect_blog(
         self,
@@ -102,7 +106,6 @@ class RSSCollector:
             }
         """
         # blog 속성을 미리 저장 (rollback 시 접근 불가 방지)
-        print(f"blog: {blog}")
         blog_id = blog.id
         blog_name = blog.name
         result = {
@@ -115,8 +118,8 @@ class RSSCollector:
         }
 
         try:
-            # 1. RSS에서 엔트리(URL + Title) 추출
-            entries = self.extract_rss_entries(blog.rss_url)
+            # 1. RSS에서 엔트리(URL + Title) 추출 (비동기)
+            entries = await self.extract_rss_entries(blog.rss_url)
             result['total_entries'] = len(entries)
 
             if not entries:
@@ -160,10 +163,11 @@ class RSSCollector:
 
                     # 중복 체크 (normalized_url 기준)
                     normalized_url = Post.normalize_url(url)
-                    existing = await self.db.execute(
-                        select(Post).where(Post.normalized_url == normalized_url)
+                    is_duplicate = await self.post_repository.exists_by_url(
+                        original_url=url,
+                        normalized_url=normalized_url
                     )
-                    if existing.scalar_one_or_none():
+                    if is_duplicate:
                         print(f"INFO: Skipping duplicate URL (normalized): {url[:100]}")
                         result['skipped_duplicates'] += 1
                         continue
@@ -214,7 +218,7 @@ class RSSCollector:
         max_posts_per_blog: Optional[int] = None
     ) -> List[dict]:
         """
-        모든 활성 블로그에서 새로운 URL 수집
+        모든 활성 블로그에서 새로운 URL 수집 (병렬 처리)
 
         Args:
             max_posts_per_blog: 블로그당 최대 수집 개수
@@ -223,14 +227,31 @@ class RSSCollector:
             각 블로그별 수집 결과 리스트
         """
         # 활성 블로그 조회
-        result = await self.db.execute(
-            select(Blog).where(Blog.status == "ACTIVE")
-        )
-        blogs = result.scalars().all()
+        blogs = await self.blog_repository.get_active()
 
-        results = []
-        for blog in blogs:
-            result = await self.collect_blog(blog, max_posts=max_posts_per_blog)
-            results.append(result)
+        # 모든 블로그를 병렬로 수집 (I/O 최적화)
+        tasks = [
+            self.collect_blog(blog, max_posts=max_posts_per_blog)
+            for blog in blogs
+        ]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        return results
+        # Exception이 반환된 경우 에러 로깅
+        final_results = []
+        for i, result in enumerate(results):
+            if isinstance(result, Exception):
+                blog_name = blogs[i].name if i < len(blogs) else "Unknown"
+                error_result = {
+                    'blog_id': blogs[i].id if i < len(blogs) else None,
+                    'blog_name': blog_name,
+                    'total_entries': 0,
+                    'new_posts': 0,
+                    'skipped_duplicates': 0,
+                    'errors': [f"Exception during collection: {str(result)}"]
+                }
+                final_results.append(error_result)
+                print(f"ERROR: Blog collection failed for {blog_name}: {result}")
+            else:
+                final_results.append(result)
+
+        return final_results
