@@ -16,28 +16,41 @@ export default function AdminPostsPage() {
   const [filters, setFilters] = useState({
     keyword: '',
     blogId: '',
-    tag: '',
-    category: '',
   });
 
   const [showFilters, setShowFilters] = useState(false);
+  const [isSearchMode, setIsSearchMode] = useState(false);
 
   useEffect(() => {
     loadPosts();
-  }, [currentPage, filters]);
+  }, [currentPage, filters.blogId, isSearchMode]); // keyword는 제외 (검색 버튼으로만 실행)
 
   const loadPosts = async () => {
     try {
       setIsLoading(true);
-      const params = {
-        skip: currentPage * 20,
-        limit: 20,
-        ...(filters.blogId && { blog_id: parseInt(filters.blogId) }),
-      };
 
-      const response = await adminPostApi.getAll(params);
-      setPosts(response.posts || []);
-      setTotalElements(response.total || 0);
+      // 검색 모드인 경우
+      if (isSearchMode && filters.keyword.trim()) {
+        const response = await adminPostApi.search({
+          q: filters.keyword.trim(),
+          limit: 20,
+          offset: currentPage * 20,
+        });
+        setPosts(response.results || []);
+        setTotalElements(response.total || 0);
+      } else {
+        // 일반 목록 모드
+        const params = {
+          skip: currentPage * 20,
+          limit: 20,
+          ...(filters.blogId && { blog_id: parseInt(filters.blogId) }),
+        };
+
+        const response = await adminPostApi.getAll(params);
+        setPosts(response.posts || []);
+        setTotalElements(response.total || 0);
+      }
+
       setError('');
     } catch (error) {
       setError('포스트 목록을 불러오는 중 오류가 발생했습니다.');
@@ -50,7 +63,8 @@ export default function AdminPostsPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setCurrentPage(0);
-    loadPosts();
+    setIsSearchMode(true);
+    // loadPosts는 useEffect에서 자동 호출됨
   };
 
   const handleFilterChange = (key: string, value: string) => {
@@ -61,10 +75,9 @@ export default function AdminPostsPage() {
     setFilters({
       keyword: '',
       blogId: '',
-      tag: '',
-      category: '',
     });
     setCurrentPage(0);
+    setIsSearchMode(false);
   };
 
   const formatDate = (dateString: string) => {
@@ -173,7 +186,7 @@ export default function AdminPostsPage() {
           </div>
 
           {showFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">블로그 ID</label>
                 <input
@@ -184,25 +197,10 @@ export default function AdminPostsPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">태그</label>
-                <input
-                  type="text"
-                  placeholder="태그"
-                  value={filters.tag}
-                  onChange={(e) => handleFilterChange('tag', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">카테고리</label>
-                <input
-                  type="text"
-                  placeholder="카테고리"
-                  value={filters.category}
-                  onChange={(e) => handleFilterChange('category', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800"
-                />
+              <div className="flex items-end">
+                <p className="text-sm text-gray-500">
+                  키워드 검색은 제목, 내용, 작성자를 모두 검색합니다.
+                </p>
               </div>
             </div>
           )}

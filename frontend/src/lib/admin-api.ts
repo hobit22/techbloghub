@@ -46,16 +46,29 @@ const adminApi = createAdminApi();
 
 // 관리자 포스트 API (FastAPI v1)
 export const adminPostApi = {
+  // 조회는 Public API 사용 (Admin API에 GET 엔드포인트 없음)
   getAll: (params: {
     skip?: number;
     limit?: number;
     blog_id?: number;
   } = {}): Promise<PostListResponse> =>
-    adminApi.get("/api/v1/admin/posts", { params }).then((res) => res.data),
+    adminApi.get("/api/v1/posts", { params }).then((res) => res.data),
 
   getById: (id: number): Promise<Post> =>
-    adminApi.get(`/api/v1/admin/posts/${id}`).then((res) => res.data),
+    adminApi.get(`/api/v1/posts/${id}`).then((res) => res.data),
 
+  // 검색 (Public API 사용)
+  search: (params: {
+    q: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{
+    total: number;
+    results: Post[];
+  }> =>
+    adminApi.get("/api/v1/posts/search", { params }).then((res) => res.data),
+
+  // 생성, 수정, 삭제는 Admin API 사용
   update: (id: number, data: Partial<Post>): Promise<Post> =>
     adminApi.patch(`/api/v1/admin/posts/${id}`, data).then((res) => res.data),
 
@@ -65,15 +78,17 @@ export const adminPostApi = {
 
 // 관리자 블로그 API (FastAPI v1)
 export const adminBlogApi = {
+  // 조회는 Public API 사용 (Admin API에 GET 엔드포인트 없음)
   getAll: (params: {
     skip?: number;
     limit?: number;
   } = {}): Promise<BlogListResponse> =>
-    adminApi.get("/api/v1/admin/blogs", { params }).then((res) => res.data),
+    adminApi.get("/api/v1/blogs/", { params }).then((res) => res.data),
 
   getById: (id: number): Promise<Blog> =>
-    adminApi.get(`/api/v1/admin/blogs/${id}`).then((res) => res.data),
+    adminApi.get(`/api/v1/blogs/${id}`).then((res) => res.data),
 
+  // 생성, 수정, 삭제는 Admin API 사용
   create: (data: {
     name: string;
     company: string;
@@ -83,7 +98,7 @@ export const adminBlogApi = {
     description?: string;
     blog_type?: string;
   }): Promise<Blog> =>
-    adminApi.post("/api/v1/admin/blogs", data).then((res) => res.data),
+    adminApi.post("/api/v1/admin/blogs/", data).then((res) => res.data),
 
   update: (id: number, data: Partial<Blog>): Promise<Blog> =>
     adminApi.patch(`/api/v1/admin/blogs/${id}`, data).then((res) => res.data),
@@ -92,51 +107,93 @@ export const adminBlogApi = {
     adminApi.delete(`/api/v1/admin/blogs/${id}`).then(() => {}),
 };
 
+// Scheduler API 타입 정의
+interface RSSCollectResult {
+  status: string;
+  summary: {
+    blogs_processed: number;
+    new_posts: number;
+    skipped_duplicates: number;
+    errors: number;
+  };
+  details?: Array<{
+    blog_id: number;
+    blog_name: string;
+    new_posts: number;
+    skipped_duplicates: number;
+    errors: string[];
+  }>;
+}
+
+interface BlogRSSCollectResult {
+  status: string;
+  blog_id: number;
+  blog_name: string;
+  summary: {
+    new_posts: number;
+    skipped_duplicates: number;
+    errors: number;
+  };
+  errors: string[];
+}
+
+interface ContentProcessResult {
+  status: string;
+  summary: {
+    total_processed: number;
+    completed: number;
+    failed: number;
+    errors: Array<{ post_id: number; error: string }>;
+  };
+}
+
+interface SchedulerStats {
+  status: string;
+  post_stats: {
+    total: number;
+    pending: number;
+    completed: number;
+    failed: number;
+    error_rate: number;
+  };
+  blog_stats: {
+    total: number;
+    active: number;
+    inactive: number;
+  };
+}
+
 // 관리자 스케줄러 API (FastAPI v1)
 export const adminSchedulerApi = {
   // RSS 수집
-  collectAllRSS: (): Promise<any> =>
+  collectAllRSS: (): Promise<RSSCollectResult> =>
     adminApi.post("/api/v1/admin/scheduler/rss-collect").then((res) => res.data),
 
-  collectBlogRSS: (blogId: number): Promise<any> =>
+  collectBlogRSS: (blogId: number): Promise<BlogRSSCollectResult> =>
     adminApi.post(`/api/v1/admin/scheduler/rss-collect/${blogId}`).then((res) => res.data),
 
   // 콘텐츠 처리
-  processContent: (batchSize?: number): Promise<any> =>
+  processContent: (batchSize?: number): Promise<ContentProcessResult> =>
     adminApi.post("/api/v1/admin/scheduler/content-process", null, {
       params: { batch_size: batchSize }
     }).then((res) => res.data),
 
-  processSinglePost: (postId: number): Promise<any> =>
+  processSinglePost: (postId: number): Promise<ContentProcessResult> =>
     adminApi.post(`/api/v1/admin/scheduler/content-process/${postId}`).then((res) => res.data),
 
-  processBlogPosts: (blogId: number, batchSize?: number): Promise<any> =>
+  processBlogPosts: (blogId: number, batchSize?: number): Promise<ContentProcessResult> =>
     adminApi.post(`/api/v1/admin/scheduler/content-process/blog/${blogId}`, null, {
       params: { batch_size: batchSize }
     }).then((res) => res.data),
 
   // 실패 재시도
-  retryFailed: (batchSize?: number): Promise<any> =>
+  retryFailed: (batchSize?: number): Promise<ContentProcessResult> =>
     adminApi.post("/api/v1/admin/scheduler/retry-failed", null, {
       params: { batch_size: batchSize }
     }).then((res) => res.data),
 
   // 통계
-  getStats: (): Promise<{
-    status: string;
-    post_stats: {
-      total: number;
-      pending: number;
-      completed: number;
-      failed: number;
-      error_rate: number;
-    };
-    blog_stats: {
-      total: number;
-      active: number;
-      inactive: number;
-    };
-  }> =>
+  getStats: (): Promise<SchedulerStats> =>
     adminApi.get("/api/v1/admin/scheduler/stats").then((res) => res.data),
 };
 
