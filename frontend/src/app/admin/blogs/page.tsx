@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { adminBlogApi } from '@/lib/admin-api';
+import { adminBlogApi, adminSchedulerApi } from '@/lib/admin-api';
 import { Blog } from '@/types';
 import { RefreshCw, Globe, Activity, Calendar, AlertCircle, CheckCircle, Plus } from 'lucide-react';
 import AddBlogModal from '@/components/admin/AddBlogModal';
@@ -31,17 +31,14 @@ export default function AdminBlogsPage() {
     }
   };
 
-  // 재크롤링 기능은 스케줄러 API에서 전체 RSS 수집으로 대체
-  // POST /api/v1/scheduler/rss-collect/trigger
-
   const handleAllRecrawl = async () => {
     if (!confirm('모든 블로그의 RSS 수집을 시작하시겠습니까?')) return;
 
     try {
       setTriggering(-1);
-      // TODO: 스케줄러 API 호출로 변경 필요
-      // await schedulerApi.triggerRSSCollection();
-      alert('전체 재크롤링 요청이 성공적으로 전송되었습니다.');
+      const result = await adminSchedulerApi.collectAllRSS();
+      alert(`전체 RSS 수집 완료!\n- 처리된 블로그: ${result.summary.blogs_processed}개\n- 새 포스트: ${result.summary.new_posts}개\n- 중복 스킵: ${result.summary.skipped_duplicates}개`);
+      loadBlogs(); // 블로그 목록 새로고침
     } catch (error) {
       alert('전체 재크롤링 요청 중 오류가 발생했습니다.');
       console.error('Error triggering all recrawl:', error);

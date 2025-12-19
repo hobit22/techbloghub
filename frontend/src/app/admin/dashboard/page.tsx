@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { adminPostApi, adminBlogApi } from '@/lib/admin-api';
+import { adminSchedulerApi } from '@/lib/admin-api';
 import { FileText, Globe, TrendingUp, Clock, Users, Activity } from 'lucide-react';
 import Link from 'next/link';
 
@@ -9,7 +9,8 @@ interface DashboardStats {
   totalPosts: number;
   totalBlogs: number;
   activeBlogsCount: number;
-  recentPostsCount: number;
+  pendingPosts: number;
+  failedPosts: number;
 }
 
 export default function AdminDashboard() {
@@ -17,25 +18,23 @@ export default function AdminDashboard() {
     totalPosts: 0,
     totalBlogs: 0,
     activeBlogsCount: 0,
-    recentPostsCount: 0,
+    pendingPosts: 0,
+    failedPosts: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
-        // 포스트와 블로그 데이터 로드
-        const [postsData, blogsData, activeBlogs] = await Promise.allSettled([
-          adminPostApi.getAll({ skip: 0, limit: 1 }),
-          adminBlogApi.getAll({ skip: 0, limit: 1 }),
-          adminBlogApi.getAll({ skip: 0, limit: 1 }),
-        ]);
+        // Scheduler Stats API 사용
+        const data = await adminSchedulerApi.getStats();
 
         const newStats: DashboardStats = {
-          totalPosts: postsData.status === 'fulfilled' ? postsData.value.total || 0 : 0,
-          totalBlogs: blogsData.status === 'fulfilled' ? blogsData.value.total || 0 : 0,
-          activeBlogsCount: activeBlogs.status === 'fulfilled' ? activeBlogs.value.total || 0 : 0,
-          recentPostsCount: postsData.status === 'fulfilled' ? postsData.value.posts.length || 0 : 0
+          totalPosts: data.post_stats.total || 0,
+          totalBlogs: data.blog_stats.total || 0,
+          activeBlogsCount: data.blog_stats.active || 0,
+          pendingPosts: data.post_stats.pending || 0,
+          failedPosts: data.post_stats.failed || 0,
         };
 
         setStats(newStats);
@@ -73,11 +72,18 @@ export default function AdminDashboard() {
       description: '현재 크롤링 중인 블로그',
     },
     {
-      title: '최근 포스트',
-      value: stats.recentPostsCount,
+      title: '대기중 포스트',
+      value: stats.pendingPosts,
       icon: Clock,
       color: 'bg-orange-500',
-      description: '오늘 등록된 포스트',
+      description: '콘텐츠 처리 대기중',
+    },
+    {
+      title: '실패 포스트',
+      value: stats.failedPosts,
+      icon: TrendingUp,
+      color: 'bg-red-500',
+      description: '콘텐츠 처리 실패',
     },
   ];
 
