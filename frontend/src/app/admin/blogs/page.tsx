@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { adminBlogApi, adminSchedulerApi } from '@/lib/admin-api';
 import { Blog } from '@/types';
-import { RefreshCw, Globe, Activity, Calendar, AlertCircle, CheckCircle, Plus } from 'lucide-react';
+import { RefreshCw, Globe, Activity, Calendar, AlertCircle, CheckCircle, Plus, Trash2, Edit } from 'lucide-react';
 import AddBlogModal from '@/components/admin/AddBlogModal';
+import EditBlogModal from '@/components/admin/EditBlogModal';
 
 export default function AdminBlogsPage() {
   const [blogs, setBlogs] = useState<Blog[]>([]);
@@ -12,6 +13,7 @@ export default function AdminBlogsPage() {
   const [error, setError] = useState('');
   const [triggering, setTriggering] = useState<number | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingBlog, setEditingBlog] = useState<Blog | null>(null);
 
   useEffect(() => {
     loadBlogs();
@@ -44,6 +46,35 @@ export default function AdminBlogsPage() {
       console.error('Error triggering all recrawl:', error);
     } finally {
       setTriggering(null);
+    }
+  };
+
+  const handleBlogRecrawl = async (blogId: number, blogName: string) => {
+    if (!confirm(`"${blogName}"의 RSS 수집을 시작하시겠습니까?`)) return;
+
+    try {
+      setTriggering(blogId);
+      const result = await adminSchedulerApi.collectBlogRSS(blogId);
+      alert(`RSS 수집 완료!\n- 새 포스트: ${result.summary.new_posts}개\n- 중복 스킵: ${result.summary.skipped_duplicates}개`);
+      loadBlogs(); // 블로그 목록 새로고침
+    } catch (error) {
+      alert('RSS 수집 요청 중 오류가 발생했습니다.');
+      console.error('Error triggering blog recrawl:', error);
+    } finally {
+      setTriggering(null);
+    }
+  };
+
+  const handleDeleteBlog = async (blogId: number, blogName: string) => {
+    if (!confirm(`정말로 "${blogName}" 블로그를 삭제하시겠습니까?\n관련된 모든 포스트도 함께 삭제됩니다.`)) return;
+
+    try {
+      await adminBlogApi.delete(blogId);
+      alert('블로그가 삭제되었습니다.');
+      loadBlogs(); // 블로그 목록 새로고침
+    } catch (error) {
+      alert('블로그 삭제 중 오류가 발생했습니다.');
+      console.error('Error deleting blog:', error);
     }
   };
 
@@ -223,9 +254,34 @@ export default function AdminBlogsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm font-medium">
-                      <span className="text-gray-500 text-sm">
-                        전체 재크롤링 사용
-                      </span>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleBlogRecrawl(blog.id, blog.name)}
+                          disabled={triggering !== null}
+                          className="text-blue-600 hover:text-blue-900 disabled:opacity-50"
+                          title="RSS 수집"
+                        >
+                          {triggering === blog.id ? (
+                            <RefreshCw className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <RefreshCw className="w-4 h-4" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => setEditingBlog(blog)}
+                          className="text-green-600 hover:text-green-900"
+                          title="편집"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteBlog(blog.id, blog.name)}
+                          className="text-red-600 hover:text-red-900"
+                          title="삭제"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -239,6 +295,14 @@ export default function AdminBlogsPage() {
       <AddBlogModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
+        onSuccess={loadBlogs}
+      />
+
+      {/* 블로그 편집 모달 */}
+      <EditBlogModal
+        blog={editingBlog}
+        isOpen={editingBlog !== null}
+        onClose={() => setEditingBlog(null)}
         onSuccess={loadBlogs}
       />
     </div>

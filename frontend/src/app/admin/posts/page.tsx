@@ -290,10 +290,16 @@ export default function AdminPostsPage() {
                           <ExternalLink className="w-4 h-4" />
                         </a>
                         <button
-                          onClick={() => {
+                          onClick={async () => {
                             if (confirm('정말로 이 포스트를 삭제하시겠습니까?')) {
-                              // TODO: 삭제 기능 구현
-                              alert('삭제 기능은 준비 중입니다.');
+                              try {
+                                await adminPostApi.delete(post.id);
+                                alert('포스트가 삭제되었습니다.');
+                                loadPosts(); // 목록 새로고침
+                              } catch (error) {
+                                alert('포스트 삭제 중 오류가 발생했습니다.');
+                                console.error('Error deleting post:', error);
+                              }
                             }
                           }}
                           className="text-red-600 hover:text-red-900"
