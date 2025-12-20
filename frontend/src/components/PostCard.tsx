@@ -8,8 +8,6 @@ import { useUrlState } from '@/hooks/useUrlState';
 import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import CategoryChip from './CategoryChip';
-import ClickableTagChip from './ClickableTagChip';
 
 interface PostCardProps {
   post: Post;

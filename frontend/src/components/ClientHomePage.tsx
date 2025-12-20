@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import PostCard from '@/components/PostCard';
-import FilterTopBar from '@/components/FilterTopBar';
+import { PostFilters } from '@/components/posts/post-filters';
 import InfiniteScroll from '@/components/InfiniteScroll';
 import FilterResetButton from '@/components/FilterResetButton';
 import { useInfinitePosts } from '@/hooks/useInfinitePosts';
@@ -98,7 +98,7 @@ export default function ClientHomePage({
         searchValue={searchQuery}
       />
 
-      <FilterTopBar
+      <PostFilters
         blogs={blogs}
         selectedBlogs={selectedBlogs}
         onBlogChange={handleBlogChange}
