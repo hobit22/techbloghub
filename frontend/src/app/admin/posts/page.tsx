@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { adminPostApi } from '@/lib/admin-api';
+import { adminPostApi, adminSchedulerApi } from '@/lib/admin-api';
 import { Post } from '@/types';
-import { Search, Filter, RefreshCw, FileText, Calendar, User, ExternalLink, Trash2 } from 'lucide-react';
+import { Search, Filter, RefreshCw, FileText, Calendar, User, ExternalLink, Trash2, Download } from 'lucide-react';
 
 export default function AdminPostsPage() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -11,6 +11,7 @@ export default function AdminPostsPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [processingPostId, setProcessingPostId] = useState<number | null>(null);
 
   // 필터 상태
   const [filters, setFilters] = useState({
@@ -77,7 +78,27 @@ export default function AdminPostsPage() {
       blogId: '',
     });
     setCurrentPage(0);
-    setIsSearchMode(false);
+  };
+
+  const handleProcessPost = async (postId: number, postTitle: string) => {
+    if (!confirm(`"${postTitle}"의 본문을 추출하시겠습니까?`)) return;
+
+    try {
+      setProcessingPostId(postId);
+      const result = await adminSchedulerApi.processSinglePost(postId);
+
+      if (result.summary.completed > 0) {
+        alert('본문 추출이 완료되었습니다!');
+        loadPosts(); // 목록 새로고침
+      } else {
+        alert(`본문 추출 실패:\n${result.summary.errors[0]?.error || '알 수 없는 오류'}`);
+      }
+    } catch (error) {
+      alert('본문 추출 중 오류가 발생했습니다.');
+      console.error('Error processing post:', error);
+    } finally {
+      setProcessingPostId(null);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -279,11 +300,24 @@ export default function AdminPostsPage() {
                     </td>
                     <td className="px-6 py-4 text-sm font-medium">
                       <div className="flex space-x-3">
+                        <button
+                          onClick={() => handleProcessPost(post.id, post.title)}
+                          disabled={processingPostId !== null}
+                          className="text-green-600 hover:text-green-900 disabled:opacity-50"
+                          title="본문 추출"
+                        >
+                          {processingPostId === post.id ? (
+                            <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+                          ) : (
+                            <Download className="w-4 h-4" />
+                          )}
+                        </button>
                         <a
                           href={post.original_url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-600 hover:text-blue-900"
+                          title="원본 링크"
                         >
                           <ExternalLink className="w-4 h-4" />
                         </a>
@@ -293,7 +327,7 @@ export default function AdminPostsPage() {
                               try {
                                 await adminPostApi.delete(post.id);
                                 alert('포스트가 삭제되었습니다.');
-                                loadPosts(); // 목록 새로고침
+                                loadPosts();
                               } catch (error) {
                                 alert('포스트 삭제 중 오류가 발생했습니다.');
                                 console.error('Error deleting post:', error);
@@ -301,6 +335,7 @@ export default function AdminPostsPage() {
                             }
                           }}
                           className="text-red-600 hover:text-red-900"
+                          title="삭제"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

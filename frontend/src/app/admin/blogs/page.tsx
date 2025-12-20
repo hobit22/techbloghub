@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { adminBlogApi, adminSchedulerApi } from '@/lib/admin-api';
 import { Blog } from '@/types';
-import { RefreshCw, Globe, Activity, Calendar, AlertCircle, CheckCircle, Plus, Trash2, Edit } from 'lucide-react';
+import { RefreshCw, Globe, Activity, Calendar, AlertCircle, CheckCircle, Plus, Download, Trash2, Edit } from 'lucide-react';
 import AddBlogModal from '@/components/admin/AddBlogModal';
 import EditBlogModal from '@/components/admin/EditBlogModal';
 
@@ -13,6 +13,7 @@ export default function AdminBlogsPage() {
   const [error, setError] = useState('');
   const [triggering, setTriggering] = useState<number | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [processingBlogId, setProcessingBlogId] = useState<number | null>(null);
   const [editingBlog, setEditingBlog] = useState<Blog | null>(null);
 
   useEffect(() => {
@@ -40,7 +41,7 @@ export default function AdminBlogsPage() {
       setTriggering(-1);
       const result = await adminSchedulerApi.collectAllRSS();
       alert(`전체 RSS 수집 완료!\n- 처리된 블로그: ${result.summary.blogs_processed}개\n- 새 포스트: ${result.summary.new_posts}개\n- 중복 스킵: ${result.summary.skipped_duplicates}개`);
-      loadBlogs(); // 블로그 목록 새로고침
+      loadBlogs();
     } catch (error) {
       alert('전체 재크롤링 요청 중 오류가 발생했습니다.');
       console.error('Error triggering all recrawl:', error);
@@ -56,7 +57,7 @@ export default function AdminBlogsPage() {
       setTriggering(blogId);
       const result = await adminSchedulerApi.collectBlogRSS(blogId);
       alert(`RSS 수집 완료!\n- 새 포스트: ${result.summary.new_posts}개\n- 중복 스킵: ${result.summary.skipped_duplicates}개`);
-      loadBlogs(); // 블로그 목록 새로고침
+      loadBlogs();
     } catch (error) {
       alert('RSS 수집 요청 중 오류가 발생했습니다.');
       console.error('Error triggering blog recrawl:', error);
@@ -71,10 +72,32 @@ export default function AdminBlogsPage() {
     try {
       await adminBlogApi.delete(blogId);
       alert('블로그가 삭제되었습니다.');
-      loadBlogs(); // 블로그 목록 새로고침
+      loadBlogs();
     } catch (error) {
       alert('블로그 삭제 중 오류가 발생했습니다.');
       console.error('Error deleting blog:', error);
+    }
+  };
+
+  const handleProcessBlogPosts = async (blogId: number, blogName: string) => {
+    if (!confirm(`"${blogName}"의 pending posts 본문을 추출하시겠습니까?`)) return;
+
+    try {
+      setProcessingBlogId(blogId);
+      const result = await adminSchedulerApi.processBlogPosts(blogId);
+
+      if (result.summary.completed > 0) {
+        alert(`본문 추출 완료!\n처리: ${result.summary.total_processed}개\n성공: ${result.summary.completed}개\n실패: ${result.summary.failed}개`);
+        loadBlogs();
+      } else {
+        const errorMsg = result.summary.errors[0]?.error || '알 수 없는 오류';
+        alert(`본문 추출 실패:\n${errorMsg}`);
+      }
+    } catch (error) {
+      alert('본문 추출 중 오류가 발생했습니다.');
+      console.error('Error processing blog posts:', error);
+    } finally {
+      setProcessingBlogId(null);
     }
   };
 
@@ -265,6 +288,18 @@ export default function AdminBlogsPage() {
                             <RefreshCw className="w-4 h-4 animate-spin" />
                           ) : (
                             <RefreshCw className="w-4 h-4" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleProcessBlogPosts(blog.id, blog.name)}
+                          disabled={processingBlogId !== null}
+                          className="text-purple-600 hover:text-purple-900 disabled:opacity-50"
+                          title="Pending Posts 본문 추출"
+                        >
+                          {processingBlogId === blog.id ? (
+                            <div className="w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                          ) : (
+                            <Download className="w-4 h-4" />
                           )}
                         </button>
                         <button

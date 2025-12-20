@@ -16,8 +16,8 @@ const createAdminApi = () => {
   // 요청 인터셉터: Basic Auth 헤더 자동 추가
   api.interceptors.request.use(
     (config) => {
-      if (typeof window !== 'undefined') {
-        const auth = localStorage.getItem('admin-auth');
+      if (typeof window !== "undefined") {
+        const auth = localStorage.getItem("admin-auth");
         if (auth) {
           config.headers.Authorization = `Basic ${auth}`;
         }
@@ -31,9 +31,9 @@ const createAdminApi = () => {
   api.interceptors.response.use(
     (response) => response,
     (error) => {
-      if (error.response?.status === 401 && typeof window !== 'undefined') {
-        localStorage.removeItem('admin-auth');
-        window.location.href = '/admin/login';
+      if (error.response?.status === 401 && typeof window !== "undefined") {
+        localStorage.removeItem("admin-auth");
+        window.location.href = "/admin/login";
       }
       return Promise.reject(error);
     }
@@ -47,11 +47,13 @@ const adminApi = createAdminApi();
 // 관리자 포스트 API (FastAPI v1)
 export const adminPostApi = {
   // 조회는 Public API 사용 (Admin API에 GET 엔드포인트 없음)
-  getAll: (params: {
-    skip?: number;
-    limit?: number;
-    blog_id?: number;
-  } = {}): Promise<PostListResponse> =>
+  getAll: (
+    params: {
+      skip?: number;
+      limit?: number;
+      blog_id?: number;
+    } = {}
+  ): Promise<PostListResponse> =>
     adminApi.get("/api/v1/posts", { params }).then((res) => res.data),
 
   getById: (id: number): Promise<Post> =>
@@ -79,10 +81,12 @@ export const adminPostApi = {
 // 관리자 블로그 API (FastAPI v1)
 export const adminBlogApi = {
   // 조회는 Public API 사용 (Admin API에 GET 엔드포인트 없음)
-  getAll: (params: {
-    skip?: number;
-    limit?: number;
-  } = {}): Promise<BlogListResponse> =>
+  getAll: (
+    params: {
+      skip?: number;
+      limit?: number;
+    } = {}
+  ): Promise<BlogListResponse> =>
     adminApi.get("/api/v1/blogs/", { params }).then((res) => res.data),
 
   getById: (id: number): Promise<Blog> =>
@@ -167,53 +171,79 @@ interface SchedulerStats {
 export const adminSchedulerApi = {
   // RSS 수집
   collectAllRSS: (): Promise<RSSCollectResult> =>
-    adminApi.post("/api/v1/admin/scheduler/rss-collect").then((res) => res.data),
+    adminApi
+      .post("/api/v1/admin/scheduler/rss-collect")
+      .then((res) => res.data),
 
   collectBlogRSS: (blogId: number): Promise<BlogRSSCollectResult> =>
-    adminApi.post(`/api/v1/admin/scheduler/rss-collect/${blogId}`).then((res) => res.data),
+    adminApi
+      .post(`/api/v1/admin/scheduler/rss-collect/${blogId}`)
+      .then((res) => res.data),
 
   // 콘텐츠 처리
   processContent: (batchSize?: number): Promise<ContentProcessResult> =>
-    adminApi.post("/api/v1/admin/scheduler/content-process", null, {
-      params: { batch_size: batchSize }
-    }).then((res) => res.data),
+    adminApi
+      .post("/api/v1/admin/scheduler/content-process", null, {
+        params: { batch_size: batchSize },
+      })
+      .then((res) => res.data),
 
   processSinglePost: (postId: number): Promise<ContentProcessResult> =>
-    adminApi.post(`/api/v1/admin/scheduler/content-process/${postId}`).then((res) => res.data),
+    adminApi
+      .post(`/api/v1/admin/scheduler/content-process/${postId}`)
+      .then((res) => res.data),
 
-  processBlogPosts: (blogId: number, batchSize?: number): Promise<ContentProcessResult> =>
-    adminApi.post(`/api/v1/admin/scheduler/content-process/blog/${blogId}`, null, {
-      params: { batch_size: batchSize }
-    }).then((res) => res.data),
+  processBlogPosts: (
+    blogId: number,
+    batchSize?: number
+  ): Promise<ContentProcessResult> =>
+    adminApi
+      .post(`/api/v1/admin/scheduler/content-process/blog/${blogId}`, null, {
+        params: { batch_size: batchSize },
+      })
+      .then((res) => res.data),
 
   // 실패 재시도
   retryFailed: (batchSize?: number): Promise<ContentProcessResult> =>
-    adminApi.post("/api/v1/admin/scheduler/retry-failed", null, {
-      params: { batch_size: batchSize }
-    }).then((res) => res.data),
+    adminApi
+      .post("/api/v1/admin/scheduler/retry-failed", null, {
+        params: { batch_size: batchSize },
+      })
+      .then((res) => res.data),
 
   // 통계
   getStats: (): Promise<SchedulerStats> =>
     adminApi.get("/api/v1/admin/scheduler/stats").then((res) => res.data),
 };
 
+// Scheduler API 타입 정의
+interface ContentProcessResult {
+  status: string;
+  summary: {
+    total_processed: number;
+    completed: number;
+    failed: number;
+    errors: Array<{ post_id: number; error: string }>;
+  };
+}
+
 // 인증 관련 유틸리티
 export const adminAuth = {
   isLoggedIn: (): boolean => {
-    if (typeof window === 'undefined') return false;
-    return !!localStorage.getItem('admin-auth');
+    if (typeof window === "undefined") return false;
+    return !!localStorage.getItem("admin-auth");
   },
 
   logout: (): void => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('admin-auth');
-      window.location.href = '/admin/login';
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("admin-auth");
+      window.location.href = "/admin/login";
     }
   },
 
   getAuth: (): string | null => {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem('admin-auth');
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("admin-auth");
   },
 };
 

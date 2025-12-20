@@ -43,7 +43,6 @@ export default function EditBlogModal({ blog, isOpen, onClose, onSuccess }: Edit
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
 
-    // 입력시 해당 필드의 에러 제거
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -97,7 +96,7 @@ export default function EditBlogModal({ blog, isOpen, onClose, onSuccess }: Edit
         site_url: formData.siteUrl.trim(),
         logo_url: formData.logoUrl.trim() || undefined,
         description: formData.description.trim() || undefined,
-        status: formData.status as any,
+        status: formData.status,
       });
 
       setErrors({});

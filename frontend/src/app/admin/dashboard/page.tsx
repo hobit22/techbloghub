@@ -23,29 +23,29 @@ export default function AdminDashboard() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [schedulerLoading, setSchedulerLoading] = useState<string | null>(null);
+  const loadDashboardData = async () => {
+    try {
+      // Scheduler Stats API 사용
+      const data = await adminSchedulerApi.getStats();
+
+      const newStats: DashboardStats = {
+        totalPosts: data.post_stats.total || 0,
+        totalBlogs: data.blog_stats.total || 0,
+        activeBlogsCount: data.blog_stats.active || 0,
+        pendingPosts: data.post_stats.pending || 0,
+        failedPosts: data.post_stats.failed || 0,
+      };
+
+      setStats(newStats);
+    } catch (error) {
+      console.error('Dashboard data loading error:', error);
+      // 에러 발생시 기본값 유지
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadDashboardData = async () => {
-      try {
-        // Scheduler Stats API 사용
-        const data = await adminSchedulerApi.getStats();
-
-        const newStats: DashboardStats = {
-          totalPosts: data.post_stats.total || 0,
-          totalBlogs: data.blog_stats.total || 0,
-          activeBlogsCount: data.blog_stats.active || 0,
-          pendingPosts: data.post_stats.pending || 0,
-          failedPosts: data.post_stats.failed || 0,
-        };
-
-        setStats(newStats);
-      } catch (error) {
-        console.error('Dashboard data loading error:', error);
-        // 에러 발생시 기본값 유지
-      } finally {
-        setIsLoading(false);
-      }
-    };
 
     loadDashboardData();
   }, []);
