@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     # CORS 설정 (프론트엔드 연동)
     ALLOWED_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:8000"]
 
-    # Admin API 인증 (HTTP Basic Auth)
+    # Admin API 인증 (Basic Auth)
     ADMIN_USERNAME: str = "admin"
     ADMIN_PASSWORD: str = "admin123"
 
