@@ -274,3 +274,21 @@ class BlogRepository:
             }
 
         return stats
+
+    async def get_status_stats(self) -> Dict[str, int]:
+        """
+        블로그 상태별 통계 조회
+
+        Returns:
+            상태별 개수 딕셔너리
+        """
+        result = await self.db.execute(
+            select(Blog.status, func.count(Blog.id))
+            .group_by(Blog.status)
+        )
+
+        stats = {status.value: 0 for status in BlogStatus}
+        for status, count in result.fetchall():
+            stats[status.value] = count
+
+        return stats

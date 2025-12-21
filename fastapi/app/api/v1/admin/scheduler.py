@@ -224,31 +224,20 @@ async def get_processing_stats(
     **Requires:** Admin API Key (`X-Admin-Key` header)
     """
     try:
+        from app.repositories.blog_repository import BlogRepository
+
+        # 포스트 통계 조회
         processor = ContentProcessor(db)
-        stats = await processor.get_processing_stats()
+        post_stats = await processor.get_processing_stats()
 
-        # 블로그 통계 추가
-        from app.models.blog import BlogStatus
-        from sqlalchemy import func
-
-        # 활성 블로그 수
-        active_blogs_result = await db.execute(
-            select(func.count(Blog.id)).where(Blog.status == BlogStatus.ACTIVE)
-        )
-        active_blogs = active_blogs_result.scalar()
-
-        # 전체 블로그 수
-        total_blogs_result = await db.execute(select(func.count(Blog.id)))
-        total_blogs = total_blogs_result.scalar()
+        # 블로그 통계 조회
+        blog_repository = BlogRepository(db)
+        blog_stats = await blog_repository.get_status_stats()
 
         return {
             "status": "success",
-            "post_stats": stats,
-            "blog_stats": {
-                "total": total_blogs,
-                "active": active_blogs,
-                "inactive": total_blogs - active_blogs
-            }
+            "post_stats": post_stats,
+            "blog_stats": blog_stats
         }
     except Exception as e:
         logger.error(f"Failed to get stats: {e}", exc_info=True)
