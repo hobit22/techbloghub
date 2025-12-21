@@ -1,68 +1,33 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { adminSchedulerApi } from '@/lib/admin-api';
-import { FileText, Globe, TrendingUp, Clock, Users, Activity, Play, RotateCcw, Zap } from 'lucide-react';
+import { FileText, Globe, TrendingUp, Clock, Activity, Play, RotateCcw, Zap } from 'lucide-react';
 import Link from 'next/link';
-
-interface DashboardStats {
-  totalPosts: number;
-  totalBlogs: number;
-  activeBlogsCount: number;
-  pendingPosts: number;
-  failedPosts: number;
-}
+import { useSchedulerStats, useCollectAllRSS, useProcessContent, useRetryFailed } from '@/lib/hooks/use-admin';
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<DashboardStats>({
-    totalPosts: 0,
-    totalBlogs: 0,
-    activeBlogsCount: 0,
-    pendingPosts: 0,
-    failedPosts: 0,
-  });
-  const [isLoading, setIsLoading] = useState(true);
-  const [schedulerLoading, setSchedulerLoading] = useState<string | null>(null);
-  const loadDashboardData = async () => {
-    try {
-      // Scheduler Stats API 사용
-      const data = await adminSchedulerApi.getStats();
+  // Use React Query hooks
+  const { data: statsData, isLoading } = useSchedulerStats();
+  const collectRSSMutation = useCollectAllRSS();
+  const processContentMutation = useProcessContent();
+  const retryFailedMutation = useRetryFailed();
 
-      const newStats: DashboardStats = {
-        totalPosts: data.post_stats.total || 0,
-        totalBlogs: data.blog_stats.total || 0,
-        activeBlogsCount: data.blog_stats.active || 0,
-        pendingPosts: data.post_stats.pending || 0,
-        failedPosts: data.post_stats.failed || 0,
-      };
-
-      setStats(newStats);
-    } catch (error) {
-      console.error('Dashboard data loading error:', error);
-      // 에러 발생시 기본값 유지
-    } finally {
-      setIsLoading(false);
-    }
+  const stats = {
+    totalPosts: statsData?.post_stats?.total || 0,
+    totalBlogs: statsData?.blog_stats?.total || 0,
+    activeBlogsCount: statsData?.blog_stats?.active || 0,
+    pendingPosts: statsData?.post_stats?.pending || 0,
+    failedPosts: statsData?.post_stats?.failed || 0,
   };
-
-  useEffect(() => {
-
-    loadDashboardData();
-  }, []);
 
   const handleRSSCollect = async () => {
     if (!confirm('모든 활성 블로그의 RSS를 수집하시겠습니까?')) return;
 
     try {
-      setSchedulerLoading('rss');
-      const result = await adminSchedulerApi.collectAllRSS();
+      const result = await collectRSSMutation.mutateAsync();
       alert(`RSS 수집 완료!\n- 처리된 블로그: ${result.summary.blogs_processed}개\n- 새 포스트: ${result.summary.new_posts}개\n- 중복 스킵: ${result.summary.skipped_duplicates}개`);
-      loadDashboardData(); // 통계 새로고침
     } catch (error) {
       alert('RSS 수집 중 오류가 발생했습니다.');
       console.error('Error collecting RSS:', error);
-    } finally {
-      setSchedulerLoading(null);
     }
   };
 
@@ -70,15 +35,11 @@ export default function AdminDashboard() {
     if (!confirm('대기 중인 포스트의 본문 추출을 시작하시겠습니까?\n(최대 50개 처리)')) return;
 
     try {
-      setSchedulerLoading('content');
-      const result = await adminSchedulerApi.processContent(50);
+      const result = await processContentMutation.mutateAsync(50);
       alert(`본문 추출 완료!\n- 처리된 포스트: ${result.summary.total_processed}개\n- 성공: ${result.summary.completed}개\n- 실패: ${result.summary.failed}개`);
-      loadDashboardData(); // 통계 새로고침
     } catch (error) {
       alert('본문 추출 중 오류가 발생했습니다.');
       console.error('Error processing content:', error);
-    } finally {
-      setSchedulerLoading(null);
     }
   };
 
@@ -86,15 +47,11 @@ export default function AdminDashboard() {
     if (!confirm('실패한 포스트를 재시도하시겠습니까?\n(최대 10개 처리)')) return;
 
     try {
-      setSchedulerLoading('retry');
-      const result = await adminSchedulerApi.retryFailed(10);
+      const result = await retryFailedMutation.mutateAsync(10);
       alert(`재시도 완료!\n- 처리된 포스트: ${result.summary.total_processed}개\n- 성공: ${result.summary.completed}개\n- 실패: ${result.summary.failed}개`);
-      loadDashboardData(); // 통계 새로고침
     } catch (error) {
       alert('재시도 중 오류가 발생했습니다.');
       console.error('Error retrying failed posts:', error);
-    } finally {
-      setSchedulerLoading(null);
     }
   };
 
@@ -229,11 +186,11 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
             onClick={handleRSSCollect}
-            disabled={schedulerLoading !== null}
+            disabled={collectRSSMutation.isPending || processContentMutation.isPending || retryFailedMutation.isPending}
             className="p-4 border-2 border-blue-200 rounded-lg hover:bg-blue-50 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="flex items-center mb-2">
-              {schedulerLoading === 'rss' ? (
+              {collectRSSMutation.isPending ? (
                 <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
               ) : (
                 <Play className="h-6 w-6 text-blue-600 mr-2" />
@@ -248,11 +205,11 @@ export default function AdminDashboard() {
 
           <button
             onClick={handleContentProcess}
-            disabled={schedulerLoading !== null}
+            disabled={collectRSSMutation.isPending || processContentMutation.isPending || retryFailedMutation.isPending}
             className="p-4 border-2 border-green-200 rounded-lg hover:bg-green-50 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="flex items-center mb-2">
-              {schedulerLoading === 'content' ? (
+              {processContentMutation.isPending ? (
                 <div className="w-6 h-6 border-2 border-green-600 border-t-transparent rounded-full animate-spin mr-2"></div>
               ) : (
                 <FileText className="h-6 w-6 text-green-600 mr-2" />
@@ -267,11 +224,11 @@ export default function AdminDashboard() {
 
           <button
             onClick={handleRetryFailed}
-            disabled={schedulerLoading !== null}
+            disabled={collectRSSMutation.isPending || processContentMutation.isPending || retryFailedMutation.isPending}
             className="p-4 border-2 border-orange-200 rounded-lg hover:bg-orange-50 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="flex items-center mb-2">
-              {schedulerLoading === 'retry' ? (
+              {retryFailedMutation.isPending ? (
                 <div className="w-6 h-6 border-2 border-orange-600 border-t-transparent rounded-full animate-spin mr-2"></div>
               ) : (
                 <RotateCcw className="h-6 w-6 text-orange-600 mr-2" />

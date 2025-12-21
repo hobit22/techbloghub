@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { adminAuth } from '@/lib/admin-api';
-import { Zap, LayoutDashboard, FileText, Globe, Settings, LogOut } from 'lucide-react';
+import { adminAuth } from '@/lib/utils/admin-auth';
+import { Zap, LayoutDashboard, FileText, Globe, LogOut } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Zap } from 'lucide-react';
-import { adminPostApi } from '@/lib/admin-api';
+import { postsApi } from '@/lib/api/endpoints/posts';
+import { adminAuth } from '@/lib/utils/admin-auth';
 import { AxiosError } from 'axios';
 
 export default function AdminLoginPage() {
@@ -22,16 +23,16 @@ export default function AdminLoginPage() {
       const auth = btoa(`${credentials.username}:${credentials.password}`);
 
       // 임시로 인증 정보 저장 (API 호출을 위해)
-      localStorage.setItem('admin-auth', auth);
+      adminAuth.setAuth(auth);
 
-      // 관리자 API 테스트 호출 - admin-api 클라이언트 사용
-      await adminPostApi.getAll({ skip: 0, limit: 1 });
+      // 관리자 API 테스트 호출
+      await postsApi.getAll({ skip: 0, limit: 1 });
 
       // 성공하면 대시보드로 이동
       router.push('/admin/dashboard');
     } catch (error) {
       // 실패하면 인증 정보 제거
-      localStorage.removeItem('admin-auth');
+      adminAuth.removeAuth();
 
       if (error instanceof AxiosError && error.response?.status === 401) {
         setError('아이디 또는 비밀번호가 잘못되었습니다.');
