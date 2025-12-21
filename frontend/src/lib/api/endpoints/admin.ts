@@ -43,16 +43,15 @@ export interface ContentProcessResult {
 export interface SchedulerStats {
   status: string;
   post_stats: {
-    total: number;
-    pending: number;
-    completed: number;
-    failed: number;
-    error_rate: number;
+    PENDING: number;
+    PROCESSING: number;
+    COMPLETED: number;
+    FAILED: number;
   };
   blog_stats: {
-    total: number;
-    active: number;
-    inactive: number;
+    ACTIVE: number;
+    INACTIVE: number;
+    SUSPENDED: number;
   };
 }
 

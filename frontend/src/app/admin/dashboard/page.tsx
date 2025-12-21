@@ -3,6 +3,7 @@
 import { FileText, Globe, TrendingUp, Clock, Activity, Play, RotateCcw, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { useSchedulerStats, useCollectAllRSS, useProcessContent, useRetryFailed } from '@/lib/hooks/use-admin';
+import { PostStatus, BlogStatus } from '@/types';
 
 export default function AdminDashboard() {
   // Use React Query hooks
@@ -11,12 +12,21 @@ export default function AdminDashboard() {
   const processContentMutation = useProcessContent();
   const retryFailedMutation = useRetryFailed();
 
+  // Calculate totals from all statuses
+  const totalPosts = statsData?.post_stats
+    ? Object.values(statsData.post_stats).reduce((sum: number, val) => sum + (typeof val === 'number' ? val : 0), 0)
+    : 0;
+
+  const totalBlogs = statsData?.blog_stats
+    ? Object.values(statsData.blog_stats).reduce((sum: number, val) => sum + (typeof val === 'number' ? val : 0), 0)
+    : 0;
+
   const stats = {
-    totalPosts: statsData?.post_stats?.total || 0,
-    totalBlogs: statsData?.blog_stats?.total || 0,
-    activeBlogsCount: statsData?.blog_stats?.active || 0,
-    pendingPosts: statsData?.post_stats?.pending || 0,
-    failedPosts: statsData?.post_stats?.failed || 0,
+    totalPosts,
+    totalBlogs,
+    activeBlogsCount: statsData?.blog_stats?.[BlogStatus.ACTIVE] || 0,
+    pendingPosts: statsData?.post_stats?.[PostStatus.PENDING] || 0,
+    failedPosts: statsData?.post_stats?.[PostStatus.FAILED] || 0,
   };
 
   const handleRSSCollect = async () => {
