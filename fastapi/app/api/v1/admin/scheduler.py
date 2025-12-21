@@ -9,7 +9,7 @@ from sqlalchemy import select
 import logging
 
 from app.core.database import get_db
-from app.core.auth import verify_admin_key
+from app.core.auth import verify_admin
 from app.models import Blog, Post
 from app.services import RSSCollector, ContentProcessor
 
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(
     prefix="/admin/scheduler",
     tags=["admin-scheduler"],
-    dependencies=[Depends(verify_admin_key)]
+    dependencies=[Depends(verify_admin)]
 )
 
 

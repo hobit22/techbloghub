@@ -2,7 +2,7 @@
 
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { searchApi, postApi } from "@/lib/api";
+import { postsApi } from "@/lib/api/endpoints/posts";
 import { SearchRequest } from "@/types";
 
 export function useInfinitePosts(
@@ -36,7 +36,7 @@ export function useInfinitePosts(
     queryFn: async ({ pageParam = 0 }) => {
       if (isKeywordSearch) {
         // 키워드 검색 API 사용
-        const result = await searchApi.searchPosts(searchRequest.keyword!, {
+        const result = await postsApi.search(searchRequest.keyword!, {
           limit: pageSize,
           offset: pageParam * pageSize,
         });
@@ -53,7 +53,7 @@ export function useInfinitePosts(
         };
       } else {
         // 일반 포스트 목록 API 사용
-        const result = await postApi.getAll({
+        const result = await postsApi.getAll({
           skip: pageParam * pageSize,
           limit: pageSize,
           blog_id: searchRequest.blogIds?.[0], // 첫 번째 블로그 ID만 사용

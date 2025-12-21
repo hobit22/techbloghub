@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { Suspense } from 'react';
-import ClientHomePage from '@/components/ClientHomePage';
+import { HomeClient } from '@/app/_components/home-client';
 import { fetchServerSideData } from '@/lib/server-api';
 import { SkeletonGrid } from '@/components/SkeletonCard';
 
@@ -73,7 +73,7 @@ export default async function HomePage() {
         </div>
       }
     >
-      <ClientHomePage
+      <HomeClient
         initialBlogs={serverData.blogs}
       />
     </Suspense>

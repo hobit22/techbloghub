@@ -20,8 +20,9 @@ class Settings(BaseSettings):
     # CORS 설정 (프론트엔드 연동)
     ALLOWED_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:8000"]
 
-    # Admin API 인증
-    ADMIN_API_KEY: str = "your-secret-admin-key-change-in-production"
+    # Admin API 인증 (Basic Auth)
+    ADMIN_USERNAME: str = "admin"
+    ADMIN_PASSWORD: str = "admin123"
 
     # RSS 크롤링 설정
     RSS_PROXY_URL: str

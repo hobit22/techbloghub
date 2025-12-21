@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import PostCard from '@/components/PostCard';
-import FilterTopBar from '@/components/FilterTopBar';
+import { PostFilters } from '@/components/posts/post-filters';
 import InfiniteScroll from '@/components/InfiniteScroll';
 import FilterResetButton from '@/components/FilterResetButton';
 import { useInfinitePosts } from '@/hooks/useInfinitePosts';
@@ -12,14 +12,14 @@ import { useUrlState } from '@/hooks/useUrlState';
 import { SearchRequest, Blog } from '@/types';
 import { X } from 'lucide-react';
 
-interface ClientHomePageProps {
+interface HomeClientProps {
   // 서버에서 받은 초기 데이터
   initialBlogs: Blog[];
 }
 
-export default function ClientHomePage({
+export function HomeClient({
   initialBlogs,
-}: ClientHomePageProps) {
+}: HomeClientProps) {
   const {
     state: urlState,
     setBlogIds,
@@ -98,7 +98,7 @@ export default function ClientHomePage({
         searchValue={searchQuery}
       />
 
-      <FilterTopBar
+      <PostFilters
         blogs={blogs}
         selectedBlogs={selectedBlogs}
         onBlogChange={handleBlogChange}

@@ -2,32 +2,47 @@
 Admin API 인증
 """
 
-from fastapi import Header, HTTPException, status
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from app.core.config import settings
+import secrets
 
 
-async def verify_admin_key(
-    x_admin_key: str = Header(..., description="Admin API Key")
-) -> bool:
+security = HTTPBasic()
+
+
+async def verify_admin(
+    credentials: HTTPBasicCredentials = Depends(security)
+) -> str:
     """
-    Admin API Key 검증
+    HTTP Basic Auth를 사용한 Admin 인증 검증
 
-    헤더에 `X-Admin-Key`로 전달된 API 키를 검증합니다.
+    username과 password를 검증합니다.
 
     Args:
-        x_admin_key: 헤더에서 전달된 Admin API Key
+        credentials: HTTP Basic Auth 자격 증명
 
     Returns:
-        인증 성공 여부
+        인증된 username
 
     Raises:
         HTTPException: 인증 실패 시
     """
-    if x_admin_key != settings.ADMIN_API_KEY:
+    # timing attack 방지를 위해 secrets.compare_digest 사용
+    correct_username = secrets.compare_digest(
+        credentials.username.encode("utf8"),
+        settings.ADMIN_USERNAME.encode("utf8")
+    )
+    correct_password = secrets.compare_digest(
+        credentials.password.encode("utf8"),
+        settings.ADMIN_PASSWORD.encode("utf8")
+    )
+
+    if not (correct_username and correct_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid admin API key",
-            headers={"WWW-Authenticate": "ApiKey"},
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Basic"},
         )
 
-    return True
+    return credentials.username
