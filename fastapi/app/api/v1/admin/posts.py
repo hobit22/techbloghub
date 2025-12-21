@@ -31,7 +31,7 @@ async def create_post(
     - **original_url**: 원본 URL (unique)
     - **blog_id**: 블로그 ID
 
-    **Requires:** Admin API Key (`X-Admin-Key` header)
+    **Requires:** HTTP Basic Auth (username, password)
     """
     service = PostService(db)
 
@@ -54,7 +54,7 @@ async def update_post(
     """
     포스트 수정 (Admin)
 
-    **Requires:** Admin API Key (`X-Admin-Key` header)
+    **Requires:** HTTP Basic Auth (username, password)
     """
     service = PostService(db)
 
@@ -76,7 +76,7 @@ async def delete_post(
     """
     포스트 삭제 (Admin)
 
-    **Requires:** Admin API Key (`X-Admin-Key` header)
+    **Requires:** HTTP Basic Auth (username, password)
     """
     service = PostService(db)
 

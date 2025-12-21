@@ -31,7 +31,7 @@ async def collect_all_rss(
     """
     모든 활성 블로그의 RSS 수집 (Admin)
 
-    **Requires:** Admin API Key (`X-Admin-Key` header)
+    **Requires:** HTTP Basic Auth (username, password)
     """
     try:
         collector = RSSCollector(db)
@@ -69,7 +69,7 @@ async def collect_blog_rss(
 
     - **blog_id**: 수집할 블로그 ID
 
-    **Requires:** Admin API Key (`X-Admin-Key` header)
+    **Requires:** HTTP Basic Auth (username, password)
     """
     # 블로그 존재 확인
     result = await db.execute(select(Blog).where(Blog.id == blog_id))
@@ -116,7 +116,7 @@ async def process_content_batch(
 
     - **batch_size**: 한 번에 처리할 포스트 개수 (기본: 50, 최대: 200)
 
-    **Requires:** Admin API Key (`X-Admin-Key` header)
+    **Requires:** HTTP Basic Auth (username, password)
     """
     try:
         processor = ContentProcessor(db)
@@ -144,7 +144,7 @@ async def process_single_post(
 
     - **post_id**: 처리할 포스트 ID
 
-    **Requires:** Admin API Key (`X-Admin-Key` header)
+    **Requires:** HTTP Basic Auth (username, password)
     """
     # 포스트 존재 확인
     result = await db.execute(select(Post).where(Post.id == post_id))
@@ -192,7 +192,7 @@ async def retry_failed_posts(
 
     - **batch_size**: 한 번에 재시도할 포스트 개수 (기본: 10, 최대: 100)
 
-    **Requires:** Admin API Key (`X-Admin-Key` header)
+    **Requires:** HTTP Basic Auth (username, password)
     """
     try:
         processor = ContentProcessor(db)
@@ -221,7 +221,7 @@ async def get_processing_stats(
 
     포스트 상태별 개수, 블로그 통계 등을 조회합니다.
 
-    **Requires:** Admin API Key (`X-Admin-Key` header)
+    **Requires:** HTTP Basic Auth (username, password)
     """
     try:
         from app.repositories.blog_repository import BlogRepository
@@ -261,7 +261,7 @@ async def process_blog_posts(
     - **blog_id**: 처리할 블로그 ID
     - **batch_size**: 한 번에 처리할 포스트 개수 (기본: 50, 최대: 200)
 
-    **Requires:** Admin API Key (`X-Admin-Key` header)
+    **Requires:** HTTP Basic Auth (username, password)
     """
     # 블로그 존재 확인
     blog_result = await db.execute(select(Blog).where(Blog.id == blog_id))
