@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { serverApi } from '@/lib/server-api';
-import { PostDetailClient } from '@/components/PostDetailClient';
+import { PostDetailClient } from './_components/detail-client';
 
 interface PageProps {
   params: Promise<{
