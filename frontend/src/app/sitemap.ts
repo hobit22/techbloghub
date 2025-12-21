@@ -1,4 +1,5 @@
 import { MetadataRoute } from "next";
+import { API_URL, BASE_URL } from "@/lib/config";
 
 interface Category {
   id: number;
@@ -20,9 +21,7 @@ interface Blog {
 async function getCategories(): Promise<Category[]> {
   try {
     const response = await fetch(
-      `${
-        process.env.NEXT_PUBLIC_API_URL || "https://teckbloghub.kr"
-      }/api/categories`,
+      `${API_URL}/api/categories`,
       {
         next: { revalidate: 3600 }, // 1시간마다 재검증
       }
@@ -41,9 +40,7 @@ async function getCategories(): Promise<Category[]> {
 async function getActiveBlogs(): Promise<Blog[]> {
   try {
     const response = await fetch(
-      `${
-        process.env.NEXT_PUBLIC_API_URL || "https://teckbloghub.kr"
-      }/api/blogs/active`,
+      `${API_URL}/api/blogs/active`,
       {
         next: { revalidate: 3600 }, // 1시간마다 재검증
       }
@@ -60,8 +57,6 @@ async function getActiveBlogs(): Promise<Blog[]> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://teckbloghub.kr";
-
   // 병렬로 데이터 가져오기
   const [categories, blogs] = await Promise.all([
     getCategories(),
@@ -70,13 +65,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const staticPages = [
     {
-      url: baseUrl,
+      url: BASE_URL,
       lastModified: new Date(),
       changeFrequency: "hourly" as const,
       priority: 1,
     },
     {
-      url: `${baseUrl}/about`,
+      url: `${BASE_URL}/about`,
       lastModified: new Date(),
       changeFrequency: "monthly" as const,
       priority: 0.5,
@@ -84,14 +79,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   const categoryPages = categories.map((category) => ({
-    url: `${baseUrl}/?category=${category.name.toLowerCase()}`,
+    url: `${BASE_URL}/?category=${category.name.toLowerCase()}`,
     lastModified: new Date(),
     changeFrequency: "daily" as const,
     priority: 0.8,
   }));
 
   const blogPages = blogs.map((blog) => ({
-    url: `${baseUrl}/?blogIds=${blog.id}`,
+    url: `${BASE_URL}/?blogIds=${blog.id}`,
     lastModified: new Date(),
     changeFrequency: "daily" as const,
     priority: 0.8,

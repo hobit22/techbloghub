@@ -1,14 +1,13 @@
 import axios, { AxiosError, AxiosInstance } from 'axios';
+import { API_URL, IS_DEVELOPMENT } from '@/lib/config';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-
-if (process.env.NODE_ENV === 'development') {
-  console.log('API_BASE_URL:', API_BASE_URL);
+if (IS_DEVELOPMENT) {
+  console.log('API_BASE_URL:', API_URL);
 }
 
 // Public API client (no authentication)
 export const apiClient: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -16,7 +15,7 @@ export const apiClient: AxiosInstance = axios.create({
 
 // Admin API client (with authentication)
 export const adminClient: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },

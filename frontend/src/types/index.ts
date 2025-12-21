@@ -1,3 +1,22 @@
+// Enums
+export enum PostStatus {
+  PENDING = 'PENDING',
+  PROCESSING = 'PROCESSING',
+  COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED',
+}
+
+export enum BlogStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  SUSPENDED = 'SUSPENDED',
+}
+
+export enum BlogType {
+  COMPANY = 'COMPANY',
+  PERSONAL = 'PERSONAL',
+}
+
 export interface Blog {
   id: number;
   name: string;

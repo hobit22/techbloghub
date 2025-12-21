@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { API_URL } from '@/lib/config';
 
 interface SummaryState {
   excerpt: string;
@@ -26,7 +27,7 @@ export function useSummaryStream(postId: number) {
 
     // EventSource 생성 (SSE)
     const eventSource = new EventSource(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/summaries/stream/${postId}`
+      `${API_URL}/api/v1/summaries/stream/${postId}`
     );
 
     eventSourceRef.current = eventSource;
