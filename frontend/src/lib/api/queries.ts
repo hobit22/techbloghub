@@ -35,6 +35,7 @@ export const queryKeys = {
   // Admin
   admin: {
     all: ['admin'] as const,
+    blogs: ['admin', 'blogs'] as const,
     scheduler: {
       stats: ['admin', 'scheduler', 'stats'] as const,
     },

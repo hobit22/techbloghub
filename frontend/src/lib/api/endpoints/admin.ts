@@ -1,4 +1,5 @@
 import { adminClient } from '../client';
+import { BlogListResponse } from '@/types';
 
 // Admin Scheduler types
 export interface RSSCollectResult {
@@ -56,6 +57,14 @@ export interface SchedulerStats {
 }
 
 export const adminApi = {
+  // Blogs
+  getBlogs: async (skip: number = 0, limit: number = 100): Promise<BlogListResponse> =>
+    adminClient
+      .get('/api/v1/admin/blogs', {
+        params: { skip, limit },
+      })
+      .then((res) => res.data),
+
   // RSS Collection
   collectAllRSS: async (): Promise<RSSCollectResult> =>
     adminClient.post('/api/v1/admin/scheduler/rss-collect').then((res) => res.data),

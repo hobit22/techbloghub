@@ -4,12 +4,13 @@ import { useState } from 'react';
 import { Blog } from '@/types';
 import { RefreshCw, Globe, Activity, Calendar, Plus, Download, Trash2, Edit } from 'lucide-react';
 import { BlogModal } from '@/components/blogs/blog-modal';
-import { useBlogs, useCreateBlog, useUpdateBlog, useDeleteBlog } from '@/lib/hooks/use-blogs';
+import { useCreateBlog, useUpdateBlog, useDeleteBlog } from '@/lib/hooks/use-blogs';
+import { useAdminBlogs } from '@/lib/hooks/use-admin';
 import { adminApi } from '@/lib/api/endpoints/admin';
 import type { BlogFormData } from '@/lib/utils/validation';
 
 export default function AdminBlogsPage() {
-  const { data: blogsData, isLoading, refetch } = useBlogs({ skip: 0, limit: 100 });
+  const { data: blogsData, isLoading, refetch } = useAdminBlogs(0, 100);
   const createBlogMutation = useCreateBlog();
   const updateBlogMutation = useUpdateBlog();
   const deleteBlogMutation = useDeleteBlog();
