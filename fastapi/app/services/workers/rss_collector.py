@@ -10,9 +10,11 @@ import asyncio
 
 import feedparser
 import httpx
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.database import AsyncSessionLocal
 from app.models.blog import Blog
 from app.models.post import Post, PostStatus
 from app.repositories import PostRepository, BlogRepository
@@ -213,15 +215,55 @@ class RSSCollector:
 
         return result
 
+    async def _collect_blog_with_new_session(
+        self,
+        blog_id: int,
+        max_posts: Optional[int] = None
+    ) -> dict:
+        """
+        새로운 세션을 생성하여 단일 블로그 수집 (병렬 처리용)
+
+        Args:
+            blog_id: 블로그 ID
+            max_posts: 최대 수집 개수
+
+        Returns:
+            수집 결과 딕셔너리
+        """
+        async with AsyncSessionLocal() as new_db:
+            # 새 세션에서 blog 다시 조회
+            result = await new_db.execute(select(Blog).where(Blog.id == blog_id))
+            blog = result.scalar_one_or_none()
+
+            if not blog:
+                return {
+                    'blog_id': blog_id,
+                    'blog_name': 'Unknown',
+                    'total_entries': 0,
+                    'new_posts': 0,
+                    'skipped_duplicates': 0,
+                    'errors': [f'Blog {blog_id} not found']
+                }
+
+            # 새 세션으로 collector 생성
+            temp_collector = RSSCollector(new_db)
+            result = await temp_collector.collect_blog(blog, max_posts=max_posts)
+
+            return result
+
     async def collect_all_active_blogs(
         self,
-        max_posts_per_blog: Optional[int] = None
+        max_posts_per_blog: Optional[int] = None,
+        max_concurrent: int = 10
     ) -> List[dict]:
         """
         모든 활성 블로그에서 새로운 URL 수집 (병렬 처리)
+        각 블로그마다 독립적인 세션을 사용하여 동시성 문제 해결
+        Semaphore를 사용하여 동시 처리 개수를 제한하여 DB 커넥션 부족 방지
 
         Args:
             max_posts_per_blog: 블로그당 최대 수집 개수
+            max_concurrent: 동시 처리할 최대 블로그 개수 (기본: 10)
 
         Returns:
             각 블로그별 수집 결과 리스트
@@ -229,11 +271,16 @@ class RSSCollector:
         # 활성 블로그 조회
         blogs = await self.blog_repository.get_active()
 
-        # 모든 블로그를 병렬로 수집 (I/O 최적화)
-        tasks = [
-            self.collect_blog(blog, max_posts=max_posts_per_blog)
-            for blog in blogs
-        ]
+        # Semaphore로 동시 처리 개수 제한 (DB connection pool 보호)
+        semaphore = asyncio.Semaphore(max_concurrent)
+
+        async def collect_with_semaphore(blog_id: int):
+            """Semaphore를 사용하여 동시 처리 개수 제한"""
+            async with semaphore:
+                return await self._collect_blog_with_new_session(blog_id, max_posts_per_blog)
+
+        # 모든 블로그를 병렬로 수집 (단, 동시 실행은 max_concurrent개로 제한)
+        tasks = [collect_with_semaphore(blog.id) for blog in blogs]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # Exception이 반환된 경우 에러 로깅
