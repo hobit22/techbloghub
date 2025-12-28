@@ -3,12 +3,12 @@ Admin Blogs API
 인증이 필요한 블로그 관리 API (생성, 수정, 삭제)
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.auth import verify_admin
-from app.schemas import BlogCreate, BlogUpdate, BlogResponse
+from app.schemas import BlogCreate, BlogUpdate, BlogResponse, BlogListResponse
 from app.services import BlogService
 
 router = APIRouter(
@@ -16,6 +16,50 @@ router = APIRouter(
     tags=["admin-blogs"],
     dependencies=[Depends(verify_admin)]
 )
+
+
+@router.get("/", response_model=BlogListResponse)
+async def list_blogs_admin(
+    skip: int = Query(0, ge=0, description="건너뛸 개수"),
+    limit: int = Query(100, ge=1, le=200, description="최대 조회 개수 (1-200)"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    블로그 목록 조회 (Admin)
+
+    - **skip**: 건너뛸 개수 (pagination)
+    - **limit**: 최대 조회 개수 (기본 100, 최대 200)
+    - 모든 상태의 블로그 조회 가능 (ACTIVE, INACTIVE, SUSPENDED)
+    - 포스트 통계 포함 (post_count, latest_post_published_at)
+
+    **Requires:** HTTP Basic Auth (username, password)
+    """
+    service = BlogService(db)
+    blogs, total = await service.get_blogs_with_stats(skip=skip, limit=limit)
+
+    return BlogListResponse(total=total, blogs=blogs)
+
+
+@router.get("/{blog_id}", response_model=BlogResponse)
+async def get_blog_admin(
+    blog_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    특정 블로그 조회 (Admin)
+
+    **Requires:** HTTP Basic Auth (username, password)
+    """
+    service = BlogService(db)
+    blog = await service.get_blog_by_id(blog_id)
+
+    if not blog:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Blog with id {blog_id} not found"
+        )
+
+    return blog
 
 
 @router.post("/", response_model=BlogResponse, status_code=status.HTTP_201_CREATED)
@@ -31,7 +75,7 @@ async def create_blog(
     - **rss_url**: RSS 피드 URL (unique)
     - **site_url**: 블로그 사이트 URL
 
-    **Requires:** Admin API Key (`X-Admin-Key` header)
+    **Requires:** HTTP Basic Auth (username, password)
     """
     service = BlogService(db)
 
@@ -56,7 +100,7 @@ async def update_blog(
 
     제공된 필드만 업데이트됨
 
-    **Requires:** Admin API Key (`X-Admin-Key` header)
+    **Requires:** HTTP Basic Auth (username, password)
     """
     service = BlogService(db)
 
@@ -83,7 +127,7 @@ async def delete_blog(
     """
     블로그 삭제 (Admin)
 
-    **Requires:** Admin API Key (`X-Admin-Key` header)
+    **Requires:** HTTP Basic Auth (username, password)
     """
     service = BlogService(db)
 

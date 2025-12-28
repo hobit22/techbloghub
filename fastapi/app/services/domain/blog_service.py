@@ -64,6 +64,38 @@ class BlogService:
         logger.info(f"Fetched {len(blogs)} blogs out of {total} total")
         return blogs, total
 
+    async def get_blogs_with_stats(
+        self,
+        skip: int = 0,
+        limit: int = 100
+    ) -> tuple[List[Blog], int]:
+        """
+        블로그 목록 조회 with 포스트 통계 (Admin 전용)
+
+        Args:
+            skip: 건너뛸 개수
+            limit: 최대 조회 개수
+
+        Returns:
+            (블로그 리스트 with post_count, 전체 개수)
+        """
+        logger.info(f"Fetching blogs with stats: skip={skip}, limit={limit}")
+
+        blogs, total = await self.repository.get_all(skip=skip, limit=limit)
+
+        # 블로그별 포스트 통계 조회
+        blog_ids = [blog.id for blog in blogs]
+        post_stats = await self.repository.get_post_stats(blog_ids)
+
+        # 각 블로그 객체에 통계 정보 추가
+        for blog in blogs:
+            stats = post_stats.get(blog.id, {"post_count": 0, "latest_post_published_at": None})
+            blog.post_count = stats["post_count"]
+            blog.latest_post_published_at = stats["latest_post_published_at"]
+
+        logger.info(f"Fetched {len(blogs)} blogs with stats out of {total} total")
+        return blogs, total
+
     async def get_active_blogs(self) -> List[Blog]:
         """
         활성 상태의 블로그 목록 조회 (포스트 통계 포함)

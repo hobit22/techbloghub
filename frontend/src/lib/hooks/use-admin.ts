@@ -2,6 +2,14 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/endpoints/admin';
 import { queryKeys } from '@/lib/api/queries';
 
+// Get blogs (Admin)
+export function useAdminBlogs(skip: number = 0, limit: number = 100) {
+  return useQuery({
+    queryKey: [...queryKeys.admin.blogs, skip, limit],
+    queryFn: () => adminApi.getBlogs(skip, limit),
+  });
+}
+
 // Get scheduler stats
 export function useSchedulerStats() {
   return useQuery({

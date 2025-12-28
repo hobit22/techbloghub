@@ -196,17 +196,19 @@ GET /api/v1/summaries/stream/{post_id}  # AI 요약 스트리밍 (SSE)
 
 ### Admin API (인증 필요)
 
-**모든 Admin API는 헤더에 `X-Admin-Key`를 포함해야 합니다.**
+**모든 Admin API는 HTTP Basic Authentication이 필요합니다.**
 
 #### Blogs (Admin)
 ```bash
+GET    /api/v1/admin/blogs        # 블로그 목록 조회 (모든 상태, 포스트 통계 포함)
+GET    /api/v1/admin/blogs/{id}   # 블로그 상세 조회
 POST   /api/v1/admin/blogs        # 블로그 생성
 PATCH  /api/v1/admin/blogs/{id}   # 블로그 수정
 DELETE /api/v1/admin/blogs/{id}   # 블로그 삭제
 
 # 예시
 curl -X POST http://localhost:8000/api/v1/admin/blogs \
-  -H "X-Admin-Key: your-admin-key" \
+  -u admin:admin123 \
   -H "Content-Type: application/json" \
   -d '{"name": "Example Blog", "company": "Example Inc", "rss_url": "https://example.com/rss", "site_url": "https://example.com"}'
 ```
@@ -220,14 +222,17 @@ DELETE /api/v1/admin/posts/{id}   # 포스트 삭제
 
 #### Scheduler (Admin)
 ```bash
-GET  /api/v1/admin/scheduler/stats                  # 스케줄러 통계 조회
-POST /api/v1/admin/scheduler/rss-collect/trigger    # RSS 수집 수동 실행
-POST /api/v1/admin/scheduler/content-process/trigger # 콘텐츠 처리 수동 실행
-POST /api/v1/admin/scheduler/retry-failed/trigger   # 재시도 수동 실행
+GET  /api/v1/admin/scheduler/stats                        # 스케줄러 통계 조회
+POST /api/v1/admin/scheduler/rss-collect                  # 모든 RSS 수집
+POST /api/v1/admin/scheduler/rss-collect/{blog_id}        # 특정 블로그 RSS 수집
+POST /api/v1/admin/scheduler/content-process              # 콘텐츠 배치 처리
+POST /api/v1/admin/scheduler/content-process/{post_id}    # 단일 포스트 처리
+POST /api/v1/admin/scheduler/content-process/blog/{blog_id} # 특정 블로그 포스트 처리
+POST /api/v1/admin/scheduler/retry-failed                 # 실패 포스트 재시도
 
 # 예시
-curl -X POST http://localhost:8000/api/v1/admin/scheduler/rss-collect/trigger \
-  -H "X-Admin-Key: your-admin-key"
+curl -X POST http://localhost:8000/api/v1/admin/scheduler/rss-collect \
+  -u admin:admin123
 ```
 
 ## 스케줄러
@@ -248,24 +253,24 @@ curl -X POST http://localhost:8000/api/v1/admin/scheduler/rss-collect/trigger \
    - 처리 실패한 포스트 재시도
    - 완료 시 Discord 알림 전송
 
-### 수동 실행 (Admin API Key 필요)
+### 수동 실행 (HTTP Basic Auth 필요)
 
 ```bash
 # RSS 수집 수동 실행
-curl -X POST http://localhost:8000/api/v1/admin/scheduler/rss-collect/trigger \
-  -H "X-Admin-Key: your-admin-key"
+curl -X POST http://localhost:8000/api/v1/admin/scheduler/rss-collect \
+  -u admin:admin123
 
 # 콘텐츠 처리 수동 실행
-curl -X POST http://localhost:8000/api/v1/admin/scheduler/content-process/trigger \
-  -H "X-Admin-Key: your-admin-key"
+curl -X POST http://localhost:8000/api/v1/admin/scheduler/content-process \
+  -u admin:admin123
 
 # 재시도 수동 실행
-curl -X POST http://localhost:8000/api/v1/admin/scheduler/retry-failed/trigger \
-  -H "X-Admin-Key: your-admin-key"
+curl -X POST http://localhost:8000/api/v1/admin/scheduler/retry-failed \
+  -u admin:admin123
 
 # 스케줄러 통계 조회
 curl -X GET http://localhost:8000/api/v1/admin/scheduler/stats \
-  -H "X-Admin-Key: your-admin-key"
+  -u admin:admin123
 ```
 
 ### Discord 알림
@@ -361,7 +366,8 @@ uvicorn main:app --port 8001
 | `DEBUG`                   | True                                        | 디버그 모드                   |
 | `DATABASE_URL`            | -                                           | PostgreSQL 연결 URL (필수)    |
 | `ALLOWED_ORIGINS`         | []                                          | CORS 허용 도메인              |
-| `ADMIN_API_KEY`           | "your-secret-admin-key-change-in-production" | Admin API 인증 키 (필수)      |
+| `ADMIN_USERNAME`          | "admin"                                     | Admin API 사용자명 (HTTP Basic Auth) |
+| `ADMIN_PASSWORD`          | "admin123"                                  | Admin API 비밀번호 (HTTP Basic Auth) |
 | `OPENAI_API_KEY`          | -                                           | OpenAI API 키 (필수)          |
 | `OPENAI_MODEL`            | "gpt-4o-mini"                               | 사용할 OpenAI 모델            |
 | `OPENAI_MAX_TOKENS`       | 10000                                       | 최대 토큰 수                  |

@@ -1,4 +1,5 @@
 import { adminClient } from '../client';
+import { BlogListResponse } from '@/types';
 
 // Admin Scheduler types
 export interface RSSCollectResult {
@@ -43,20 +44,27 @@ export interface ContentProcessResult {
 export interface SchedulerStats {
   status: string;
   post_stats: {
-    total: number;
-    pending: number;
-    completed: number;
-    failed: number;
-    error_rate: number;
+    PENDING: number;
+    PROCESSING: number;
+    COMPLETED: number;
+    FAILED: number;
   };
   blog_stats: {
-    total: number;
-    active: number;
-    inactive: number;
+    ACTIVE: number;
+    INACTIVE: number;
+    SUSPENDED: number;
   };
 }
 
 export const adminApi = {
+  // Blogs
+  getBlogs: async (skip: number = 0, limit: number = 100): Promise<BlogListResponse> =>
+    adminClient
+      .get('/api/v1/admin/blogs', {
+        params: { skip, limit },
+      })
+      .then((res) => res.data),
+
   // RSS Collection
   collectAllRSS: async (): Promise<RSSCollectResult> =>
     adminClient.post('/api/v1/admin/scheduler/rss-collect').then((res) => res.data),

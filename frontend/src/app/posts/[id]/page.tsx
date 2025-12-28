@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { serverApi } from '@/lib/server-api';
+import { getPostUrl } from '@/lib/config';
 import { PostDetailClient } from './_components/detail-client';
 
 interface PageProps {
@@ -26,7 +27,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     ? post.content.substring(0, 200).replace(/\s+/g, ' ').trim() + '...'
     : `${post.blog.company} 기술 블로그의 ${post.title}`;
 
-  const url = `https://teckbloghub.kr/posts/${post.id}`;
+  const url = getPostUrl(post.id);
 
   return {
     title: `${post.title} - ${post.blog.company}`,

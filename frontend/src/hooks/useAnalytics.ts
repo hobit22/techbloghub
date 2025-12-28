@@ -2,11 +2,12 @@
 
 import { useEffect } from 'react';
 import { pageview, event } from '@/lib/analytics';
+import { GA_MEASUREMENT_ID } from '@/lib/config';
 
 export const usePageView = (url: string) => {
   useEffect(() => {
     // 관리자 페이지에서는 GA 추적하지 않음
-    if (process.env.NEXT_PUBLIC_GA_ID && !url.startsWith('/admin')) {
+    if (GA_MEASUREMENT_ID && !url.startsWith('/admin')) {
       pageview(url);
     }
   }, [url]);
@@ -29,7 +30,7 @@ export const useAnalytics = () => {
       return;
     }
 
-    if (process.env.NEXT_PUBLIC_GA_ID) {
+    if (GA_MEASUREMENT_ID) {
       event({ action, category, label, value });
     }
   };

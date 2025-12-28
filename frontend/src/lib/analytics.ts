@@ -1,3 +1,5 @@
+import { GA_MEASUREMENT_ID } from '@/lib/config';
+
 declare global {
   interface Window {
     gtag: (
@@ -14,8 +16,8 @@ export const pageview = (url: string) => {
     return;
   }
 
-  if (typeof window !== "undefined" && window.gtag) {
-    window.gtag("config", process.env.NEXT_PUBLIC_GA_ID!, {
+  if (typeof window !== "undefined" && window.gtag && GA_MEASUREMENT_ID) {
+    window.gtag("config", GA_MEASUREMENT_ID, {
       page_path: url,
     });
   }
