@@ -176,13 +176,13 @@ class ContentExtractor:
         Returns:
             추출 결과 또는 None (실패)
         """
+        browser = None
         try:
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)
                 page = await browser.new_page()
                 await page.goto(url, wait_until='networkidle', timeout=self.playwright_timeout)
                 html_content = await page.content()
-                await browser.close()
 
                 html_length = len(html_content)
 
@@ -212,6 +212,12 @@ class ContentExtractor:
         except Exception as e:
             logger.error(f"Step 2 failed for {url[:50]}...: {e}", exc_info=True)
             return None
+        finally:
+            if browser:
+                try:
+                    await browser.close()
+                except Exception as close_error:
+                    logger.warning(f"Failed to close browser: {close_error}")
 
     async def extract(self, url: str, use_proxy: bool = True) -> Optional[Dict[str, Any]]:
         """

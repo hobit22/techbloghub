@@ -5,8 +5,9 @@ RSS 피드에서 URL과 메타데이터만 수집 (본문 추출 제외)
 
 from typing import List, Dict, Optional
 from urllib.parse import urlparse, quote
-from datetime import datetime
+from datetime import datetime, timezone
 import asyncio
+import logging
 
 import feedparser
 import httpx
@@ -14,6 +15,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 from app.core.database import AsyncSessionLocal
 from app.models.blog import Blog
 from app.models.post import Post, PostStatus
@@ -70,7 +73,7 @@ class RSSCollector:
             return entries
 
         except Exception as e:
-            print(f"RSS 엔트리 추출 실패 ({rss_url}): {e}")
+            logger.error(f"RSS 엔트리 추출 실패 ({rss_url}): {e}")
             return []
 
     async def get_existing_urls(self, blog_id: int) -> set[str]:
@@ -160,8 +163,8 @@ class RSSCollector:
                             from dateutil import parser
                             published_at = parser.parse(rss_published)
                         except Exception as parse_error:
-                            print(f"WARNING: Failed to parse published date for {url[:100]}: "
-                                  f"RSS date='{rss_published}', error={str(parse_error)}")
+                            logger.warning(f"Failed to parse published date for {url[:100]}: "
+                                           f"RSS date='{rss_published}', error={str(parse_error)}")
 
                     # 중복 체크 (normalized_url 기준)
                     normalized_url = Post.normalize_url(url)
@@ -170,7 +173,7 @@ class RSSCollector:
                         normalized_url=normalized_url
                     )
                     if is_duplicate:
-                        print(f"INFO: Skipping duplicate URL (normalized): {url[:100]}")
+                        logger.debug(f"Skipping duplicate URL (normalized): {url[:100]}")
                         result['skipped_duplicates'] += 1
                         continue
 
@@ -191,7 +194,7 @@ class RSSCollector:
                 except Exception as e:
                     error_msg = str(e)
                     result['errors'].append(f"Error creating post {url[:100]}: {error_msg[:100]}")
-                    print(f"ERROR: Failed to create post {url[:100]}: {error_msg}")
+                    logger.error(f"Failed to create post {url[:100]}: {error_msg}")
 
             # 6. 모든 Post 한 번에 커밋
             try:
@@ -210,8 +213,8 @@ class RSSCollector:
             try:
                 blog.mark_crawl_failure()
                 await self.db.commit()
-            except:
-                pass  # Best effort to mark failure
+            except Exception as commit_error:
+                logger.warning(f"Failed to mark crawl failure for blog {blog_id}: {commit_error}")
 
         return result
 
@@ -297,7 +300,7 @@ class RSSCollector:
                     'errors': [f"Exception during collection: {str(result)}"]
                 }
                 final_results.append(error_result)
-                print(f"ERROR: Blog collection failed for {blog_name}: {result}")
+                logger.error(f"Blog collection failed for {blog_name}: {result}")
             else:
                 final_results.append(result)
 
