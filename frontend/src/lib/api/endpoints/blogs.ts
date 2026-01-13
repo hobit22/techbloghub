@@ -1,5 +1,5 @@
 import { apiClient, adminClient } from '../client';
-import type { Blog, BlogListResponse } from '@/types';
+import type { Blog, BlogListResponse, BlogType } from '@/types';
 
 export interface CreateBlogDto {
   name: string;
@@ -8,7 +8,7 @@ export interface CreateBlogDto {
   site_url: string;
   logo_url?: string;
   description?: string;
-  blog_type?: string;
+  blog_type?: BlogType;
 }
 
 export const blogsApi = {

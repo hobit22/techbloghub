@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${post.title} - ${post.blog.company}`,
     description,
-    keywords: post.tags || [],
+    keywords: post.keywords || [],
     authors: post.author ? [{ name: post.author }] : undefined,
     openGraph: {
       title: post.title,
@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       locale: 'ko_KR',
       publishedTime: post.published_at,
       authors: post.author ? [post.author] : undefined,
-      tags: post.tags || [],
+      tags: post.keywords || [],
       images: [
         {
           url: post.blog.logo_url || '/og-image.svg',

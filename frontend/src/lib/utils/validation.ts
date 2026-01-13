@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { BlogType } from '@/types';
 
 export const blogFormSchema = z.object({
   name: z.string().min(1, '블로그 이름은 필수입니다.'),
@@ -17,7 +18,7 @@ export const blogFormSchema = z.object({
     .optional()
     .or(z.literal('')),
   description: z.string().optional(),
-  blog_type: z.string().optional(),
+  blog_type: z.nativeEnum(BlogType).optional(),
 });
 
 export type BlogFormData = z.infer<typeof blogFormSchema>;

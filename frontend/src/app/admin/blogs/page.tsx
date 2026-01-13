@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Blog } from '@/types';
+import { Blog, BlogType } from '@/types';
 import { RefreshCw, Globe, Activity, Calendar, Plus, Download, Trash2, Edit } from 'lucide-react';
 import { BlogModal } from '@/components/blogs/blog-modal';
 import { useCreateBlog, useUpdateBlog, useDeleteBlog } from '@/lib/hooks/use-blogs';
 import { useAdminBlogs } from '@/lib/hooks/use-admin';
 import { adminApi } from '@/lib/api/endpoints/admin';
 import type { BlogFormData } from '@/lib/utils/validation';
+import { logger } from '@/lib/config';
 
 export default function AdminBlogsPage() {
   const { data: blogsData, isLoading, refetch } = useAdminBlogs(0, 100);
@@ -25,7 +26,7 @@ export default function AdminBlogsPage() {
   const handleCreateBlog = async (data: BlogFormData) => {
     await createBlogMutation.mutateAsync({
       ...data,
-      blog_type: 'COMPANY',
+      blog_type: BlogType.COMPANY,
     });
     setIsAddModalOpen(false);
   };
@@ -49,7 +50,7 @@ export default function AdminBlogsPage() {
       refetch();
     } catch (error) {
       alert('전체 재크롤링 요청 중 오류가 발생했습니다.');
-      console.error('Error triggering all recrawl:', error);
+      logger.error('Error triggering all recrawl:', error);
     } finally {
       setTriggering(null);
     }
@@ -65,7 +66,7 @@ export default function AdminBlogsPage() {
       refetch();
     } catch (error) {
       alert('RSS 수집 요청 중 오류가 발생했습니다.');
-      console.error('Error triggering blog recrawl:', error);
+      logger.error('Error triggering blog recrawl:', error);
     } finally {
       setTriggering(null);
     }
@@ -79,7 +80,7 @@ export default function AdminBlogsPage() {
       alert('블로그가 삭제되었습니다.');
     } catch (error) {
       alert('블로그 삭제 중 오류가 발생했습니다.');
-      console.error('Error deleting blog:', error);
+      logger.error('Error deleting blog:', error);
     }
   };
 
@@ -99,7 +100,7 @@ export default function AdminBlogsPage() {
       }
     } catch (error) {
       alert('본문 추출 중 오류가 발생했습니다.');
-      console.error('Error processing blog posts:', error);
+      logger.error('Error processing blog posts:', error);
     } finally {
       setProcessingBlogId(null);
     }
@@ -178,7 +179,7 @@ export default function AdminBlogsPage() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {blogs.map((blog) => {
-                const postCount = blog.post_count ?? blog.postCount ?? 0;
+                const postCount = blog.post_count ?? 0;
                 return (
                   <tr key={blog.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
