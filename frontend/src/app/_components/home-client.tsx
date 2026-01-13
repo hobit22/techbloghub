@@ -27,9 +27,10 @@ export function HomeClient({
     reset,
   } = useUrlState();
 
-  // 모든 필터 상태를 URL 상태와 동기화
+  // 검색 입력 중간 상태 (URL에는 엔터/검색 버튼 시에만 반영)
   const [searchQuery, setSearchQuery] = useState(urlState.keyword || '');
-  const [selectedBlogs, setSelectedBlogs] = useState<number[]>(urlState.blogIds || []);
+
+  // selectedBlogs는 urlState.blogIds를 직접 사용 (상태 중복 제거)
 
   // 서버에서 받은 초기 데이터를 우선 사용하고, 필요시 클라이언트에서 추가 fetch
   const { data: blogs = initialBlogs } = useBlogs(initialBlogs);
@@ -69,20 +70,16 @@ export function HomeClient({
 
   const handleReset = () => {
     setSearchQuery('');
-    setSelectedBlogs([]);
-
     reset();
   };
 
-  // URL 상태와 로컬 상태 동기화
+  // URL keyword 변경 시 검색 입력 필드 동기화
   useEffect(() => {
     setSearchQuery(urlState.keyword || '');
-    setSelectedBlogs(urlState.blogIds || []);
-  }, [urlState]);
+  }, [urlState.keyword]);
 
-  // 필터 변경 시 URL 업데이트
+  // 블로그 필터 변경 시 URL 직접 업데이트
   const handleBlogChange = (blogIds: number[]) => {
-    setSelectedBlogs(blogIds);
     setBlogIds(blogIds);
   };
 
@@ -100,7 +97,7 @@ export function HomeClient({
 
       <PostFilters
         blogs={blogs}
-        selectedBlogs={selectedBlogs}
+        selectedBlogs={urlState.blogIds || []}
         onBlogChange={handleBlogChange}
       />
 
