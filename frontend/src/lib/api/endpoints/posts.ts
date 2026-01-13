@@ -6,16 +6,23 @@ export const postsApi = {
   getAll: async (params?: {
     skip?: number;
     limit?: number;
-    blog_id?: number;
+    blog_ids?: number[];
   }): Promise<PostListResponse> =>
-    apiClient.get('/api/v1/posts', { params }).then((res) => res.data),
+    apiClient
+      .get('/api/v1/posts', {
+        params,
+        paramsSerializer: {
+          indexes: null, // blog_ids=1&blog_ids=2 형식으로 직렬화
+        },
+      })
+      .then((res) => res.data),
 
   getById: async (id: number): Promise<Post> =>
     apiClient.get(`/api/v1/posts/${id}`).then((res) => res.data),
 
   search: async (
     keyword: string,
-    params?: { limit?: number; offset?: number }
+    params?: { limit?: number; offset?: number; blog_ids?: number[] }
   ): Promise<SearchResultResponse> =>
     apiClient
       .get('/api/v1/posts/search', {
@@ -23,6 +30,10 @@ export const postsApi = {
           q: keyword,
           limit: params?.limit || 20,
           offset: params?.offset || 0,
+          blog_ids: params?.blog_ids,
+        },
+        paramsSerializer: {
+          indexes: null, // blog_ids=1&blog_ids=2 형식으로 직렬화
         },
       })
       .then((res) => res.data),
