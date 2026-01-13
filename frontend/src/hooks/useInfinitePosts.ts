@@ -35,10 +35,11 @@ export function useInfinitePosts(
     queryKey,
     queryFn: async ({ pageParam = 0 }) => {
       if (isKeywordSearch) {
-        // 키워드 검색 API 사용
+        // 키워드 검색 API 사용 (블로그 필터 포함)
         const result = await postsApi.search(searchRequest.keyword!, {
           limit: pageSize,
           offset: pageParam * pageSize,
+          blog_ids: searchRequest.blogIds, // 여러 블로그 ID 지원
         });
 
         // FastAPI 응답을 Spring Boot 형식으로 변환
@@ -56,7 +57,7 @@ export function useInfinitePosts(
         const result = await postsApi.getAll({
           skip: pageParam * pageSize,
           limit: pageSize,
-          blog_id: searchRequest.blogIds?.[0], // 첫 번째 블로그 ID만 사용
+          blog_ids: searchRequest.blogIds, // 여러 블로그 ID 지원
         });
 
         // FastAPI 응답을 Spring Boot 형식으로 변환

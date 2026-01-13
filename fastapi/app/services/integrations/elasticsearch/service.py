@@ -28,7 +28,8 @@ class ElasticsearchService:
         self,
         query: str,
         limit: int = 20,
-        offset: int = 0
+        offset: int = 0,
+        blog_ids: Optional[List[int]] = None
     ) -> tuple[List[Dict[str, Any]], int]:
         """
         Elasticsearch를 사용한 포스트 검색
@@ -37,26 +38,43 @@ class ElasticsearchService:
             query: 검색어
             limit: 최대 결과 개수
             offset: 건너뛸 개수 (페이지네이션)
+            blog_ids: 블로그 ID 필터 리스트 (optional)
 
         Returns:
             (검색 결과 리스트, 전체 개수) 튜플
         """
         try:
+            # 기본 multi_match 쿼리
+            match_query = {
+                "multi_match": {
+                    "query": query,
+                    "fields": [
+                        "title^3",      # title 가중치 3배
+                        "title.ngram^2",  # title ngram 가중치 2배
+                        "content"       # content 기본 가중치
+                    ],
+                    "type": "best_fields",
+                    "operator": "or",
+                    "fuzziness": "AUTO"  # 오타 허용
+                }
+            }
+
+            # blog_ids 필터가 있으면 bool 쿼리로 래핑
+            if blog_ids:
+                search_query = {
+                    "bool": {
+                        "must": match_query,
+                        "filter": {
+                            "terms": {"blog_id": blog_ids}  # terms로 여러 값 필터
+                        }
+                    }
+                }
+            else:
+                search_query = match_query
+
             # Elasticsearch 검색 쿼리
             body = {
-                "query": {
-                    "multi_match": {
-                        "query": query,
-                        "fields": [
-                            "title^3",      # title 가중치 3배
-                            "title.ngram^2",  # title ngram 가중치 2배
-                            "content"       # content 기본 가중치
-                        ],
-                        "type": "best_fields",
-                        "operator": "or",
-                        "fuzziness": "AUTO"  # 오타 허용
-                    }
-                },
+                "query": search_query,
                 "from": offset,
                 "size": limit,
                 "sort": [

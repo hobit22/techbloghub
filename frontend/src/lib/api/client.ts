@@ -1,9 +1,7 @@
 import axios, { AxiosError, AxiosInstance } from 'axios';
-import { API_URL, IS_DEVELOPMENT } from '@/lib/config';
+import { API_URL, logger } from '@/lib/config';
 
-if (IS_DEVELOPMENT) {
-  console.log('API_BASE_URL:', API_URL);
-}
+logger.log('API_BASE_URL:', API_URL);
 
 // Public API client (no authentication)
 export const apiClient: AxiosInstance = axios.create({
@@ -69,22 +67,3 @@ export const handleApiError = (error: unknown): ApiError => {
   };
 };
 
-// Auth utilities
-export const adminAuth = {
-  isLoggedIn: (): boolean => {
-    if (typeof window === 'undefined') return false;
-    return !!localStorage.getItem('admin-auth');
-  },
-
-  logout: (): void => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('admin-auth');
-      window.location.href = '/admin/login';
-    }
-  },
-
-  getAuth: (): string | null => {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem('admin-auth');
-  },
-};

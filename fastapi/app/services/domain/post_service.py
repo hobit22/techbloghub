@@ -51,7 +51,7 @@ class PostService:
         self,
         skip: int = 0,
         limit: int = 20,
-        blog_id: Optional[int] = None,
+        blog_ids: Optional[List[int]] = None,
         include_blog: bool = False
     ) -> tuple[List[Post], int]:
         """
@@ -60,18 +60,18 @@ class PostService:
         Args:
             skip: 건너뛸 개수
             limit: 최대 조회 개수
-            blog_id: 특정 블로그 필터링
+            blog_ids: 블로그 ID 필터 리스트 (optional)
             include_blog: 블로그 정보 포함 여부
 
         Returns:
             (포스트 리스트, 전체 개수)
         """
-        logger.info(f"Fetching posts: skip={skip}, limit={limit}, blog_id={blog_id}")
+        logger.info(f"Fetching posts: skip={skip}, limit={limit}, blog_ids={blog_ids}")
 
         posts, total = await self.repository.get_all(
             skip=skip,
             limit=limit,
-            blog_id=blog_id,
+            blog_ids=blog_ids,
             include_blog=include_blog
         )
 
@@ -82,7 +82,8 @@ class PostService:
         self,
         query: str,
         limit: int = 20,
-        offset: int = 0
+        offset: int = 0,
+        blog_ids: Optional[List[int]] = None
     ) -> tuple[List[tuple[Post, float]], int]:
         """
         포스트 전문 검색 (PostgreSQL Full-Text Search)
@@ -91,17 +92,19 @@ class PostService:
             query: 검색어
             limit: 최대 결과 개수
             offset: 건너뛸 개수
+            blog_ids: 블로그 ID 필터 리스트 (optional)
 
         Returns:
             ((Post, rank) 튜플 리스트 (blog relationship 포함), 전체 개수)
         """
-        logger.info(f"Searching posts: query='{query}', limit={limit}, offset={offset}")
+        logger.info(f"Searching posts: query='{query}', limit={limit}, offset={offset}, blog_ids={blog_ids}")
 
         # Repository를 통해 검색 (ORM 모델 + rank 반환)
         posts_with_rank, total = await self.repository.search_fulltext(
             search_query=query,
             limit=limit,
-            offset=offset
+            offset=offset,
+            blog_ids=blog_ids
         )
 
         logger.info(f"Found {len(posts_with_rank)} posts out of {total} total for query '{query}'")

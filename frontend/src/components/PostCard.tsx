@@ -22,36 +22,60 @@ export default function PostCard({ post }: PostCardProps) {
     router.push(`/posts/${post.id}`);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleClick();
+    }
+  };
+
   const handleCompanyClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // 이벤트 전파 방지
-    setBlogIds([post.blog?.id ?? 0]); // 해당 회사의 블로그로 필터링
+    e.stopPropagation();
+    setBlogIds([post.blog?.id ?? 0]);
+  };
+
+  const handleCompanyKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      e.stopPropagation();
+      setBlogIds([post.blog?.id ?? 0]);
+    }
   };
 
   const publishedDate = new Date(post.published_at);
   const isRecent = Date.now() - publishedDate.getTime() < 24 * 60 * 60 * 1000; // 24 hours;
 
   return (
-    <article 
+    <article
+      role="button"
+      tabIndex={0}
       onClick={handleClick}
-      className="group relative bg-white rounded-lg border border-slate-200 p-4 
-                 hover:shadow-md hover:shadow-slate-200/50 hover:border-slate-300 
-                 transition-all duration-200 cursor-pointer"
+      onKeyDown={handleKeyDown}
+      aria-label={`${post.blog?.company}: ${post.title}`}
+      className="group relative bg-white rounded-lg border border-slate-200 p-4
+                 hover:shadow-md hover:shadow-slate-200/50 hover:border-slate-300
+                 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
     >
       <div className="flex items-start space-x-4">
         {/* Left side - Company Logo and Info */}
         <div className="flex-shrink-0 flex flex-col items-center">
-          <div 
+          <div
+            role="button"
+            tabIndex={0}
             onClick={handleCompanyClick}
-            className="w-6 h-6 
-                      flex items-center justify-center mb-2 cursor-pointer 
-                      overflow-hidden"
+            onKeyDown={handleCompanyKeyDown}
+            aria-label={`${post.blog?.company} 블로그 필터`}
+            className="w-6 h-6
+                      flex items-center justify-center mb-2 cursor-pointer
+                      overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
           >
             {post.blog?.logo_url && !logoError ? (
-              <Image 
+              <Image
                 src={post.blog?.logo_url}
                 alt={`${post.blog?.company} logo`}
                 width={24}
                 height={24}
+                loading="lazy"
                 className="w-full h-full object-contain"
                 onError={() => setLogoError(true)}
               />
@@ -64,10 +88,14 @@ export default function PostCard({ post }: PostCardProps) {
             )}
           </div>
           <div className="text-center">
-            <div 
+            <div
+              role="button"
+              tabIndex={0}
               onClick={handleCompanyClick}
-              className="text-xs font-medium text-slate-700 truncate w-16 cursor-pointer hover:text-blue-600 
-                        transition-colors duration-200"
+              onKeyDown={handleCompanyKeyDown}
+              aria-label={`${post.blog?.company} 블로그 필터`}
+              className="text-xs font-medium text-slate-700 truncate w-16 cursor-pointer hover:text-blue-600
+                        transition-colors duration-200 focus:outline-none focus:text-blue-600"
             >
               {post.blog?.company}
             </div>

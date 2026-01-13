@@ -54,3 +54,24 @@ export function getAbsoluteUrl(path: string): string {
 export function getPostUrl(postId: number): string {
   return getAbsoluteUrl(`posts/${postId}`);
 }
+
+/**
+ * Logger utility - only logs in development mode
+ */
+export const logger = {
+  log: (...args: unknown[]) => {
+    if (IS_DEVELOPMENT) {
+      console.log(...args);
+    }
+  },
+  error: (message: string, error?: unknown) => {
+    if (IS_DEVELOPMENT) {
+      console.error(message, error);
+    }
+  },
+  warn: (...args: unknown[]) => {
+    if (IS_DEVELOPMENT) {
+      console.warn(...args);
+    }
+  },
+};

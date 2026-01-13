@@ -35,7 +35,7 @@ class Post(Base):
     normalized_url = Column(String(1000), unique=True, index=True, comment="정규화된 URL (쿼리 파라미터 제거)")
 
     # 블로그 관계
-    blog_id = Column(Integer, ForeignKey("blogs.id"), nullable=False, index=True, comment="블로그 ID")
+    blog_id = Column(Integer, ForeignKey("blogs.id", ondelete="CASCADE"), nullable=False, index=True, comment="블로그 ID")
     blog = relationship("Blog", backref="posts")
 
     # 발행 정보

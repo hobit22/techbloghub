@@ -25,13 +25,12 @@ export interface Blog {
   site_url: string;
   description?: string;
   logo_url?: string;
-  status: string;
-  blog_type?: string;
+  status: BlogStatus;
+  blog_type?: BlogType;
   created_at: string;
   updated_at: string;
   last_crawled_at?: string;
   failure_count?: number;
-  postCount?: number;
   post_count?: number;
   latest_post_published_at?: string;
 }
@@ -49,10 +48,9 @@ export interface Post {
   blog_id: number;
   blog: BlogInfo;
   keywords?: string[];
-  tags?: string[] | null;
-  categories?: string[] | null;
-  totalContent?: string;
-  summaryContent?: string;
+  status?: PostStatus;
+  retry_count?: number;
+  error_message?: string;
 }
 
 export interface BlogInfo {

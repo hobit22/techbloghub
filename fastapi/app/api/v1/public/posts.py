@@ -5,7 +5,7 @@ Public Posts API
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional
+from typing import Optional, List
 
 from app.core.database import get_db
 from app.schemas import (
@@ -23,7 +23,7 @@ router = APIRouter(prefix="/posts", tags=["public-posts"])
 async def list_posts(
     skip: int = 0,
     limit: int = 20,
-    blog_id: Optional[int] = None,
+    blog_ids: Optional[List[int]] = Query(None, description="블로그 ID 필터 (복수 선택 가능)"),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -31,13 +31,13 @@ async def list_posts(
 
     - **skip**: 건너뛸 개수
     - **limit**: 최대 조회 개수
-    - **blog_id**: 특정 블로그의 포스트만 조회 (optional)
+    - **blog_ids**: 특정 블로그들의 포스트만 조회 (복수 선택 가능, optional)
     """
     service = PostService(db)
     posts, total = await service.get_posts(
         skip=skip,
         limit=limit,
-        blog_id=blog_id,
+        blog_ids=blog_ids,
         include_blog=True
     )
 
@@ -49,6 +49,7 @@ async def search_posts(
     q: str = Query(..., min_length=1, description="검색어"),
     limit: int = Query(20, ge=1, le=100, description="최대 결과 개수"),
     offset: int = Query(0, ge=0, description="건너뛸 개수"),
+    blog_ids: Optional[List[int]] = Query(None, description="블로그 ID 필터 (복수 선택 가능)"),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -57,6 +58,7 @@ async def search_posts(
     - **q**: 검색어 (필수)
     - **limit**: 최대 결과 개수 (1-100, 기본값 20)
     - **offset**: 건너뛸 개수 (페이지네이션)
+    - **blog_ids**: 특정 블로그들의 포스트만 검색 (복수 선택 가능, optional)
 
     Elasticsearch + Nori 한글 형태소 분석기를 사용하여 검색합니다.
     - 한글 형태소 분석 지원
@@ -73,7 +75,8 @@ async def search_posts(
         search_results, total = await service.search_posts(
             query=q,
             limit=limit,
-            offset=offset
+            offset=offset,
+            blog_ids=blog_ids
         )
 
         # 결과를 PostSearchResponse로 변환
@@ -94,7 +97,8 @@ async def search_posts(
         posts_with_rank, total = await service.search_posts(
             query=q,
             limit=limit,
-            offset=offset
+            offset=offset,
+            blog_ids=blog_ids
         )
 
         # 결과를 PostSearchResponse로 변환

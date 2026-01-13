@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { blogFormSchema, type BlogFormData } from '@/lib/utils/validation';
-import type { Blog } from '@/types';
+import { BlogType, type Blog } from '@/types';
 
 interface BlogFormProps {
   blog?: Blog;
@@ -31,7 +31,7 @@ export function BlogForm({ blog, onSubmit, onCancel, isLoading = false }: BlogFo
           site_url: blog.site_url,
           logo_url: blog.logo_url || '',
           description: blog.description || '',
-          blog_type: blog.blog_type || 'COMPANY',
+          blog_type: blog.blog_type || BlogType.COMPANY,
         }
       : {
           name: '',
@@ -40,7 +40,7 @@ export function BlogForm({ blog, onSubmit, onCancel, isLoading = false }: BlogFo
           site_url: '',
           logo_url: '',
           description: '',
-          blog_type: 'COMPANY',
+          blog_type: BlogType.COMPANY,
         },
   });
 

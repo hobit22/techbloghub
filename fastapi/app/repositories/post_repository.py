@@ -47,7 +47,7 @@ class PostRepository:
         self,
         skip: int = 0,
         limit: int = 20,
-        blog_id: Optional[int] = None,
+        blog_ids: Optional[List[int]] = None,
         include_blog: bool = False,
         order_by: str = "published_at",
         desc: bool = True
@@ -58,7 +58,7 @@ class PostRepository:
         Args:
             skip: 건너뛸 개수
             limit: 최대 조회 개수
-            blog_id: 특정 블로그 필터링
+            blog_ids: 블로그 ID 필터 리스트 (optional)
             include_blog: 블로그 정보 포함 여부
             order_by: 정렬 기준 컬럼
             desc: 내림차순 여부
@@ -73,9 +73,9 @@ class PostRepository:
         if include_blog:
             query = query.options(selectinload(Post.blog))
 
-        if blog_id:
-            query = query.where(Post.blog_id == blog_id)
-            count_query = count_query.where(Post.blog_id == blog_id)
+        if blog_ids:
+            query = query.where(Post.blog_id.in_(blog_ids))
+            count_query = count_query.where(Post.blog_id.in_(blog_ids))
 
         # 총 개수
         total_result = await self.db.execute(count_query)
@@ -222,7 +222,8 @@ class PostRepository:
         self,
         search_query: str,
         limit: int = 20,
-        offset: int = 0
+        offset: int = 0,
+        blog_ids: Optional[List[int]] = None
     ) -> tuple[List[tuple[Post, float]], int]:
         """
         포스트 전문 검색 (PostgreSQL Full-Text Search)
@@ -231,6 +232,7 @@ class PostRepository:
             search_query: 검색어 (공백으로 구분된 단어들은 자동으로 '&' 결합)
             limit: 최대 결과 개수
             offset: 건너뛸 개수
+            blog_ids: 블로그 ID 필터 리스트 (optional)
 
         Returns:
             ((Post, rank) 튜플 리스트 (blog relationship 포함), 전체 개수)
@@ -244,10 +246,17 @@ class PostRepository:
         # ts_rank를 label로 추가
         rank_label = func.ts_rank(Post.keyword_vector, tsquery_func).label('rank')
 
+        # 기본 조건: 검색어 매칭
+        conditions = [Post.keyword_vector.op('@@')(tsquery_func)]
+
+        # blog_ids 필터 추가 (IN 조건)
+        if blog_ids:
+            conditions.append(Post.blog_id.in_(blog_ids))
+
         # ORM 쿼리 작성
         query = (
             select(Post, rank_label)
-            .where(Post.keyword_vector.op('@@')(tsquery_func))
+            .where(*conditions)
             .options(selectinload(Post.blog))
             .order_by(rank_label.desc(), Post.published_at.desc().nulls_last())
             .offset(offset)
@@ -262,9 +271,7 @@ class PostRepository:
         posts_with_rank = [(row[0], float(row[1])) for row in rows]
 
         # 총 개수 조회 (ORM 스타일)
-        count_query = select(func.count(Post.id)).where(
-            Post.keyword_vector.op('@@')(tsquery_func)
-        )
+        count_query = select(func.count(Post.id)).where(*conditions)
         count_result = await self.db.execute(count_query)
         total = count_result.scalar() or 0
 
