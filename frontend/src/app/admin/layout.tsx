@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { adminAuth } from '@/lib/utils/admin-auth';
 import { Zap, LayoutDashboard, FileText, Globe, LogOut } from 'lucide-react';
 import Link from 'next/link';
@@ -9,6 +10,7 @@ import Link from 'next/link';
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -20,6 +22,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [pathname, router]);
 
   const handleLogout = () => {
+    // React Query 캐시 정리 후 로그아웃
+    queryClient.clear();
     adminAuth.logout();
   };
 
