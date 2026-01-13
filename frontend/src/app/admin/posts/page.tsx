@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Search, Filter, RefreshCw, FileText, Calendar, User, ExternalLink, Trash2, Download } from 'lucide-react';
 import { usePosts, useSearchPosts, useDeletePost } from '@/lib/hooks/use-posts';
 import { useProcessPost } from '@/lib/hooks/use-admin';
+import { logger } from '@/lib/config';
 
 export default function AdminPostsPage() {
   const [currentPage, setCurrentPage] = useState(0);
@@ -88,7 +89,7 @@ export default function AdminPostsPage() {
       }
     } catch (error) {
       alert('본문 추출 중 오류가 발생했습니다.');
-      console.error('Error processing post:', error);
+      logger.error('Error processing post:', error);
     } finally {
       setProcessingPostId(null);
     }
@@ -102,7 +103,7 @@ export default function AdminPostsPage() {
       alert('포스트가 삭제되었습니다.');
     } catch (error) {
       alert('포스트 삭제 중 오류가 발생했습니다.');
-      console.error('Error deleting post:', error);
+      logger.error('Error deleting post:', error);
     }
   };
 

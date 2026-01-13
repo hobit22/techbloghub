@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { API_URL } from '@/lib/config';
+import { API_URL, logger } from '@/lib/config';
 
 interface SummaryState {
   excerpt: string;
@@ -86,13 +86,13 @@ export function useSummaryStream(postId: number) {
             break;
         }
       } catch (e) {
-        console.error('JSON 파싱 오류:', e);
+        logger.error('JSON 파싱 오류:', e);
       }
     };
 
     // 에러 처리
     eventSource.onerror = (error) => {
-      console.error('SSE 오류:', error);
+      logger.error('SSE 오류:', error);
       setState(prev => ({
         ...prev,
         status: 'error',

@@ -6,6 +6,7 @@ import { Zap } from 'lucide-react';
 import { postsApi } from '@/lib/api/endpoints/posts';
 import { adminAuth } from '@/lib/utils/admin-auth';
 import { AxiosError } from 'axios';
+import { logger } from '@/lib/config';
 
 export default function AdminLoginPage() {
   const [credentials, setCredentials] = useState({ username: '', password: '' });
@@ -39,7 +40,7 @@ export default function AdminLoginPage() {
       } else {
         setError('로그인 중 오류가 발생했습니다.');
       }
-      console.error('Login error:', error);
+      logger.error('Login error:', error);
     } finally {
       setIsLoading(false);
     }

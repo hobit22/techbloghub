@@ -4,6 +4,7 @@ import { FileText, Globe, TrendingUp, Clock, Activity, Play, RotateCcw, Zap } fr
 import Link from 'next/link';
 import { useSchedulerStats, useCollectAllRSS, useProcessContent, useRetryFailed } from '@/lib/hooks/use-admin';
 import { PostStatus, BlogStatus } from '@/types';
+import { logger } from '@/lib/config';
 
 export default function AdminDashboard() {
   // Use React Query hooks
@@ -37,7 +38,7 @@ export default function AdminDashboard() {
       alert(`RSS 수집 완료!\n- 처리된 블로그: ${result.summary.blogs_processed}개\n- 새 포스트: ${result.summary.new_posts}개\n- 중복 스킵: ${result.summary.skipped_duplicates}개`);
     } catch (error) {
       alert('RSS 수집 중 오류가 발생했습니다.');
-      console.error('Error collecting RSS:', error);
+      logger.error('Error collecting RSS:', error);
     }
   };
 
@@ -49,7 +50,7 @@ export default function AdminDashboard() {
       alert(`본문 추출 완료!\n- 처리된 포스트: ${result.summary.total_processed}개\n- 성공: ${result.summary.completed}개\n- 실패: ${result.summary.failed}개`);
     } catch (error) {
       alert('본문 추출 중 오류가 발생했습니다.');
-      console.error('Error processing content:', error);
+      logger.error('Error processing content:', error);
     }
   };
 
@@ -61,7 +62,7 @@ export default function AdminDashboard() {
       alert(`재시도 완료!\n- 처리된 포스트: ${result.summary.total_processed}개\n- 성공: ${result.summary.completed}개\n- 실패: ${result.summary.failed}개`);
     } catch (error) {
       alert('재시도 중 오류가 발생했습니다.');
-      console.error('Error retrying failed posts:', error);
+      logger.error('Error retrying failed posts:', error);
     }
   };
 
