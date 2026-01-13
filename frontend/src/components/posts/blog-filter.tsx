@@ -35,22 +35,38 @@ const CustomCheckbox = ({ checked, onChange, disabled = false }: CheckboxProps) 
 
 interface CheckboxItemProps {
   checked: boolean;
-  onChange: (e: React.MouseEvent) => void;
+  onChange: () => void;
   children: React.ReactNode;
   disabled?: boolean;
+  label: string;
 }
 
-const CheckboxItem = ({ checked, onChange, children, disabled = false }: CheckboxItemProps) => (
-  <div
-    onClick={onChange}
-    className={`flex items-center p-3 rounded-lg cursor-pointer group transition-all duration-150 ${
-      checked ? 'bg-blue-50 hover:bg-blue-100' : 'hover:bg-slate-50'
-    } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-  >
-    <CustomCheckbox checked={checked} onChange={onChange} disabled={disabled} />
-    <div className="ml-3 flex items-center space-x-2 flex-1 min-w-0">{children}</div>
-  </div>
-);
+const CheckboxItem = ({ checked, onChange, children, disabled = false, label }: CheckboxItemProps) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (!disabled) onChange();
+    }
+  };
+
+  return (
+    <div
+      role="checkbox"
+      aria-checked={checked}
+      aria-label={label}
+      tabIndex={disabled ? -1 : 0}
+      onClick={() => !disabled && onChange()}
+      onKeyDown={handleKeyDown}
+      className={`flex items-center p-3 rounded-lg cursor-pointer group transition-all duration-150
+        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${
+        checked ? 'bg-blue-50 hover:bg-blue-100' : 'hover:bg-slate-50'
+      } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+    >
+      <CustomCheckbox checked={checked} onChange={() => onChange()} disabled={disabled} />
+      <div className="ml-3 flex items-center space-x-2 flex-1 min-w-0">{children}</div>
+    </div>
+  );
+};
 
 export function BlogFilter({ blogs, selectedBlogs, searchTerm, onBlogToggle }: BlogFilterProps) {
   const filteredBlogs = useMemo(() => {
@@ -90,17 +106,15 @@ export function BlogFilter({ blogs, selectedBlogs, searchTerm, onBlogToggle }: B
   return (
     <div className="space-y-1">
       {filteredBlogs.map((blog) => {
-        const postCount = blog.post_count ?? blog.postCount ?? 0;
+        const postCount = blog.post_count ?? 0;
         const latestDate = blog.latest_post_published_at;
 
         return (
           <CheckboxItem
             key={blog.id}
             checked={selectedBlogs.includes(blog.id)}
-            onChange={(e) => {
-              e.stopPropagation();
-              onBlogToggle(blog.id);
-            }}
+            onChange={() => onBlogToggle(blog.id)}
+            label={`${blog.name} 블로그 선택`}
           >
             <div className="flex items-center gap-3 min-w-0 flex-1">
               {blog.logo_url ? (
@@ -109,6 +123,7 @@ export function BlogFilter({ blogs, selectedBlogs, searchTerm, onBlogToggle }: B
                   alt={`${blog.name} logo`}
                   width={32}
                   height={32}
+                  loading="lazy"
                   className="rounded-lg object-cover flex-shrink-0"
                 />
               ) : (
