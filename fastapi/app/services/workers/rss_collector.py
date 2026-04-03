@@ -32,6 +32,17 @@ class RSSCollector:
         self.post_repository = PostRepository(db)
         self.blog_repository = BlogRepository(db)
 
+    async def _fetch_feed_text(self, rss_url: str, use_proxy: bool) -> str:
+        target_url = (
+            f"{self.proxy_url}{quote(rss_url, safe='')}"
+            if use_proxy and self.proxy_url
+            else rss_url
+        )
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.get(target_url)
+            response.raise_for_status()
+            return response.text
+
     async def extract_rss_entries(self, rss_url: str) -> List[Dict[str, str]]:
         """
         RSS 피드에서 URL과 Title 추출
@@ -42,39 +53,36 @@ class RSSCollector:
         Returns:
             [{'url': str, 'title': str, 'published': str}, ...]
         """
-        try:
-            # Cloudflare 프록시를 통해 RSS 다운로드 (비동기)
-            proxy_url = self.proxy_url + quote(rss_url, safe='')
+        feed_content = ""
 
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.get(proxy_url)
-                response.raise_for_status()
-                feed_content = response.text
+        if self.proxy_url:
+            try:
+                feed_content = await self._fetch_feed_text(rss_url, use_proxy=True)
+            except Exception as proxy_error:
+                logger.warning(f"RSS proxy fetch failed ({rss_url}): {proxy_error}")
 
-            if not feed_content:
+        if not feed_content:
+            try:
+                feed_content = await self._fetch_feed_text(rss_url, use_proxy=False)
+            except Exception as direct_error:
+                logger.error(f"RSS direct fetch failed ({rss_url}): {direct_error}")
                 return []
 
-            # feedparser로 RSS 파싱 (CPU 작업이지만 가벼워서 그냥 실행)
-            feed = feedparser.parse(feed_content)
-
-            entries = []
-            for entry in feed.entries:
-                url = entry.get('link', '').strip()
-                title = entry.get('title', '').strip()
-                published = entry.get('published', '')
-
-                if url and title:
-                    entries.append({
-                        'url': url,
-                        'title': title,
-                        'published': published
-                    })
-
-            return entries
-
-        except Exception as e:
-            logger.error(f"RSS 엔트리 추출 실패 ({rss_url}): {e}")
+        if not feed_content:
             return []
+
+        feed = feedparser.parse(feed_content)
+
+        entries = []
+        for entry in feed.entries:
+            url = entry.get("link", "").strip()
+            title = entry.get("title", "").strip()
+            published = entry.get("published", "")
+
+            if url and title:
+                entries.append({"url": url, "title": title, "published": published})
+
+        return entries
 
     async def get_existing_urls(self, blog_id: int) -> set[str]:
         """
@@ -88,11 +96,7 @@ class RSSCollector:
         """
         return await self.post_repository.get_existing_urls(blog_id)
 
-    async def collect_blog(
-        self,
-        blog: Blog,
-        max_posts: Optional[int] = None
-    ) -> dict:
+    async def collect_blog(self, blog: Blog, max_posts: Optional[int] = None) -> dict:
         """
         단일 블로그에서 새로운 URL 수집 (본문 추출 없이)
 
@@ -114,21 +118,21 @@ class RSSCollector:
         blog_id = blog.id
         blog_name = blog.name
         result = {
-            'blog_id': blog_id,
-            'blog_name': blog_name,
-            'total_entries': 0,
-            'new_posts': 0,
-            'skipped_duplicates': 0,
-            'errors': []
+            "blog_id": blog_id,
+            "blog_name": blog_name,
+            "total_entries": 0,
+            "new_posts": 0,
+            "skipped_duplicates": 0,
+            "errors": [],
         }
 
         try:
             # 1. RSS에서 엔트리(URL + Title) 추출 (비동기)
             entries = await self.extract_rss_entries(blog.rss_url)
-            result['total_entries'] = len(entries)
+            result["total_entries"] = len(entries)
 
             if not entries:
-                result['errors'].append("No entries extracted from RSS")
+                result["errors"].append("No entries extracted from RSS")
                 blog.mark_crawl_failure()
                 await self.db.commit()
                 return result
@@ -137,8 +141,10 @@ class RSSCollector:
             existing_urls = await self.get_existing_urls(blog_id)
 
             # 3. 새로운 엔트리만 필터링
-            new_entries = [entry for entry in entries if entry['url'] not in existing_urls]
-            result['skipped_duplicates'] = len(entries) - len(new_entries)
+            new_entries = [
+                entry for entry in entries if entry["url"] not in existing_urls
+            ]
+            result["skipped_duplicates"] = len(entries) - len(new_entries)
 
             if not new_entries:
                 blog.mark_crawl_success()
@@ -151,9 +157,9 @@ class RSSCollector:
 
             # 5. Post 생성 (PENDING 상태, content=None)
             for entry in new_entries:
-                url = entry['url']
-                rss_title = entry['title']
-                rss_published = entry.get('published')
+                url = entry["url"]
+                rss_title = entry["title"]
+                rss_published = entry.get("published")
 
                 try:
                     # 발행일 파싱
@@ -161,20 +167,24 @@ class RSSCollector:
                     if rss_published:
                         try:
                             from dateutil import parser
+
                             published_at = parser.parse(rss_published)
                         except Exception as parse_error:
-                            logger.warning(f"Failed to parse published date for {url[:100]}: "
-                                           f"RSS date='{rss_published}', error={str(parse_error)}")
+                            logger.warning(
+                                f"Failed to parse published date for {url[:100]}: "
+                                f"RSS date='{rss_published}', error={str(parse_error)}"
+                            )
 
                     # 중복 체크 (normalized_url 기준)
                     normalized_url = Post.normalize_url(url)
                     is_duplicate = await self.post_repository.exists_by_url(
-                        original_url=url,
-                        normalized_url=normalized_url
+                        original_url=url, normalized_url=normalized_url
                     )
                     if is_duplicate:
-                        logger.debug(f"Skipping duplicate URL (normalized): {url[:100]}")
-                        result['skipped_duplicates'] += 1
+                        logger.debug(
+                            f"Skipping duplicate URL (normalized): {url[:100]}"
+                        )
+                        result["skipped_duplicates"] += 1
                         continue
 
                     # Post 생성 (본문 없이 URL만)
@@ -185,15 +195,17 @@ class RSSCollector:
                         normalized_url=normalized_url,
                         blog_id=blog_id,
                         published_at=published_at,
-                        status=PostStatus.PENDING  # 본문 추출 대기
+                        status=PostStatus.PENDING,  # 본문 추출 대기
                     )
 
                     self.db.add(new_post)
-                    result['new_posts'] += 1
+                    result["new_posts"] += 1
 
                 except Exception as e:
                     error_msg = str(e)
-                    result['errors'].append(f"Error creating post {url[:100]}: {error_msg[:100]}")
+                    result["errors"].append(
+                        f"Error creating post {url[:100]}: {error_msg[:100]}"
+                    )
                     logger.error(f"Failed to create post {url[:100]}: {error_msg}")
 
             # 6. 모든 Post 한 번에 커밋
@@ -203,25 +215,25 @@ class RSSCollector:
                 await self.db.commit()
             except Exception as e:
                 await self.db.rollback()
-                result['errors'].append(f"Commit failed: {str(e)}")
+                result["errors"].append(f"Commit failed: {str(e)}")
                 blog.mark_crawl_failure()
                 await self.db.commit()
 
         except Exception as e:
             await self.db.rollback()
-            result['errors'].append(f"Blog collection failed: {str(e)}")
+            result["errors"].append(f"Blog collection failed: {str(e)}")
             try:
                 blog.mark_crawl_failure()
                 await self.db.commit()
             except Exception as commit_error:
-                logger.warning(f"Failed to mark crawl failure for blog {blog_id}: {commit_error}")
+                logger.warning(
+                    f"Failed to mark crawl failure for blog {blog_id}: {commit_error}"
+                )
 
         return result
 
     async def _collect_blog_with_new_session(
-        self,
-        blog_id: int,
-        max_posts: Optional[int] = None
+        self, blog_id: int, max_posts: Optional[int] = None
     ) -> dict:
         """
         새로운 세션을 생성하여 단일 블로그 수집 (병렬 처리용)
@@ -240,12 +252,12 @@ class RSSCollector:
 
             if not blog:
                 return {
-                    'blog_id': blog_id,
-                    'blog_name': 'Unknown',
-                    'total_entries': 0,
-                    'new_posts': 0,
-                    'skipped_duplicates': 0,
-                    'errors': [f'Blog {blog_id} not found']
+                    "blog_id": blog_id,
+                    "blog_name": "Unknown",
+                    "total_entries": 0,
+                    "new_posts": 0,
+                    "skipped_duplicates": 0,
+                    "errors": [f"Blog {blog_id} not found"],
                 }
 
             # 새 세션으로 collector 생성
@@ -255,9 +267,7 @@ class RSSCollector:
             return result
 
     async def collect_all_active_blogs(
-        self,
-        max_posts_per_blog: Optional[int] = None,
-        max_concurrent: int = 10
+        self, max_posts_per_blog: Optional[int] = None, max_concurrent: int = 2
     ) -> List[dict]:
         """
         모든 활성 블로그에서 새로운 URL 수집 (병렬 처리)
@@ -266,7 +276,7 @@ class RSSCollector:
 
         Args:
             max_posts_per_blog: 블로그당 최대 수집 개수
-            max_concurrent: 동시 처리할 최대 블로그 개수 (기본: 10)
+            max_concurrent: 동시 처리할 최대 블로그 개수 (기본: 2)
 
         Returns:
             각 블로그별 수집 결과 리스트
@@ -280,7 +290,9 @@ class RSSCollector:
         async def collect_with_semaphore(blog_id: int):
             """Semaphore를 사용하여 동시 처리 개수 제한"""
             async with semaphore:
-                return await self._collect_blog_with_new_session(blog_id, max_posts_per_blog)
+                return await self._collect_blog_with_new_session(
+                    blog_id, max_posts_per_blog
+                )
 
         # 모든 블로그를 병렬로 수집 (단, 동시 실행은 max_concurrent개로 제한)
         tasks = [collect_with_semaphore(blog.id) for blog in blogs]
@@ -292,12 +304,12 @@ class RSSCollector:
             if isinstance(result, Exception):
                 blog_name = blogs[i].name if i < len(blogs) else "Unknown"
                 error_result = {
-                    'blog_id': blogs[i].id if i < len(blogs) else None,
-                    'blog_name': blog_name,
-                    'total_entries': 0,
-                    'new_posts': 0,
-                    'skipped_duplicates': 0,
-                    'errors': [f"Exception during collection: {str(result)}"]
+                    "blog_id": blogs[i].id if i < len(blogs) else None,
+                    "blog_name": blog_name,
+                    "total_entries": 0,
+                    "new_posts": 0,
+                    "skipped_duplicates": 0,
+                    "errors": [f"Exception during collection: {str(result)}"],
                 }
                 final_results.append(error_result)
                 logger.error(f"Blog collection failed for {blog_name}: {result}")

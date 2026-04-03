@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     ADMIN_PASSWORD: str = "admin123"
 
     # RSS 크롤링 설정
-    RSS_PROXY_URL: str
+    RSS_PROXY_URL: str = ""
 
     # 컨텐츠 추출 설정
     MIN_CONTENT_LENGTH: int = 500
