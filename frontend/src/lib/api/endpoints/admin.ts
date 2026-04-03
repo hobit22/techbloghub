@@ -41,6 +41,23 @@ export interface ContentProcessResult {
   };
 }
 
+export interface SinglePostProcessExecutionResult {
+  post_id: number;
+  url: string;
+  status: 'completed' | 'failed' | 'error';
+  error: string | null;
+  success: boolean;
+  content_length?: number;
+}
+
+export interface SinglePostProcessResult {
+  status: string;
+  post_id: number;
+  result: SinglePostProcessExecutionResult;
+  post_status: string;
+  content_length: number;
+}
+
 export interface SchedulerStats {
   status: string;
   post_stats: {
@@ -82,7 +99,7 @@ export const adminApi = {
       })
       .then((res) => res.data),
 
-  processSinglePost: async (postId: number): Promise<ContentProcessResult> =>
+  processSinglePost: async (postId: number): Promise<SinglePostProcessResult> =>
     adminClient
       .post(`/api/v1/admin/scheduler/content-process/${postId}`)
       .then((res) => res.data),

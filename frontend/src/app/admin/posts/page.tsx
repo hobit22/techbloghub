@@ -51,6 +51,15 @@ export default function AdminPostsPage() {
   const posts = isSearchMode ? (searchData?.results || []) : (listData?.posts || []);
   const totalElements = isSearchMode ? (searchData?.total || 0) : (listData?.total || 0);
 
+  const refetchCurrentPosts = () => {
+    if (isSearchMode) {
+      void refetchSearch();
+      return;
+    }
+
+    void refetchList();
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setCurrentPage(0);
@@ -77,15 +86,12 @@ export default function AdminPostsPage() {
       setProcessingPostId(postId);
       const result = await processPostMutation.mutateAsync(postId);
 
-      if (result.summary.completed > 0) {
+      if (result.result.success) {
         alert('본문 추출이 완료되었습니다!');
-        if (isSearchMode) {
-          refetchSearch();
-        } else {
-          refetchList();
-        }
+        refetchCurrentPosts();
       } else {
-        alert(`본문 추출 실패:\n${result.summary.errors[0]?.error || '알 수 없는 오류'}`);
+        alert(`본문 추출 실패:\n${result.result.error || '알 수 없는 오류'}`);
+        refetchCurrentPosts();
       }
     } catch (error) {
       alert('본문 추출 중 오류가 발생했습니다.');
