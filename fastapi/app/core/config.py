@@ -41,12 +41,10 @@ class Settings(BaseSettings):
     DISCORD_WEBHOOK_URL: str = ""
     DISCORD_WEBHOOK_ENABLED: bool = False
 
-    # Elasticsearch 설정
-    ELASTICSEARCH_URL: str = "http://localhost:9200"
-
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"
 
 
 # 싱글톤 인스턴스

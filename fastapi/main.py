@@ -25,10 +25,7 @@ app = FastAPI(
 )
 
 # HTTP 요청/응답 로깅 미들웨어 (health check 제외)
-app.add_middleware(
-    HTTPLoggingMiddleware,
-    exclude_paths=["/health", "/"]
-)
+app.add_middleware(HTTPLoggingMiddleware, exclude_paths=["/health", "/"])
 
 # CORS 설정 (프론트엔드 연동)
 app.add_middleware(
@@ -56,7 +53,7 @@ async def root():
     return {
         "message": "Welcome to TechBlog Hub API",
         "version": settings.APP_VERSION,
-        "status": "running"
+        "status": "running",
     }
 
 
@@ -69,17 +66,10 @@ async def health_check():
 # 서버 시작 이벤트
 @app.on_event("startup")
 async def startup():
-    from app.services import discord_notifier, init_elasticsearch
+    from app.services import discord_notifier
 
     logger.info(f"🚀 {settings.APP_NAME} v{settings.APP_VERSION} 시작!")
     logger.info(f"📊 Database: {settings.DATABASE_URL.split('@')[1]}")
-
-    # Elasticsearch 초기화 (선택적)
-    try:
-        await init_elasticsearch()
-        logger.info(f"🔍 Elasticsearch initialized: {settings.ELASTICSEARCH_URL}")
-    except Exception as e:
-        logger.warning(f"⚠️  Elasticsearch initialization failed (will run without ES): {e}")
 
     # 스케줄러 시작
     start_scheduler()
@@ -95,16 +85,7 @@ async def startup():
 # 서버 종료 이벤트
 @app.on_event("shutdown")
 async def shutdown():
-    from app.services import close_elasticsearch
-
     logger.info("👋 서버 종료 중...")
-
-    # Elasticsearch 연결 종료
-    try:
-        await close_elasticsearch()
-        logger.info("🔌 Elasticsearch connection closed")
-    except Exception as e:
-        logger.warning(f"⚠️  Elasticsearch shutdown warning: {e}")
 
     # 스케줄러 종료
     shutdown_scheduler()
