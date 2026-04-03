@@ -82,3 +82,6 @@ terraform.tfplan.*
 aws-credentials
 .aws/
 .vercel
+
+.opencode
+.sisyphus
