@@ -156,6 +156,7 @@ npm run dev
 
 - **백엔드**: [fastapi/README.md](./fastapi/README.md)
 - **프론트엔드**: [frontend/README.md](./frontend/README.md)
+- **백엔드 배포**: [docs/backend-deployment.md](./docs/backend-deployment.md)
 
 ## 기여하기
 

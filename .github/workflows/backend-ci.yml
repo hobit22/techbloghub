@@ -72,7 +72,6 @@ jobs:
             -e RSS_PROXY_URL='' \
             -e DISCORD_WEBHOOK_ENABLED='false' \
             -e DISCORD_WEBHOOK_URL='' \
-            -e ELASTICSEARCH_URL='http://localhost:9200' \
             techbloghub-fastapi:ci-${{ github.sha }}
 
       - name: Verify health endpoint
