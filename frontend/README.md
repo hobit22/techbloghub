@@ -234,7 +234,10 @@ Next.js 15 App Router 사용:
 | ------------- | ----------------------------- | ---------------- |
 | `/`           | `src/app/page.tsx`            | 홈 (포스트 목록) |
 | `/posts/[id]` | `src/app/posts/[id]/page.tsx` | 포스트 상세      |
-| `/admin`      | `src/app/admin/page.tsx`      | 관리자 대시보드  |
+| `/admin/login` | `src/app/admin/login/page.tsx` | 관리자 로그인 |
+| `/admin/dashboard` | `src/app/admin/dashboard/page.tsx` | 관리자 대시보드 |
+| `/admin/posts` | `src/app/admin/posts/page.tsx` | 관리자 포스트 관리 |
+| `/admin/blogs` | `src/app/admin/blogs/page.tsx` | 관리자 블로그 관리 |
 | `/api/*`      | `src/app/api/*/route.ts`      | API Routes       |
 
 ## 배포

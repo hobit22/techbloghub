@@ -152,6 +152,22 @@ npm install
 npm run dev
 ```
 
+루트에서도 자주 쓰는 실행 명령을 바로 사용할 수 있습니다.
+
+```bash
+# 프론트엔드 개발 서버
+npm run frontend:dev
+
+# 프론트엔드 빌드
+npm run frontend:build
+
+# 프론트엔드 린트
+npm run frontend:lint
+
+# FastAPI 개발 서버
+npm run backend:dev
+```
+
 ### 상세 가이드
 
 - **백엔드**: [fastapi/README.md](./fastapi/README.md)
