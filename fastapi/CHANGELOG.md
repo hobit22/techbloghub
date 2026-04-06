@@ -14,7 +14,7 @@
   - `GET /api/v1/posts/search` - 포스트 검색
   - `GET /api/v1/summaries/stream/{post_id}` - AI 요약
 
-- **Admin API** (`/api/v1/admin/*`): 관리 작업 - `X-Admin-Key` 헤더 필요
+- **Admin API** (`/api/v1/admin/*`): 관리 작업 - HTTP Basic Auth 필요
   - `POST/PATCH/DELETE /api/v1/admin/blogs` - 블로그 관리
   - `POST/PATCH/DELETE /api/v1/admin/posts` - 포스트 관리
   - `POST /api/v1/admin/scheduler/*` - 스케줄러 수동 트리거
@@ -24,9 +24,9 @@
 # 기존 (인증 없음)
 curl -X POST http://localhost:8000/api/v1/blogs -d '{...}'
 
-# 새로운 방식 (Admin API Key 필요)
+# 새로운 방식 (HTTP Basic Auth 필요)
 curl -X POST http://localhost:8000/api/v1/admin/blogs \
-  -H "X-Admin-Key: your-admin-key" \
+  -u admin:admin123 \
   -d '{...}'
 ```
 
@@ -79,7 +79,8 @@ scheduler.add_job(
 
 ```env
 # Admin API 인증
-ADMIN_API_KEY=your-secret-admin-key-change-in-production
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=change-in-production
 
 # Discord 알림 (선택사항)
 DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
@@ -123,19 +124,19 @@ fastapi/
    - `DELETE /api/v1/blogs/{id}` → `DELETE /api/v1/admin/blogs/{id}`
    - 포스트, 스케줄러 API도 동일하게 변경
 
-2. **인증 헤더 필수:**
-   - 모든 Admin API는 `X-Admin-Key` 헤더 필요
-   - 헤더 없이 요청 시 `401 Unauthorized` 반환
+2. **인증 필수:**
+   - 모든 Admin API는 HTTP Basic Auth 필요
+   - 인증 없이 요청 시 `401 Unauthorized` 반환
 
 3. **환경 변수 필수:**
-   - `ADMIN_API_KEY` 환경 변수 설정 필수 (기본값 있음)
+   - `ADMIN_USERNAME`, `ADMIN_PASSWORD` 환경 변수 설정 권장
 
 ### 테스트 방법
 
 ```bash
 # 1. 환경 변수 설정
 cp .env.example .env
-# .env 파일에서 ADMIN_API_KEY, DISCORD_WEBHOOK_URL 설정
+# .env 파일에서 ADMIN_USERNAME, ADMIN_PASSWORD, DISCORD_WEBHOOK_URL 설정
 
 # 2. 서버 실행
 uvicorn main:app --reload
@@ -144,8 +145,8 @@ uvicorn main:app --reload
 curl http://localhost:8000/api/v1/blogs
 
 # 4. Admin API 테스트 (인증 필요)
-curl -X POST http://localhost:8000/api/v1/admin/scheduler/stats \
-  -H "X-Admin-Key: your-admin-key"
+curl http://localhost:8000/api/v1/admin/scheduler/stats \
+  -u admin:admin123
 
 # 5. Swagger UI 확인
 open http://localhost:8000/docs
@@ -161,7 +162,7 @@ git checkout <previous-commit-hash>
 ## 이전 버전과의 호환성
 
 **Frontend/Backend 통합:**
-- Frontend에서 블로그/포스트 생성/수정/삭제 요청 시 `X-Admin-Key` 헤더 추가 필요
+- Frontend에서 관리자 API 호출 시 HTTP Basic Auth 사용 필요
 - 조회 API는 변경 없음 (하위 호환)
 
 **Spring Boot Backend:**

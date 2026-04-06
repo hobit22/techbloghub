@@ -41,7 +41,7 @@ app.include_router(public_blogs.router, prefix="/api/v1")
 app.include_router(public_posts.router, prefix="/api/v1")
 app.include_router(public_summaries.router, prefix="/api/v1")
 
-# Admin API 라우터 등록 (X-Admin-Key 헤더 필요)
+# Admin API 라우터 등록 (HTTP Basic Auth 필요)
 app.include_router(admin_blogs.router, prefix="/api/v1")
 app.include_router(admin_posts.router, prefix="/api/v1")
 app.include_router(admin_scheduler.router, prefix="/api/v1")
