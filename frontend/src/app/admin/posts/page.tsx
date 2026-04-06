@@ -31,6 +31,7 @@ export default function AdminPostsPage() {
     {
       limit: pageSize,
       offset: currentPage * pageSize,
+      ...(filters.blogId && { blog_ids: [parseInt(filters.blogId)] }),
     }
   );
 
@@ -41,7 +42,7 @@ export default function AdminPostsPage() {
   } = usePosts({
     skip: currentPage * pageSize,
     limit: pageSize,
-    ...(filters.blogId && { blog_id: parseInt(filters.blogId) }),
+    ...(filters.blogId && { blog_ids: [parseInt(filters.blogId)] }),
   });
 
   const deletePostMutation = useDeletePost();

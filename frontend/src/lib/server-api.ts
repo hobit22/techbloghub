@@ -40,7 +40,9 @@ function buildQueryString(params: Record<string, unknown>): string {
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
       if (Array.isArray(value) && value.length > 0) {
-        searchParams.set(key, value.join(","));
+        value.forEach((item) => {
+          searchParams.append(key, String(item));
+        });
       } else if (!Array.isArray(value)) {
         searchParams.set(key, String(value));
       }
@@ -67,15 +69,15 @@ export const serverApi = {
     params: {
       skip?: number;
       limit?: number;
-      blog_id?: number;
+      blog_ids?: number[];
     } = {}
   ): Promise<{ posts: Post[]; total: number }> {
     try {
-      const queryString = buildQueryString({
-        skip: params.skip || 0,
-        limit: params.limit || 20,
-        blog_id: params.blog_id,
-      });
+        const queryString = buildQueryString({
+          skip: params.skip || 0,
+          limit: params.limit || 20,
+          blog_ids: params.blog_ids,
+        });
 
       const response = await serverFetch<{ total: number; posts: Post[] }>(
         `/api/v1/posts?${queryString}`
@@ -97,14 +99,16 @@ export const serverApi = {
     params: {
       limit?: number;
       offset?: number;
+      blog_ids?: number[];
     } = {}
   ): Promise<{ results: Post[]; total: number }> {
     try {
-      const queryString = buildQueryString({
-        q: keyword,
-        limit: params.limit || 20,
-        offset: params.offset || 0,
-      });
+        const queryString = buildQueryString({
+          q: keyword,
+          limit: params.limit || 20,
+          offset: params.offset || 0,
+          blog_ids: params.blog_ids,
+        });
 
       const response = await serverFetch<{ total: number; results: Post[] }>(
         `/api/v1/posts/search?${queryString}`

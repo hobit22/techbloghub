@@ -7,7 +7,7 @@ import type { Post } from '@/types';
 export function usePosts(params?: {
   skip?: number;
   limit?: number;
-  blog_id?: number;
+  blog_ids?: number[];
 }) {
   return useQuery({
     queryKey: queryKeys.posts.list(params || {}),
@@ -27,7 +27,7 @@ export function usePost(id: number) {
 // Search posts
 export function useSearchPosts(
   keyword: string,
-  params?: { limit?: number; offset?: number }
+  params?: { limit?: number; offset?: number; blog_ids?: number[] }
 ) {
   return useQuery({
     queryKey: queryKeys.posts.search(keyword, params || {}),

@@ -20,13 +20,13 @@ export const queryKeys = {
   posts: {
     all: ['posts'] as const,
     lists: () => [...queryKeys.posts.all, 'list'] as const,
-    list: (filters: { skip?: number; limit?: number; blog_id?: number }) =>
+    list: (filters: { skip?: number; limit?: number; blog_ids?: number[] }) =>
       [...queryKeys.posts.lists(), filters] as const,
     infinites: () => [...queryKeys.posts.all, 'infinite'] as const,
     infinite: (filters: SearchRequest) =>
       [...queryKeys.posts.infinites(), filters] as const,
     searches: () => [...queryKeys.posts.all, 'search'] as const,
-    search: (keyword: string, filters: { limit?: number; offset?: number }) =>
+    search: (keyword: string, filters: { limit?: number; offset?: number; blog_ids?: number[] }) =>
       [...queryKeys.posts.searches(), keyword, filters] as const,
     details: () => [...queryKeys.posts.all, 'detail'] as const,
     detail: (id: number) => [...queryKeys.posts.details(), id] as const,
