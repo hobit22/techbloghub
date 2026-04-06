@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Zap } from 'lucide-react';
-import { postsApi } from '@/lib/api/endpoints/posts';
+import { adminApi } from '@/lib/api/endpoints/admin';
 import { adminAuth } from '@/lib/utils/admin-auth';
 import { AxiosError } from 'axios';
 import { logger } from '@/lib/config';
@@ -27,7 +27,7 @@ export default function AdminLoginPage() {
       adminAuth.setAuth(auth);
 
       // 관리자 API 테스트 호출
-      await postsApi.getAll({ skip: 0, limit: 1 });
+      await adminApi.getSchedulerStats();
 
       // 성공하면 대시보드로 이동
       router.push('/admin/dashboard');

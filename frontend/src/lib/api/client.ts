@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosInstance } from 'axios';
 import { API_URL, logger } from '@/lib/config';
+import { ADMIN_AUTH_STORAGE_KEY } from '@/lib/utils/admin-auth';
 
 logger.log('API_BASE_URL:', API_URL);
 
@@ -23,7 +24,7 @@ export const adminClient: AxiosInstance = axios.create({
 adminClient.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
-      const auth = localStorage.getItem('admin-auth');
+      const auth = localStorage.getItem(ADMIN_AUTH_STORAGE_KEY);
       if (auth) {
         config.headers.Authorization = `Basic ${auth}`;
       }
@@ -38,7 +39,7 @@ adminClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401 && typeof window !== 'undefined') {
-      localStorage.removeItem('admin-auth');
+      localStorage.removeItem(ADMIN_AUTH_STORAGE_KEY);
       window.location.href = '/admin/login';
     }
     return Promise.reject(error);
@@ -66,4 +67,3 @@ export const handleApiError = (error: unknown): ApiError => {
     status: 500,
   };
 };
-
