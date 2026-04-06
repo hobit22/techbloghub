@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { serverApi } from '@/lib/server-api';
-import { getPostUrl } from '@/lib/config';
+import { getPostUrl, SITE_NAME, TWITTER_HANDLE } from '@/lib/config';
 import { PostDetailClient } from './_components/detail-client';
 
 interface PageProps {
@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: post.title,
       description,
       url,
-      siteName: 'TeckBlogHub',
+      siteName: SITE_NAME,
       type: 'article',
       locale: 'ko_KR',
       publishedTime: post.published_at,
@@ -58,7 +58,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: post.title,
       description,
       images: [post.blog.logo_url || '/og-image.svg'],
-      creator: '@teckbloghub',
+      creator: TWITTER_HANDLE,
     },
     alternates: {
       canonical: url,

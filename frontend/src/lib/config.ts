@@ -31,7 +31,7 @@ export const IS_DEVELOPMENT = process.env.NODE_ENV === 'development';
 /**
  * Site metadata
  */
-export const SITE_NAME = 'TeckBlogHub';
+export const SITE_NAME = 'TechBlogHub';
 export const SITE_DESCRIPTION = '국내 주요 기업 기술 블로그를 한곳에서 모아보는 플랫폼';
 export const TWITTER_HANDLE = '@teckbloghub';
 

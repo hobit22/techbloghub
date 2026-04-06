@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 import { HomeClient } from '@/app/_components/home-client';
 import { fetchServerSideData } from '@/lib/server-api';
 import { SkeletonGrid } from '@/components/SkeletonCard';
+import { SITE_NAME } from '@/lib/config';
 
 // 동적 메타데이터 생성
 export async function generateMetadata({
@@ -20,14 +21,14 @@ export async function generateMetadata({
   let description = '국내 주요 IT 기업의 최신 기술 블로그 포스트를 한 곳에서 확인하세요.';
 
   if (keyword) {
-    title = `"${keyword}" 검색 결과 - TeckBlogHub`;
+    title = `"${keyword}" 검색 결과 - ${SITE_NAME}`;
     description = `"${keyword}" 관련 기술 블로그 포스트를 모아보세요. 국내 IT 대기업의 개발 인사이트와 기술 트렌드를 확인하세요.`;
   }
 
   return {
     title: {
       default: title,
-      template: '%s | TeckBlogHub',
+      template: `%s | ${SITE_NAME}`,
     },
     description,
     keywords: [

@@ -1,6 +1,6 @@
 {
-  "name": "TeckBlogHub - 기술 블로그 모음",
-  "short_name": "TeckBlogHub",
+  "name": "TechBlogHub - 기술 블로그 모음",
+  "short_name": "TechBlogHub",
   "description": "국내 IT 대기업 기술 블로그를 한 곳에서 모아보세요",
   "start_url": "/",
   "display": "standalone",
