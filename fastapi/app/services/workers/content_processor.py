@@ -80,13 +80,27 @@ class ContentProcessor:
             # 본문 추출
             extracted = await self.extractor.extract(post.original_url, use_proxy=True)
 
-            if not extracted:
+            if not extracted.get("success"):
                 # 추출 실패
                 post.status = PostStatus.FAILED
-                post.retry_count += 1
-                post.error_message = "Content extraction returned None"
                 result["status"] = "failed"
-                result["error"] = "extraction_failed"
+
+                if extracted.get("terminal"):
+                    post.retry_count = self.max_retries
+                    error_code = extracted.get("error", "terminal_failure")
+                    error_message = extracted.get(
+                        "message", "Terminal extraction failure"
+                    )
+                    post.error_message = f"[TERMINAL:{error_code}] {error_message}"[
+                        :500
+                    ]
+                    result["error"] = "terminal_failed"
+                else:
+                    post.retry_count += 1
+                    post.error_message = extracted.get(
+                        "message", "Content extraction returned None"
+                    )[:500]
+                    result["error"] = extracted.get("error", "extraction_failed")
 
             else:
                 # 추출 성공

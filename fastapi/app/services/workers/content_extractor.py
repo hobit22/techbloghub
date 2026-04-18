@@ -8,7 +8,7 @@ import re
 import logging
 from html import unescape
 from typing import Optional, Dict, Any
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 import httpx
 from bs4 import BeautifulSoup
@@ -52,6 +52,85 @@ class ContentExtractor:
         self.min_text_ratio = settings.MIN_TEXT_RATIO
         self.proxy_url = settings.RSS_PROXY_URL
         self.playwright_timeout = settings.PLAYWRIGHT_TIMEOUT
+
+    @staticmethod
+    def is_html_content_type(content_type: str) -> bool:
+        normalized = (content_type or "").lower()
+        return (
+            normalized.startswith("text/html")
+            or normalized.startswith("application/xhtml+xml")
+            or normalized == ""
+        )
+
+    def classify_failure(
+        self,
+        url: str,
+        *,
+        status_code: Optional[int] = None,
+        content_type: str = "",
+        exception_message: str = "",
+    ) -> Dict[str, Any]:
+        message = exception_message or "Unknown extraction failure"
+        lowered = message.lower()
+        parsed = urlparse(url)
+
+        if parsed.scheme not in ("http", "https") or not parsed.netloc:
+            return {
+                "success": False,
+                "terminal": True,
+                "error": "invalid_url",
+                "message": message,
+            }
+
+        if status_code in (404, 410):
+            return {
+                "success": False,
+                "terminal": True,
+                "error": "not_found",
+                "message": message,
+            }
+
+        if status_code in (401, 403):
+            return {
+                "success": False,
+                "terminal": True,
+                "error": "access_denied",
+                "message": message,
+            }
+
+        if content_type and not self.is_html_content_type(content_type):
+            return {
+                "success": False,
+                "terminal": True,
+                "error": "unsupported_content",
+                "message": f"Unsupported content type: {content_type}",
+            }
+
+        if (
+            "missing an 'http://' or 'https://' protocol" in lowered
+            or "cannot navigate to invalid url" in lowered
+        ):
+            return {
+                "success": False,
+                "terminal": True,
+                "error": "invalid_url",
+                "message": message,
+            }
+
+        if status_code == 429 or "timeout" in lowered:
+            return {
+                "success": False,
+                "terminal": False,
+                "error": "timeout",
+                "message": message,
+            }
+
+        return {
+            "success": False,
+            "terminal": False,
+            "error": "extraction_failed",
+            "message": message,
+        }
 
     @staticmethod
     def _build_request_headers() -> Dict[str, str]:
@@ -143,14 +222,12 @@ class ContentExtractor:
             logger.error(f"Trafilatura extraction failed: {e}")
             return None
 
-    async def extract_step1(
-        self, url: str, use_proxy: bool = True
-    ) -> Optional[Dict[str, Any]]:
+    async def extract_step1(self, url: str, use_proxy: bool = True) -> Dict[str, Any]:
         """
         Step 1: Proxy + BeautifulSoup + Trafilatura (빠름)
 
         Returns:
-            추출 결과 또는 None (failover 필요)
+            추출 결과 또는 실패 메타데이터
         """
         try:
             # HTML 다운로드 (비동기)
@@ -164,9 +241,22 @@ class ContentExtractor:
                 response = await client.get(download_url)
                 response.raise_for_status()
                 html_content = response.text
+                content_type = response.headers.get("content-type", "")
+
+            if content_type and not self.is_html_content_type(content_type):
+                return self.classify_failure(
+                    url,
+                    status_code=response.status_code,
+                    content_type=content_type,
+                    exception_message=f"Unsupported content type: {content_type}",
+                )
 
             if not html_content:
-                return None
+                return self.classify_failure(
+                    url,
+                    content_type=content_type,
+                    exception_message="Empty HTML response",
+                )
 
             html_length = len(html_content)
 
@@ -177,7 +267,11 @@ class ContentExtractor:
             data = self.extract_with_trafilatura(cleaned_html)
 
             if not data:
-                return None
+                return self.classify_failure(
+                    url,
+                    content_type=content_type,
+                    exception_message="Trafilatura returned None",
+                )
 
             content = self.normalize_content(data.get("text", ""))
             content_length = len(content)
@@ -188,13 +282,18 @@ class ContentExtractor:
             )
 
             if needs_failover:
-                return None
+                return self.classify_failure(
+                    url,
+                    content_type=content_type,
+                    exception_message=reason,
+                )
 
             # 성공
             logger.info(
                 f"Step 1 succeeded for {url[:50]}... (length: {content_length})"
             )
             return {
+                "success": True,
                 "method": "Step 1 (Proxy + BeautifulSoup + Trafilatura)",
                 "title": data.get("title"),
                 "author": data.get("author"),
@@ -203,16 +302,24 @@ class ContentExtractor:
                 "content_length": content_length,
             }
 
+        except httpx.HTTPStatusError as e:
+            logger.warning(f"Step 1 failed for {url[:50]}...: {e}")
+            return self.classify_failure(
+                url,
+                status_code=e.response.status_code,
+                content_type=e.response.headers.get("content-type", ""),
+                exception_message=str(e),
+            )
         except Exception as e:
             logger.warning(f"Step 1 failed for {url[:50]}...: {e}")
-            return None
+            return self.classify_failure(url, exception_message=str(e))
 
-    async def extract_step2(self, url: str) -> Optional[Dict[str, Any]]:
+    async def extract_step2(self, url: str) -> Dict[str, Any]:
         """
         Step 2: Playwright + BeautifulSoup + Trafilatura (느리지만 확실)
 
         Returns:
-            추출 결과 또는 None (실패)
+            추출 결과 또는 실패 메타데이터
         """
         browser = None
         try:
@@ -236,7 +343,10 @@ class ContentExtractor:
                 data = self.extract_with_trafilatura(cleaned_html)
 
                 if not data:
-                    return None
+                    return self.classify_failure(
+                        url,
+                        exception_message="Trafilatura returned None after browser render",
+                    )
 
                 content = self.normalize_content(data.get("text", ""))
                 content_length = len(content)
@@ -246,6 +356,7 @@ class ContentExtractor:
                     f"Step 2 succeeded for {url[:50]}... (length: {content_length})"
                 )
                 return {
+                    "success": True,
                     "method": "Step 2 (Playwright + Trafilatura)",
                     "title": data.get("title"),
                     "author": data.get("author"),
@@ -256,7 +367,7 @@ class ContentExtractor:
 
         except Exception as e:
             logger.error(f"Step 2 failed for {url[:50]}...: {e}", exc_info=True)
-            return None
+            return self.classify_failure(url, exception_message=str(e))
         finally:
             if browser:
                 try:
@@ -264,9 +375,7 @@ class ContentExtractor:
                 except Exception as close_error:
                     logger.warning(f"Failed to close browser: {close_error}")
 
-    async def extract(
-        self, url: str, use_proxy: bool = True
-    ) -> Optional[Dict[str, Any]]:
+    async def extract(self, url: str, use_proxy: bool = True) -> Dict[str, Any]:
         """
         Failover 전략으로 본문 추출
 
@@ -283,25 +392,34 @@ class ContentExtractor:
                 'content': str,
                 'content_length': int,
             }
-            또는 None (모든 방법 실패)
+            또는 실패 메타데이터 dict
         """
         # Step 1 시도
         logger.info(f"Starting content extraction for {url[:50]}...")
         result = await self.extract_step1(url, use_proxy=use_proxy)
-        if result:
+        if result.get("success"):
+            return result
+
+        if result.get("terminal"):
+            logger.error(f"Terminal extraction failure for {url}: {result['error']}")
             return result
 
         if use_proxy and self.proxy_url:
             logger.info(f"Proxy fetch failed, retrying direct fetch for {url[:50]}...")
             result = await self.extract_step1(url, use_proxy=False)
-            if result:
+            if result.get("success"):
+                return result
+            if result.get("terminal"):
+                logger.error(
+                    f"Terminal extraction failure for {url}: {result['error']}"
+                )
                 return result
 
         logger.info(f"Step 1 failed, trying Step 2 for {url[:50]}...")
         result = await self.extract_step2(url)
-        if result:
+        if result.get("success"):
             return result
 
         # 모든 방법 실패
         logger.error(f"All extraction methods failed for {url}")
-        return None
+        return result
