@@ -1,13 +1,14 @@
 'use client';
 
 import { Post } from '@/types';
-import { ExternalLink, User, Building2, Clock, ArrowUpRight } from 'lucide-react';
+import { ExternalLink, Building2, Clock, ArrowUpRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useUrlState } from '@/hooks/useUrlState';
 import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 interface PostCardProps {
   post: Post;
@@ -17,6 +18,8 @@ export default function PostCard({ post }: PostCardProps) {
   const { setBlogIds } = useUrlState();
   const [logoError, setLogoError] = useState(false);
   const router = useRouter();
+
+  const summary = post.content?.replace(/\s+/g, ' ').trim() || '';
 
   const handleClick = () => {
     router.push(`/posts/${post.id}`);
@@ -52,22 +55,20 @@ export default function PostCard({ post }: PostCardProps) {
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       aria-label={`${post.blog?.company}: ${post.title}`}
-      className="group relative bg-white rounded-lg border border-slate-200 p-4
-                 hover:shadow-md hover:shadow-slate-200/50 hover:border-slate-300
-                 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      className="group border-b border-slate-200 py-4 first:pt-0 last:border-b-0 hover:bg-slate-50/70
+                 transition-colors duration-150 cursor-pointer focus:outline-none focus:ring-2
+                 focus:ring-blue-500 focus:ring-offset-2 rounded-md"
     >
-      <div className="flex items-start space-x-4">
-        {/* Left side - Company Logo and Info */}
-        <div className="flex-shrink-0 flex flex-col items-center">
+      <div className="flex items-start gap-3">
+        <div className="mt-1 flex-shrink-0 flex flex-col items-center">
           <div
             role="button"
             tabIndex={0}
             onClick={handleCompanyClick}
             onKeyDown={handleCompanyKeyDown}
             aria-label={`${post.blog?.company} 블로그 필터`}
-            className="w-6 h-6
-                      flex items-center justify-center mb-2 cursor-pointer
-                      overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+            className="h-6 w-6 flex items-center justify-center cursor-pointer overflow-hidden
+                      focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
           >
             {post.blog?.logo_url && !logoError ? (
               <Image
@@ -80,77 +81,74 @@ export default function PostCard({ post }: PostCardProps) {
                 onError={() => setLogoError(true)}
               />
             ) : (
-              <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg 
-                      flex items-center justify-center cursor-pointer hover:from-blue-600 hover:to-blue-700 
-                      transition-all duration-200 overflow-hidden">
-              <Building2 className="h-4 w-4 text-white" />
+              <div className="h-6 w-6 rounded-md bg-slate-900 flex items-center justify-center overflow-hidden">
+                <Building2 className="h-3.5 w-3.5 text-white" />
               </div>
             )}
           </div>
-          <div className="text-center">
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-4">
+            <h3 className="flex-1 text-[17px] font-semibold leading-6 text-slate-950
+                           group-hover:text-blue-700 transition-colors duration-150">
+              {post.title}
+            </h3>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {isRecent && (
+                <div className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                  NEW
+                </div>
+              )}
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                <ArrowUpRight className="h-4 w-4 text-slate-400 group-hover:text-blue-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500">
             <div
               role="button"
               tabIndex={0}
               onClick={handleCompanyClick}
               onKeyDown={handleCompanyKeyDown}
               aria-label={`${post.blog?.company} 블로그 필터`}
-              className="text-xs font-medium text-slate-700 truncate w-16 cursor-pointer hover:text-blue-600
-                        transition-colors duration-200 focus:outline-none focus:text-blue-600"
+              className="font-medium text-slate-700 hover:text-blue-700 focus:outline-none focus:text-blue-700"
             >
               {post.blog?.company}
             </div>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between mb-2">
-            <h3 className="text-lg font-semibold text-slate-900 leading-tight line-clamp-1 flex-1
-                         group-hover:text-blue-600 transition-colors duration-200 pr-4">
-              {post.title}
-            </h3>
-            
-            {/* Status and Arrow */}
-            <div className="flex items-center space-x-2 flex-shrink-0">
-              {isRecent && (
-                <div className="flex items-center space-x-1 px-2 py-1 bg-green-50 border border-green-200 rounded-full">
-                  <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
-                  <span className="text-xs font-medium text-green-700">NEW</span>
-                </div>
-              )}
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                <ArrowUpRight className="h-5 w-5 text-slate-400 group-hover:text-blue-600" />
-              </div>
+            <div className="flex items-center gap-1">
+              <Clock className="h-3.5 w-3.5" />
+              <span>{format(publishedDate, 'yyyy년 MM월 dd일', { locale: ko })}</span>
             </div>
+            {post.author && <span className="truncate">{post.author}</span>}
           </div>
 
-          {/* Content Preview */}
-          {post.content && (
-            <p className="text-slate-600 text-sm leading-relaxed mb-3 line-clamp-2">
-              {post.content}
+          {summary && (
+            <p className="mt-2 line-clamp-1 text-sm leading-6 text-slate-600">
+              {summary}
             </p>
           )}
 
-          {/* Footer */}
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center space-x-4 text-slate-500">
-              {post.author && (
-                <div className="flex items-center space-x-1">
-                  <User className="h-3.5 w-3.5" />
-                  <span>{post.author}</span>
-                </div>
-              )}
-              <div className="flex items-center space-x-1">
-                <Clock className="h-3.5 w-3.5" />
-                <span>
-                  {format(publishedDate, 'yyyy년 MM월 dd일', { locale: ko })}
-                </span>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <ExternalLink className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-500 transition-colors" />
-            </div>
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-sm font-medium text-slate-600">
+            <Link
+              href={`/posts/${post.id}`}
+              onClick={(event) => event.stopPropagation()}
+              className="inline-flex items-center gap-1 hover:text-blue-700"
+            >
+              상세 보기
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </Link>
+            <Link
+              href={post.original_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(event) => event.stopPropagation()}
+              className="inline-flex items-center gap-1 hover:text-blue-700"
+            >
+              원문 보기
+              <ExternalLink className="h-3.5 w-3.5" />
+            </Link>
           </div>
         </div>
       </div>

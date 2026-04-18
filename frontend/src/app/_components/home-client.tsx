@@ -102,11 +102,13 @@ export function HomeClient({
       />
 
       <main className="max-w-7xl mx-auto p-4 lg:p-6">
-        {/* Header Section */}
-        <div className="mb-6 lg:mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div className="mb-6 border-b border-slate-200 pb-5 lg:mb-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-1">
-              <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 tracking-tight">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                TechBlogHub Feed
+              </p>
+              <h1 className="text-2xl lg:text-3xl font-bold text-slate-950 tracking-tight">
                 {urlState.keyword ? (
                   <>&quot;{urlState.keyword}&quot; 검색 결과</>
                 ) : hasFilters ? (
@@ -115,12 +117,13 @@ export function HomeClient({
                   '최신 기술 블로그 포스트'
                 )}
               </h1>
-              <p className="text-slate-600">
+              <p className="max-w-3xl text-sm leading-6 text-slate-600 lg:text-base">
                 {!postsLoading && infiniteData && infiniteData.pages[0] ? (
                   <>
-                    총 <span className="font-semibold text-slate-700">{infiniteData.pages[0].totalElements.toLocaleString()}</span>개의 포스트
+                    GeekNews처럼 빠르게 훑어보고 바로 원문으로 이동할 수 있도록 정리했습니다.
+                    총 <span className="mx-1 font-semibold text-slate-900">{infiniteData.pages[0].totalElements.toLocaleString()}</span>개의 포스트가 있습니다.
                     {(urlState.blogIds?.length || urlState.keyword) && (
-                      <span className="ml-2 text-sm bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
+                      <span className="ml-2 rounded-full bg-blue-50 px-2 py-1 text-xs text-blue-700">
                         필터 적용
                       </span>
                     )}
@@ -140,20 +143,17 @@ export function HomeClient({
           </div>
         </div>
 
-        {/* Content */}
         {postsLoading && allPosts.length === 0 ? (
           <div className="space-y-4">
             {Array.from({ length: 12 }).map((_, index) => (
-              <div key={index} className="bg-white rounded-lg border border-slate-200 p-4 animate-pulse">
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-slate-200 rounded-lg"></div>
+              <div key={index} className="animate-pulse border-b border-slate-200 py-4 first:pt-0">
+                <div className="flex items-start gap-3">
+                  <div className="h-6 w-6 rounded bg-slate-200"></div>
                   <div className="flex-1 space-y-2">
-                    <div className="h-5 bg-slate-200 rounded-md w-3/4"></div>
-                    <div className="h-4 bg-slate-200 rounded-md w-1/2"></div>
-                    <div className="flex gap-2">
-                      <div className="h-6 bg-slate-200 rounded-md w-16"></div>
-                      <div className="h-6 bg-slate-200 rounded-md w-20"></div>
-                    </div>
+                    <div className="h-5 w-4/5 rounded bg-slate-200"></div>
+                    <div className="h-4 w-1/3 rounded bg-slate-200"></div>
+                    <div className="h-4 w-11/12 rounded bg-slate-200"></div>
+                    <div className="h-4 w-48 rounded bg-slate-200"></div>
                   </div>
                 </div>
               </div>
@@ -165,7 +165,7 @@ export function HomeClient({
             hasNextPage={hasNextPage as boolean}
             isFetchingNextPage={isFetchingNextPage as boolean}
           >
-            <div className="space-y-4">
+            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-2 shadow-sm shadow-slate-200/40 sm:px-6">
               {allPosts.map((post) => (
                 <PostCard key={post.id} post={post} />
               ))}

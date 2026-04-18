@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import { Blog, BlogType } from '@/types';
-import { RefreshCw, Globe, Activity, Calendar, Plus, Download, Trash2, Edit } from 'lucide-react';
+import { RefreshCw, Globe, Activity, Calendar, Plus, Download, Trash2, Edit, Sparkles, Radio, ShieldCheck } from 'lucide-react';
 import { BlogModal } from '@/components/blogs/blog-modal';
 import { useCreateBlog, useUpdateBlog, useDeleteBlog } from '@/lib/hooks/use-blogs';
 import { useAdminBlogs } from '@/lib/hooks/use-admin';
 import { adminApi } from '@/lib/api/endpoints/admin';
 import type { BlogFormData } from '@/lib/utils/validation';
 import { logger } from '@/lib/config';
+import { AdminActionButton, AdminBadge, AdminPageHeader, AdminStatCard, AdminSurface } from '@/components/admin/admin-ui';
 
 export default function AdminBlogsPage() {
   const { data: blogsData, isLoading, refetch } = useAdminBlogs(0, 100);
@@ -20,8 +21,12 @@ export default function AdminBlogsPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [processingBlogId, setProcessingBlogId] = useState<number | null>(null);
   const [editingBlog, setEditingBlog] = useState<Blog | null>(null);
+  const [isImportingVerified, setIsImportingVerified] = useState(false);
 
   const blogs = blogsData?.blogs || [];
+  const activeBlogs = blogs.filter((blog) => blog.status === 'ACTIVE').length;
+  const suspendedBlogs = blogs.filter((blog) => blog.status === 'SUSPENDED').length;
+  const totalPosts = blogs.reduce((sum, blog) => sum + (blog.post_count ?? 0), 0);
 
   const handleCreateBlog = async (data: BlogFormData) => {
     await createBlogMutation.mutateAsync({
@@ -38,6 +43,24 @@ export default function AdminBlogsPage() {
       data,
     });
     setEditingBlog(null);
+  };
+
+  const handleImportVerifiedBlogs = async () => {
+    if (!confirm('Velopers 기반 검증 RSS 블로그들을 일괄 추가하시겠습니까?')) return;
+
+    try {
+      setIsImportingVerified(true);
+      const result = await adminApi.importVerifiedVelopersBlogs();
+      alert(
+        `검증 블로그 가져오기 완료!\n- 요청: ${result.summary.requested}개\n- 생성: ${result.summary.created}개\n- 중복 스킵: ${result.summary.skipped}개`
+      );
+      refetch();
+    } catch (error) {
+      alert('검증 블로그 가져오기 중 오류가 발생했습니다.');
+      logger.error('Error importing verified blogs:', error);
+    } finally {
+      setIsImportingVerified(false);
+    }
   };
 
   const handleAllRecrawl = async () => {
@@ -125,119 +148,146 @@ export default function AdminBlogsPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">블로그 관리</h1>
-        </div>
-        <div className="bg-white rounded-lg shadow p-8 text-center">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">블로그 목록을 불러오는 중...</p>
-        </div>
+        <AdminPageHeader title="블로그 관리" description="등록된 블로그와 검증 소스를 불러오는 중입니다." />
+        <AdminSurface className="p-8 text-center">
+          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-cyan-400 border-t-transparent"></div>
+          <p className="text-sm text-slate-300">블로그 목록을 불러오는 중...</p>
+        </AdminSurface>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* 헤더 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">블로그 관리</h1>
-          <p className="text-gray-600 mt-1">등록된 블로그 목록 및 크롤링 관리</p>
-        </div>
-        <div className="flex space-x-3">
-          <button
+      <AdminPageHeader
+        eyebrow="Sources"
+        title="블로그 관리"
+        description="등록된 기술 블로그를 운영하고, Velopers 기준으로 검증한 소스를 일괄 가져오며, 블로그 단위 RSS/본문 작업을 실행합니다."
+        actions={(
+          <>
+            <AdminActionButton
+            onClick={handleImportVerifiedBlogs}
+            disabled={isImportingVerified}
+              tone="warning"
+          >
+            <Sparkles className={`w-4 h-4 mr-2 inline ${isImportingVerified ? 'animate-spin' : ''}`} />
+            Velopers 검증 소스 추가
+            </AdminActionButton>
+            <AdminActionButton
             onClick={() => setIsAddModalOpen(true)}
-            className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+              tone="success"
           >
             <Plus className="w-4 h-4 mr-2 inline" />
             블로그 추가
-          </button>
-          <button
+            </AdminActionButton>
+            <AdminActionButton
             onClick={handleAllRecrawl}
             disabled={triggering !== null}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              tone="primary"
           >
             <RefreshCw className={`w-4 h-4 mr-2 inline ${triggering === -1 ? 'animate-spin' : ''}`} />
             전체 RSS 수집
-          </button>
-        </div>
+            </AdminActionButton>
+          </>
+        )}
+      />
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <AdminStatCard label="등록 블로그" value={blogs.length.toLocaleString()} description="현재 어드민에 등록된 전체 블로그 수" icon={<Globe className="h-5 w-5" />} />
+        <AdminStatCard label="활성 블로그" value={activeBlogs.toLocaleString()} description="정상 수집 대상 상태의 블로그" icon={<Radio className="h-5 w-5" />} tone="success" />
+        <AdminStatCard label="누적 포스트" value={totalPosts.toLocaleString()} description="연결된 블로그들이 보유한 전체 포스트" icon={<Activity className="h-5 w-5" />} />
+        <AdminStatCard label="주의 필요" value={suspendedBlogs.toLocaleString()} description="중단 상태이거나 재확인이 필요한 블로그" icon={<ShieldCheck className="h-5 w-5" />} tone={suspendedBlogs > 0 ? 'warning' : 'default'} />
       </div>
 
-      {/* 블로그 목록 */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <AdminSurface className="overflow-hidden">
+        <div className="flex flex-col gap-3 border-b border-white/10 px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-white">운영 중인 블로그</h2>
+            <p className="mt-1 text-sm text-slate-400">RSS 주소, 상태, 포스트 수, 마지막 크롤링 시점을 빠르게 확인할 수 있습니다.</p>
+          </div>
+          <AdminBadge>{blogs.length} sources</AdminBadge>
+        </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-white/10">
+            <thead className="bg-white/[0.03]">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">블로그</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">회사</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">상태</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">포스트 수</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">마지막 크롤링</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">작업</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">블로그</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">회사</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">상태</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">포스트</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">마지막 크롤링</th>
+                <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">작업</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="divide-y divide-white/5 bg-transparent">
               {blogs.map((blog) => {
                 const postCount = blog.post_count ?? 0;
                 return (
-                  <tr key={blog.id} className="hover:bg-gray-50">
+                  <tr key={blog.id} className="transition hover:bg-white/[0.03]">
                     <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        <Globe className="w-5 h-5 text-gray-400 mr-2" />
+                      <div className="flex items-center gap-3">
+                        <div className="rounded-2xl border border-white/10 bg-white/5 p-2 text-slate-400">
+                          <Globe className="h-4 w-4" />
+                        </div>
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{blog.name}</div>
-                          <div className="text-sm text-gray-500">{blog.rss_url}</div>
+                          <div className="text-sm font-semibold text-white">{blog.name}</div>
+                          <div className="text-sm text-slate-400">{blog.rss_url}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">{blog.company}</div>
+                      <div className="text-sm text-slate-200">{blog.company}</div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(blog.status)}`}>
+                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(blog.status)}`}>
                         {blog.status}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center text-sm text-gray-900">
-                        <Activity className="w-4 h-4 mr-1 text-gray-400" />
+                      <div className="flex items-center text-sm text-slate-200">
+                        <Activity className="mr-1 h-4 w-4 text-slate-500" />
                         {postCount.toLocaleString()}
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center text-sm text-gray-500">
-                        <Calendar className="w-4 h-4 mr-1" />
+                      <div className="flex items-center text-sm text-slate-400">
+                        <Calendar className="mr-1 h-4 w-4" />
                         {formatDate(blog.last_crawled_at || '')}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-right text-sm font-medium space-x-2">
-                      <button
+                    <td className="px-6 py-4 text-right text-sm font-medium">
+                      <div className="flex justify-end gap-2">
+                      <AdminActionButton
                         onClick={() => setEditingBlog(blog)}
-                        className="text-blue-600 hover:text-blue-900"
+                        tone="default"
+                        className="h-10 w-10 rounded-2xl px-0"
                       >
-                        <Edit className="w-4 h-4 inline" />
-                      </button>
-                      <button
+                        <Edit className="h-4 w-4" />
+                      </AdminActionButton>
+                      <AdminActionButton
                         onClick={() => handleBlogRecrawl(blog.id, blog.name)}
                         disabled={triggering === blog.id}
-                        className="text-green-600 hover:text-green-900 disabled:opacity-50"
+                        tone="success"
+                        className="h-10 w-10 rounded-2xl px-0"
                       >
-                        <RefreshCw className={`w-4 h-4 inline ${triggering === blog.id ? 'animate-spin' : ''}`} />
-                      </button>
-                      <button
+                        <RefreshCw className={`h-4 w-4 ${triggering === blog.id ? 'animate-spin' : ''}`} />
+                      </AdminActionButton>
+                      <AdminActionButton
                         onClick={() => handleProcessBlogPosts(blog.id, blog.name)}
                         disabled={processingBlogId === blog.id}
-                        className="text-purple-600 hover:text-purple-900 disabled:opacity-50"
+                        tone="primary"
+                        className="h-10 w-10 rounded-2xl px-0"
                       >
-                        <Download className={`w-4 h-4 inline ${processingBlogId === blog.id ? 'animate-spin' : ''}`} />
-                      </button>
-                      <button
+                        <Download className={`h-4 w-4 ${processingBlogId === blog.id ? 'animate-spin' : ''}`} />
+                      </AdminActionButton>
+                      <AdminActionButton
                         onClick={() => handleDeleteBlog(blog.id, blog.name)}
-                        className="text-red-600 hover:text-red-900"
+                        tone="danger"
+                        className="h-10 w-10 rounded-2xl px-0"
                       >
-                        <Trash2 className="w-4 h-4 inline" />
-                      </button>
+                        <Trash2 className="h-4 w-4" />
+                      </AdminActionButton>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -245,9 +295,8 @@ export default function AdminBlogsPage() {
             </tbody>
           </table>
         </div>
-      </div>
+      </AdminSurface>
 
-      {/* Modals */}
       <BlogModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}

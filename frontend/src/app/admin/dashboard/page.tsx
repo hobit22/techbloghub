@@ -1,10 +1,11 @@
 'use client';
 
-import { FileText, Globe, TrendingUp, Clock, Activity, Play, RotateCcw, Zap } from 'lucide-react';
+import { FileText, Globe, TrendingUp, Clock, Activity, Play, RotateCcw, ArrowRight, CircleAlert } from 'lucide-react';
 import Link from 'next/link';
 import { useSchedulerStats, useCollectAllRSS, useProcessContent, useRetryFailed } from '@/lib/hooks/use-admin';
 import { PostStatus, BlogStatus } from '@/types';
 import { logger } from '@/lib/config';
+import { AdminBadge, AdminPageHeader, AdminStatCard, AdminSurface } from '@/components/admin/admin-ui';
 
 export default function AdminDashboard() {
   // Use React Query hooks
@@ -107,17 +108,14 @@ export default function AdminDashboard() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">대시보드</h1>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <AdminPageHeader title="운영 대시보드" description="스케줄러와 처리 상태를 불러오는 중입니다." />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white rounded-lg shadow p-6 animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-              <div className="h-8 bg-gray-200 rounded w-1/2 mb-2"></div>
-              <div className="h-3 bg-gray-200 rounded w-full"></div>
-            </div>
+            <AdminSurface key={i} className="animate-pulse p-6">
+              <div className="h-4 w-24 rounded bg-white/10"></div>
+              <div className="mt-4 h-10 w-20 rounded bg-white/10"></div>
+              <div className="mt-4 h-3 w-full rounded bg-white/10"></div>
+            </AdminSurface>
           ))}
         </div>
       </div>
@@ -126,159 +124,158 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* 헤더 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">대시보드</h1>
-          <p className="text-gray-600 mt-1">TechBlogHub 관리자 대시보드</p>
-        </div>
-        <div className="text-sm text-gray-500">
-          마지막 업데이트: {new Date().toLocaleString('ko-KR')}
-        </div>
-      </div>
+      <AdminPageHeader
+        eyebrow="Operations"
+        title="운영 대시보드"
+        description="수집 파이프라인 상태, 블로그 운영 현황, 처리 대기열을 한 화면에서 보고 즉시 작업을 실행합니다."
+        actions={<AdminBadge>마지막 확인 {new Date().toLocaleTimeString('ko-KR')}</AdminBadge>}
+      />
 
-      {/* 통계 카드 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
         {statCards.map((card, index) => {
           const Icon = card.icon;
+          const tone = card.title === '실패 포스트' ? 'danger' : card.title === '대기중 포스트' ? 'warning' : card.title === '활성 블로그' ? 'success' : 'default';
           return (
-            <div key={index} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow p-6">
-              <div className="flex items-center">
-                <div className={`p-3 rounded-lg ${card.color}`}>
-                  <Icon className="h-6 w-6 text-white" />
-                </div>
-                <div className="ml-4 flex-1">
-                  <p className="text-sm font-medium text-gray-600">{card.title}</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {card.value.toLocaleString()}
-                  </p>
-                </div>
-              </div>
-              <p className="text-xs text-gray-500 mt-4">{card.description}</p>
-            </div>
+            <AdminStatCard
+              key={index}
+              label={card.title}
+              value={card.value.toLocaleString()}
+              description={card.description}
+              tone={tone}
+              icon={<Icon className="h-5 w-5" />}
+            />
           );
         })}
       </div>
 
-      {/* 최근 활동 */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">시스템 상태</h2>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between py-3 border-b border-gray-100">
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-              <span className="text-sm text-gray-700">크롤링 시스템</span>
+      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <AdminSurface className="p-6">
+          <div className="mb-6 flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300/75">Automation</p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">스케줄러 실행 센터</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-400">크롤링과 본문 처리 작업을 운영 상황에 맞춰 수동으로 실행합니다.</p>
             </div>
-            <span className="text-sm font-medium text-green-600">정상 동작</span>
+            <AdminBadge tone={stats.failedPosts > 0 ? 'warning' : 'success'}>
+              실패 {stats.failedPosts.toLocaleString()}건
+            </AdminBadge>
           </div>
-          <div className="flex items-center justify-between py-3 border-b border-gray-100">
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-              <span className="text-sm text-gray-700">데이터베이스</span>
-            </div>
-            <span className="text-sm font-medium text-green-600">연결됨</span>
-          </div>
-          <div className="flex items-center justify-between py-3">
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-              <span className="text-sm text-gray-700">API 서버</span>
-            </div>
-            <span className="text-sm font-medium text-green-600">온라인</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 스케줄러 관리 */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <Zap className="w-5 h-5 mr-2 text-orange-500" />
-          스케줄러 관리
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid gap-4 md:grid-cols-3">
           <button
             onClick={handleRSSCollect}
             disabled={collectRSSMutation.isPending || processContentMutation.isPending || retryFailedMutation.isPending}
-            className="p-4 border-2 border-blue-200 rounded-lg hover:bg-blue-50 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded-3xl border border-cyan-400/20 bg-cyan-400/10 p-5 text-left transition hover:bg-cyan-400/15 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <div className="flex items-center mb-2">
               {collectRSSMutation.isPending ? (
-                <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                <div className="mr-2 h-6 w-6 animate-spin rounded-full border-2 border-cyan-200 border-t-transparent"></div>
               ) : (
-                <Play className="h-6 w-6 text-blue-600 mr-2" />
+                <Play className="mr-2 h-6 w-6 text-cyan-200" />
               )}
-              <h3 className="font-medium text-gray-900">RSS 수집</h3>
+              <h3 className="font-medium text-white">RSS 수집</h3>
             </div>
-            <p className="text-sm text-gray-600">모든 활성 블로그의 RSS 피드를 수집합니다</p>
+            <p className="text-sm text-slate-300">모든 활성 블로그의 RSS 피드를 수집합니다.</p>
             {stats.activeBlogsCount > 0 && (
-              <p className="text-xs text-blue-600 mt-2">활성 블로그: {stats.activeBlogsCount}개</p>
+              <p className="mt-3 text-xs font-medium text-cyan-100">활성 블로그 {stats.activeBlogsCount}개</p>
             )}
           </button>
 
           <button
             onClick={handleContentProcess}
             disabled={collectRSSMutation.isPending || processContentMutation.isPending || retryFailedMutation.isPending}
-            className="p-4 border-2 border-green-200 rounded-lg hover:bg-green-50 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-5 text-left transition hover:bg-emerald-400/15 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <div className="flex items-center mb-2">
               {processContentMutation.isPending ? (
-                <div className="w-6 h-6 border-2 border-green-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                <div className="mr-2 h-6 w-6 animate-spin rounded-full border-2 border-emerald-200 border-t-transparent"></div>
               ) : (
-                <FileText className="h-6 w-6 text-green-600 mr-2" />
+                <FileText className="mr-2 h-6 w-6 text-emerald-200" />
               )}
-              <h3 className="font-medium text-gray-900">본문 추출</h3>
+              <h3 className="font-medium text-white">본문 추출</h3>
             </div>
-            <p className="text-sm text-gray-600">대기 중인 포스트의 본문을 추출합니다</p>
+            <p className="text-sm text-slate-300">대기 중인 포스트의 본문을 추출합니다.</p>
             {stats.pendingPosts > 0 && (
-              <p className="text-xs text-green-600 mt-2">대기 포스트: {stats.pendingPosts}개</p>
+              <p className="mt-3 text-xs font-medium text-emerald-100">대기 포스트 {stats.pendingPosts}개</p>
             )}
           </button>
 
           <button
             onClick={handleRetryFailed}
             disabled={collectRSSMutation.isPending || processContentMutation.isPending || retryFailedMutation.isPending}
-            className="p-4 border-2 border-orange-200 rounded-lg hover:bg-orange-50 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded-3xl border border-amber-400/20 bg-amber-400/10 p-5 text-left transition hover:bg-amber-400/15 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <div className="flex items-center mb-2">
               {retryFailedMutation.isPending ? (
-                <div className="w-6 h-6 border-2 border-orange-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                <div className="mr-2 h-6 w-6 animate-spin rounded-full border-2 border-amber-100 border-t-transparent"></div>
               ) : (
-                <RotateCcw className="h-6 w-6 text-orange-600 mr-2" />
+                <RotateCcw className="mr-2 h-6 w-6 text-amber-100" />
               )}
-              <h3 className="font-medium text-gray-900">실패 재시도</h3>
+              <h3 className="font-medium text-white">실패 재시도</h3>
             </div>
-            <p className="text-sm text-gray-600">실패한 포스트를 다시 처리합니다</p>
+            <p className="text-sm text-slate-300">실패한 포스트를 다시 처리합니다.</p>
             {stats.failedPosts > 0 && (
-              <p className="text-xs text-orange-600 mt-2">실패 포스트: {stats.failedPosts}개</p>
+              <p className="mt-3 text-xs font-medium text-amber-50">실패 포스트 {stats.failedPosts}개</p>
             )}
           </button>
-        </div>
-      </div>
+          </div>
 
-      {/* 빠른 작업 */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">빠른 작업</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-4 text-sm text-slate-300">
+            작업은 현재 페이지를 벗어나지 않고 즉시 실행되며, 완료 후 최신 상태를 다시 불러옵니다.
+          </div>
+        </AdminSurface>
+
+        <div className="space-y-6">
+          <AdminSurface className="p-6">
+            <div className="mb-5 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300/75">Health</p>
+                <h2 className="mt-2 text-2xl font-semibold text-white">시스템 상태</h2>
+              </div>
+              <AdminBadge tone="success">정상 동작</AdminBadge>
+            </div>
+            <div className="space-y-3">
+              {[
+                ['크롤링 시스템', '정상 동작'],
+                ['데이터베이스', '연결됨'],
+                ['API 서버', '온라인'],
+              ].map(([label, value]) => (
+                <div key={label} className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                  <div className="flex items-center gap-3 text-sm text-slate-300">
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+                    {label}
+                  </div>
+                  <span className="text-sm font-medium text-emerald-200">{value}</span>
+                </div>
+              ))}
+            </div>
+          </AdminSurface>
+
+          <AdminSurface className="p-6">
+            <div className="mb-5 flex items-center gap-2 text-white">
+              <CircleAlert className="h-5 w-5 text-cyan-200" />
+              <h2 className="text-xl font-semibold">빠른 이동</h2>
+            </div>
+            <div className="grid gap-3">
           <Link
             href="/admin/posts"
-            className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left block"
+            className="group rounded-3xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10"
           >
-            <FileText className="h-6 w-6 text-blue-500 mb-2" />
-            <h3 className="font-medium text-gray-900">포스트 관리</h3>
-            <p className="text-sm text-gray-600">포스트 목록 보기 및 관리</p>
+            <FileText className="mb-3 h-6 w-6 text-cyan-200" />
+            <h3 className="font-medium text-white">포스트 관리</h3>
+            <p className="mt-1 text-sm text-slate-400">포스트 대기열과 원문 처리 상태를 관리합니다.</p>
+            <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-cyan-200">바로 이동 <ArrowRight className="h-4 w-4" /></span>
           </Link>
           <Link
             href="/admin/blogs"
-            className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left block"
+            className="group rounded-3xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10"
           >
-            <Globe className="h-6 w-6 text-green-500 mb-2" />
-            <h3 className="font-medium text-gray-900">블로그 관리</h3>
-            <p className="text-sm text-gray-600">블로그 설정 및 크롤링 관리</p>
+            <Globe className="mb-3 h-6 w-6 text-emerald-200" />
+            <h3 className="font-medium text-white">블로그 관리</h3>
+            <p className="mt-1 text-sm text-slate-400">소스 추가, 검증 소스 가져오기, 단일 재수집을 제어합니다.</p>
+            <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-emerald-200">바로 이동 <ArrowRight className="h-4 w-4" /></span>
           </Link>
-          <div className="p-4 border border-gray-200 rounded-lg bg-gray-50 text-left opacity-50">
-            <TrendingUp className="h-6 w-6 text-gray-400 mb-2" />
-            <h3 className="font-medium text-gray-600">통계 보기</h3>
-            <p className="text-sm text-gray-500">준비 중...</p>
-          </div>
+            </div>
+          </AdminSurface>
         </div>
       </div>
     </div>

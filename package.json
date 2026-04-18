@@ -26,5 +26,8 @@
   "homepage": "https://github.com/hobit22/techbloghub#readme",
   "devDependencies": {
     "wrangler": "^4.79.0"
+  },
+  "dependencies": {
+    "defuddle": "^0.15.0"
   }
 }

@@ -73,6 +73,25 @@ export interface SchedulerStats {
   };
 }
 
+export interface VerifiedBlogImportResult {
+  status: string;
+  summary: {
+    requested: number;
+    created: number;
+    skipped: number;
+  };
+  created: Array<{
+    id: number;
+    name: string;
+    rss_url: string;
+  }>;
+  skipped: Array<{
+    name: string;
+    rss_url: string;
+    reason: string;
+  }>;
+}
+
 export const adminApi = {
   // Blogs
   getBlogs: async (skip: number = 0, limit: number = 100): Promise<BlogListResponse> =>
@@ -80,6 +99,11 @@ export const adminApi = {
       .get('/api/v1/admin/blogs', {
         params: { skip, limit },
       })
+      .then((res) => res.data),
+
+  importVerifiedVelopersBlogs: async (): Promise<VerifiedBlogImportResult> =>
+    adminClient
+      .post('/api/v1/admin/blogs/import/verified-velopers')
       .then((res) => res.data),
 
   // RSS Collection
