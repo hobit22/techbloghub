@@ -10,11 +10,10 @@ from app.core.database import get_db
 from app.core.auth import verify_admin
 from app.schemas import BlogCreate, BlogUpdate, BlogResponse, BlogListResponse
 from app.services import BlogService
+from app.services.domain.blog_presets import VERIFIED_VELOPERS_BLOG_PRESETS
 
 router = APIRouter(
-    prefix="/admin/blogs",
-    tags=["admin-blogs"],
-    dependencies=[Depends(verify_admin)]
+    prefix="/admin/blogs", tags=["admin-blogs"], dependencies=[Depends(verify_admin)]
 )
 
 
@@ -22,7 +21,7 @@ router = APIRouter(
 async def list_blogs_admin(
     skip: int = Query(0, ge=0, description="건너뛸 개수"),
     limit: int = Query(100, ge=1, le=200, description="최대 조회 개수 (1-200)"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """
     블로그 목록 조회 (Admin)
@@ -41,10 +40,7 @@ async def list_blogs_admin(
 
 
 @router.get("/{blog_id}", response_model=BlogResponse)
-async def get_blog_admin(
-    blog_id: int,
-    db: AsyncSession = Depends(get_db)
-):
+async def get_blog_admin(blog_id: int, db: AsyncSession = Depends(get_db)):
     """
     특정 블로그 조회 (Admin)
 
@@ -56,17 +52,14 @@ async def get_blog_admin(
     if not blog:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Blog with id {blog_id} not found"
+            detail=f"Blog with id {blog_id} not found",
         )
 
     return blog
 
 
 @router.post("/", response_model=BlogResponse, status_code=status.HTTP_201_CREATED)
-async def create_blog(
-    blog_data: BlogCreate,
-    db: AsyncSession = Depends(get_db)
-):
+async def create_blog(blog_data: BlogCreate, db: AsyncSession = Depends(get_db)):
     """
     새로운 블로그 생성 (Admin)
 
@@ -83,17 +76,49 @@ async def create_blog(
         new_blog = await service.create_blog(blog_data)
         return new_blog
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/import/verified-velopers")
+async def import_verified_velopers_blogs(db: AsyncSession = Depends(get_db)):
+    service = BlogService(db)
+    created = []
+    skipped = []
+
+    for blog_data in VERIFIED_VELOPERS_BLOG_PRESETS:
+        try:
+            blog = await service.create_blog(blog_data)
+            created.append(
+                {
+                    "id": blog.id,
+                    "name": blog.name,
+                    "rss_url": blog.rss_url,
+                }
+            )
+        except ValueError:
+            skipped.append(
+                {
+                    "name": blog_data.name,
+                    "rss_url": blog_data.rss_url,
+                    "reason": "duplicate",
+                }
+            )
+
+    return {
+        "status": "completed",
+        "summary": {
+            "requested": len(VERIFIED_VELOPERS_BLOG_PRESETS),
+            "created": len(created),
+            "skipped": len(skipped),
+        },
+        "created": created,
+        "skipped": skipped,
+    }
 
 
 @router.patch("/{blog_id}", response_model=BlogResponse)
 async def update_blog(
-    blog_id: int,
-    blog_data: BlogUpdate,
-    db: AsyncSession = Depends(get_db)
+    blog_id: int, blog_data: BlogUpdate, db: AsyncSession = Depends(get_db)
 ):
     """
     블로그 수정 (Admin)
@@ -109,21 +134,12 @@ async def update_blog(
         return blog
     except ValueError as e:
         if "not found" in str(e):
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=str(e)
-            )
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.delete("/{blog_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_blog(
-    blog_id: int,
-    db: AsyncSession = Depends(get_db)
-):
+async def delete_blog(blog_id: int, db: AsyncSession = Depends(get_db)):
     """
     블로그 삭제 (Admin)
 
@@ -135,7 +151,4 @@ async def delete_blog(
         await service.delete_blog(blog_id)
         return None
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))

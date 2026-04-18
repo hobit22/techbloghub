@@ -6,6 +6,7 @@ Failover 전략: Proxy + BeautifulSoup + Trafilatura → Playwright + Trafilatur
 import json
 import re
 import logging
+from html import unescape
 from typing import Optional, Dict, Any
 from urllib.parse import quote
 
@@ -25,6 +26,10 @@ NOISE_SELECTORS = [
     "nav",
     "footer",
     "aside",
+    "noscript",
+    "iframe",
+    "script",
+    "style",
     ".sidebar",
     ".ad",
     ".advertisement",
@@ -32,6 +37,10 @@ NOISE_SELECTORS = [
     ".social-share",
     "#comments",
     "header",
+    ".related-posts",
+    ".recommendation",
+    ".newsletter",
+    ".share",
 ]
 
 
@@ -43,6 +52,25 @@ class ContentExtractor:
         self.min_text_ratio = settings.MIN_TEXT_RATIO
         self.proxy_url = settings.RSS_PROXY_URL
         self.playwright_timeout = settings.PLAYWRIGHT_TIMEOUT
+
+    @staticmethod
+    def _build_request_headers() -> Dict[str, str]:
+        return {
+            "User-Agent": (
+                "Mozilla/5.0 (compatible; TechBlogHubBot/1.0; "
+                "+https://github.com/hobit22/techbloghub)"
+            ),
+            "Accept-Language": "ko,en-US;q=0.9,en;q=0.8",
+        }
+
+    @staticmethod
+    def normalize_content(content: str) -> str:
+        normalized = unescape(content or "")
+        normalized = normalized.replace("\u200b", "").replace("\ufeff", "")
+        normalized = normalized.replace("\r\n", "\n")
+        normalized = re.sub(r"\n{3,}", "\n\n", normalized)
+        normalized = re.sub(r"[ \t]{2,}", " ", normalized)
+        return normalized.strip()
 
     def should_failover(
         self, extracted_content: Optional[str], html_length: int, content_length: int
@@ -128,7 +156,11 @@ class ContentExtractor:
             # HTML 다운로드 (비동기)
             download_url = self.proxy_url + quote(url, safe="") if use_proxy else url
 
-            async with httpx.AsyncClient(timeout=30.0) as client:
+            async with httpx.AsyncClient(
+                timeout=httpx.Timeout(30.0, connect=10.0),
+                follow_redirects=True,
+                headers=self._build_request_headers(),
+            ) as client:
                 response = await client.get(download_url)
                 response.raise_for_status()
                 html_content = response.text
@@ -147,7 +179,7 @@ class ContentExtractor:
             if not data:
                 return None
 
-            content = data.get("text", "")
+            content = self.normalize_content(data.get("text", ""))
             content_length = len(content)
 
             # Failover 판단
@@ -186,10 +218,13 @@ class ContentExtractor:
         try:
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)
-                page = await browser.new_page()
-                await page.goto(
-                    url, wait_until="networkidle", timeout=self.playwright_timeout
+                page = await browser.new_page(
+                    user_agent=self._build_request_headers()["User-Agent"]
                 )
+                await page.goto(
+                    url, wait_until="domcontentloaded", timeout=self.playwright_timeout
+                )
+                await page.wait_for_timeout(1500)
                 html_content = await page.content()
 
                 html_length = len(html_content)
@@ -203,7 +238,7 @@ class ContentExtractor:
                 if not data:
                     return None
 
-                content = data.get("text", "")
+                content = self.normalize_content(data.get("text", ""))
                 content_length = len(content)
 
                 # 성공
