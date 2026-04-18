@@ -4,8 +4,8 @@ RSS 피드에서 URL과 메타데이터만 수집 (본문 추출 제외)
 """
 
 from typing import List, Dict, Optional
-from urllib.parse import urlparse, quote
-from datetime import datetime, timezone
+from urllib.parse import quote, urljoin
+from datetime import datetime
 import asyncio
 import logging
 
@@ -32,32 +32,90 @@ class RSSCollector:
         self.post_repository = PostRepository(db)
         self.blog_repository = BlogRepository(db)
 
+    @staticmethod
+    def _resolve_entry_url(rss_url: str, entry_url: str) -> str:
+        cleaned_url = entry_url.strip()
+        if not cleaned_url:
+            return ""
+
+        if Post.is_absolute_url(cleaned_url):
+            return cleaned_url
+
+        return urljoin(rss_url, cleaned_url)
+
+    @staticmethod
+    def _build_request_headers() -> Dict[str, str]:
+        return {
+            "User-Agent": (
+                "Mozilla/5.0 (compatible; TechBlogHubBot/1.0; "
+                "+https://github.com/hobit22/techbloghub)"
+            ),
+            "Accept": "application/rss+xml, application/xml, text/xml, */*;q=0.8",
+            "Accept-Language": "ko,en-US;q=0.9,en;q=0.8",
+        }
+
+    @staticmethod
+    def _parse_entry_published(entry: feedparser.FeedParserDict) -> Optional[datetime]:
+        parsed_struct = (
+            entry.get("published_parsed")
+            or entry.get("updated_parsed")
+            or entry.get("created_parsed")
+        )
+
+        if parsed_struct:
+            try:
+                return datetime(*parsed_struct[:6])
+            except Exception:
+                logger.debug("Failed to parse structured RSS date", exc_info=True)
+
+        raw_date = (
+            entry.get("published") or entry.get("updated") or entry.get("created") or ""
+        )
+        if not raw_date:
+            return None
+
+        try:
+            from dateutil import parser
+
+            return parser.parse(raw_date)
+        except Exception as parse_error:
+            logger.warning(
+                "Failed to parse RSS entry date '%s': %s", raw_date, parse_error
+            )
+            return None
+
     async def _fetch_feed_text(self, rss_url: str, use_proxy: bool) -> str:
         target_url = (
             f"{self.proxy_url}{quote(rss_url, safe='')}"
             if use_proxy and self.proxy_url
             else rss_url
         )
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(
+            timeout=httpx.Timeout(30.0, connect=10.0),
+            follow_redirects=True,
+            headers=self._build_request_headers(),
+        ) as client:
             response = await client.get(target_url)
             response.raise_for_status()
             return response.text
 
-    async def extract_rss_entries(self, rss_url: str) -> List[Dict[str, str]]:
-        """
-        RSS 피드에서 URL과 Title 추출
-
-        Args:
-            rss_url: RSS 피드 URL
-
-        Returns:
-            [{'url': str, 'title': str, 'published': str}, ...]
-        """
+    async def extract_rss_entries(
+        self, rss_url: str, site_url: Optional[str] = None
+    ) -> List[Dict[str, object]]:
         feed_content = ""
 
         if self.proxy_url:
             try:
-                feed_content = await self._fetch_feed_text(rss_url, use_proxy=True)
+                proxy_content = await self._fetch_feed_text(rss_url, use_proxy=True)
+                # 프록시 응답이 HTML(RSS가 아닌)인 경우 무시하고 직접 요청 fallback
+                if proxy_content and not proxy_content.lstrip().startswith(
+                    ("<?xml", "<rss", "<feed", "<atom")
+                ):
+                    logger.warning(
+                        f"Proxy returned non-RSS content for {rss_url}, falling back to direct"
+                    )
+                else:
+                    feed_content = proxy_content
             except Exception as proxy_error:
                 logger.warning(f"RSS proxy fetch failed ({rss_url}): {proxy_error}")
 
@@ -73,14 +131,35 @@ class RSSCollector:
 
         feed = feedparser.parse(feed_content)
 
-        entries = []
+        entries: List[Dict[str, object]] = []
+        seen_urls: set[str] = set()
         for entry in feed.entries:
             url = entry.get("link", "").strip()
             title = entry.get("title", "").strip()
-            published = entry.get("published", "")
 
-            if url and title:
-                entries.append({"url": url, "title": title, "published": published})
+            url = self._resolve_entry_url(rss_url, url)
+
+            if url and not Post.is_absolute_url(url):
+                logger.warning("Skipping RSS entry with non-absolute URL: %s", url)
+                continue
+
+            normalized_url = Post.normalize_url(url)
+
+            if not url or not title or not normalized_url:
+                continue
+
+            if normalized_url in seen_urls:
+                continue
+
+            seen_urls.add(normalized_url)
+            entries.append(
+                {
+                    "url": url,
+                    "normalized_url": normalized_url,
+                    "title": title,
+                    "published": self._parse_entry_published(entry),
+                }
+            )
 
         return entries
 
@@ -128,7 +207,9 @@ class RSSCollector:
 
         try:
             # 1. RSS에서 엔트리(URL + Title) 추출 (비동기)
-            entries = await self.extract_rss_entries(blog.rss_url)
+            entries = await self.extract_rss_entries(
+                blog.rss_url, site_url=blog.site_url
+            )
             result["total_entries"] = len(entries)
 
             if not entries:
@@ -157,26 +238,19 @@ class RSSCollector:
 
             # 5. Post 생성 (PENDING 상태, content=None)
             for entry in new_entries:
-                url = entry["url"]
-                rss_title = entry["title"]
+                url = str(entry["url"])
+                rss_title = str(entry["title"])
                 rss_published = entry.get("published")
 
                 try:
-                    # 발행일 파싱
-                    published_at = None
-                    if rss_published:
-                        try:
-                            from dateutil import parser
-
-                            published_at = parser.parse(rss_published)
-                        except Exception as parse_error:
-                            logger.warning(
-                                f"Failed to parse published date for {url[:100]}: "
-                                f"RSS date='{rss_published}', error={str(parse_error)}"
-                            )
+                    published_at = (
+                        rss_published if isinstance(rss_published, datetime) else None
+                    )
 
                     # 중복 체크 (normalized_url 기준)
-                    normalized_url = Post.normalize_url(url)
+                    normalized_url = str(
+                        entry.get("normalized_url") or Post.normalize_url(url)
+                    )
                     is_duplicate = await self.post_repository.exists_by_url(
                         original_url=url, normalized_url=normalized_url
                     )

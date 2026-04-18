@@ -25,7 +25,9 @@ class PostService:
         self.repository = PostRepository(db)
         self.blog_repository = BlogRepository(db)
 
-    async def get_post_by_id(self, post_id: int, include_blog: bool = False) -> Optional[Post]:
+    async def get_post_by_id(
+        self, post_id: int, include_blog: bool = False
+    ) -> Optional[Post]:
         """
         ID로 포스트 조회
 
@@ -52,7 +54,7 @@ class PostService:
         skip: int = 0,
         limit: int = 20,
         blog_ids: Optional[List[int]] = None,
-        include_blog: bool = False
+        include_blog: bool = False,
     ) -> tuple[List[Post], int]:
         """
         포스트 목록 조회 (페이지네이션)
@@ -69,10 +71,7 @@ class PostService:
         logger.info(f"Fetching posts: skip={skip}, limit={limit}, blog_ids={blog_ids}")
 
         posts, total = await self.repository.get_all(
-            skip=skip,
-            limit=limit,
-            blog_ids=blog_ids,
-            include_blog=include_blog
+            skip=skip, limit=limit, blog_ids=blog_ids, include_blog=include_blog
         )
 
         logger.info(f"Fetched {len(posts)} posts out of {total} total")
@@ -83,7 +82,7 @@ class PostService:
         query: str,
         limit: int = 20,
         offset: int = 0,
-        blog_ids: Optional[List[int]] = None
+        blog_ids: Optional[List[int]] = None,
     ) -> tuple[List[tuple[Post, float]], int]:
         """
         포스트 전문 검색 (PostgreSQL Full-Text Search)
@@ -97,24 +96,22 @@ class PostService:
         Returns:
             ((Post, rank) 튜플 리스트 (blog relationship 포함), 전체 개수)
         """
-        logger.info(f"Searching posts: query='{query}', limit={limit}, offset={offset}, blog_ids={blog_ids}")
+        logger.info(
+            f"Searching posts: query='{query}', limit={limit}, offset={offset}, blog_ids={blog_ids}"
+        )
 
         # Repository를 통해 검색 (ORM 모델 + rank 반환)
         posts_with_rank, total = await self.repository.search_fulltext(
-            search_query=query,
-            limit=limit,
-            offset=offset,
-            blog_ids=blog_ids
+            search_query=query, limit=limit, offset=offset, blog_ids=blog_ids
         )
 
-        logger.info(f"Found {len(posts_with_rank)} posts out of {total} total for query '{query}'")
+        logger.info(
+            f"Found {len(posts_with_rank)} posts out of {total} total for query '{query}'"
+        )
         return posts_with_rank, total
 
     async def check_duplicate_url(
-        self,
-        original_url: str,
-        normalized_url: str,
-        exclude_id: Optional[int] = None
+        self, original_url: str, normalized_url: str, exclude_id: Optional[int] = None
     ) -> bool:
         """
         포스트 URL 중복 체크
@@ -127,12 +124,14 @@ class PostService:
         Returns:
             중복이면 True, 아니면 False
         """
-        logger.info(f"Checking duplicate URL: original={original_url}, normalized={normalized_url}")
+        logger.info(
+            f"Checking duplicate URL: original={original_url}, normalized={normalized_url}"
+        )
 
         is_duplicate = await self.repository.exists_by_url(
             original_url=original_url,
             normalized_url=normalized_url,
-            exclude_id=exclude_id
+            exclude_id=exclude_id,
         )
 
         if is_duplicate:
@@ -155,13 +154,21 @@ class PostService:
         Raises:
             ValueError: 블로그가 없거나 중복된 URL이 존재하는 경우
         """
-        logger.info(f"Creating post: title={post_data.title}, blog_id={post_data.blog_id}")
+        logger.info(
+            f"Creating post: title={post_data.title}, blog_id={post_data.blog_id}"
+        )
 
         # 블로그 존재 여부 확인
         blog = await self.blog_repository.get_by_id(post_data.blog_id)
         if not blog:
-            logger.error(f"Failed to create post: blog_id={post_data.blog_id} not found")
+            logger.error(
+                f"Failed to create post: blog_id={post_data.blog_id} not found"
+            )
             raise ValueError(f"Blog with id {post_data.blog_id} not found")
+
+        if not Post.is_absolute_url(post_data.original_url):
+            logger.error("Failed to create post: original_url must be absolute")
+            raise ValueError("Post original_url must be an absolute http(s) URL")
 
         # URL 정규화
         normalized_url = Post.normalize_url(post_data.original_url)
@@ -176,14 +183,12 @@ class PostService:
         new_post = Post(**post_dict, normalized_url=normalized_url)
         created_post = await self.repository.create(new_post)
 
-        logger.info(f"Post created successfully: id={created_post.id}, title={created_post.title}")
+        logger.info(
+            f"Post created successfully: id={created_post.id}, title={created_post.title}"
+        )
         return created_post
 
-    async def update_post(
-        self,
-        post_id: int,
-        post_data: PostUpdate
-    ) -> Post:
+    async def update_post(self, post_id: int, post_data: PostUpdate) -> Post:
         """
         포스트 수정
 
